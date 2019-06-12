@@ -1,0 +1,20 @@
+name: cli_pkg
+
+environment:
+  sdk: '>=2.3.0 <3.0.0'
+
+dependencies:
+  archive: ">=1.0.0 <3.0.0"
+  grinder: '^0.8.0'
+  http: ">=0.11.0 <0.13.0"
+  pubspec_parse: '^0.1.0'
+  meta: "^1.1.7"
+  mustache: "^1.0.0"
+  path: '^1.0.0'
+  pub_semver: '^1.0.0'
+  yaml: '^2.0.0'
+
+dev_dependencies:
+  test: '^1.0.0'
+  test_descriptor: '^1.2.0'
+  test_process: '^1.0.0'
