@@ -90,7 +90,7 @@ Future<void> pkgStandaloneLinuxX64({http.Client client}) async {
 }
 
 /// Builds a standalone 32-bit package for MacOs to
-/// `build/$pkgStandaloneName-$pkgVersion-linux-ia32.tar.gz`.
+/// `build/$pkgStandaloneName-$pkgVersion-macos-ia32.tar.gz`.
 ///
 /// If [client] is passed, it's used to download the corresponding Dart SDK
 /// version.
@@ -100,7 +100,7 @@ Future<void> pkgStandaloneMacOsIa32({http.Client client}) =>
     _buildPackage("macos", x64: false, client: client);
 
 /// Builds a standalone 64-bit package for MacOs to
-/// `build/$pkgStandaloneName-$pkgVersion-linux-x64.tar.gz`.
+/// `build/$pkgStandaloneName-$pkgVersion-macos-x64.tar.gz`.
 ///
 /// If [client] is passed, it's used to download the corresponding Dart SDK
 /// version.

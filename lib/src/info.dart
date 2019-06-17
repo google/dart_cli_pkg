@@ -26,7 +26,7 @@ final _pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
 final _rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
-//? The name of the package, as specified in the pubspec.
+/// The name of the package, as specified in the pubspec.
 final pkgDartName = _pubspec.name;
 
 /// The package's version, as specified in the pubspec.

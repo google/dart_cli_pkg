@@ -26,8 +26,8 @@ final _dir = p.fromUri(waitFor(
 /// A cache of parsed templates.
 final _cache = p.PathMap<Template>();
 
-/// Loads the templated from [path] (relative to `lib/src/templates`, without
-/// the trailing `.mustache`) and renders it using [variables].
+/// Loads the template from [path] (relative to `lib/src/templates`, without the
+/// trailing `.mustache`) and renders it using [variables].
 String renderTemplate(String path, Map<String, String> variables) {
   path = p.join(_dir, path);
   return _cache
