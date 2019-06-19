@@ -19,7 +19,7 @@ import 'package:pubspec_parse/pubspec_parse.dart';
 import 'package:yaml/yaml.dart';
 
 /// The parsed pubspec for the CLI package.
-final _pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
+final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
 /// The raw YAML of the pubspec.
@@ -27,10 +27,10 @@ final _rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
 /// The name of the package, as specified in the pubspec.
-final pkgDartName = _pubspec.name;
+final pkgDartName = pubspec.name;
 
 /// The package's version, as specified in the pubspec.
-final pkgVersion = _pubspec.version;
+final pkgVersion = pubspec.version;
 
 /// The default name of the package on package managers other than pub.
 ///
@@ -40,6 +40,14 @@ final pkgVersion = _pubspec.version;
 String get pkgName => _pkgName ?? pkgDartName;
 set pkgName(String value) => _pkgName = value;
 String _pkgName;
+
+/// The human-friendly name of the package.
+///
+/// This is used in places where the package name is only meant to be read by
+/// humans, not used as a filename or identifier. It defaults to [pkgName].
+String get pkgHumanName => _pkgHumanName ?? pkgName;
+set pkgHumanName(String value) => _pkgHumanName = value;
+String _pkgHumanName;
 
 /// A mutable map from executable names to those executables' paths in `bin/`.
 ///

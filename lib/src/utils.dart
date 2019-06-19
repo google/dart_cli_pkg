@@ -62,6 +62,18 @@ ArchiveFile file(String target, String source, {bool executable = false}) =>
     fileFromBytes(target, File(source).readAsBytesSync(),
         executable: executable);
 
+/// Parses [url], replacing its hostname with the `_CLI_PKG_TEST_HOST`
+/// environment variable if it's set.
+Uri url(String url) {
+  var parsed = Uri.parse(url);
+  var host = Platform.environment["_CLI_PKG_TEST_HOST"];
+  if (host == null) return parsed;
+
+  var parsedHost = Uri.parse(host);
+  return parsed.replace(
+      scheme: parsedHost.scheme, host: parsedHost.host, port: parsedHost.port);
+}
+
 /// Passes [client] to [callback] and returns the result.
 ///
 /// If [client] is `null`, creates a client just for the duration of [callback].

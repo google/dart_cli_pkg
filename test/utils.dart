@@ -16,27 +16,50 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
+import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 import 'package:test_process/test_process.dart';
 
+/// Returns the application directory.
+///
+/// This assumes that there's a single directory in the sandbox which is the
+/// application.
+String get _appDir => Directory(d.sandbox).listSync().single.path;
+
 /// Runs [grinder] in the application directory with the given [arguments].
 ///
-/// Runs `pub get` first.
+/// Runs `pub get` first if necessary.
+///
+/// If [server] is passed, redirectable HTTP requests from the grinder tasks
+/// will be made to it instead of to the default host.
 ///
 /// The [environment] and [forwardStdio] arguments have the same meanings as for
 /// [TestProcess.start].
 Future<TestProcess> grind(List<String> arguments,
-    {Map<String, String> environment, bool forwardStdio = false}) async {
-  var directory = Directory(d.sandbox).listSync().single.path;
-
-  await (await TestProcess.start("pub", ["get", "--offline", "--no-precompile"],
-          forwardStdio: forwardStdio, workingDirectory: directory))
-      .shouldExit(0);
+    {ShelfTestServer server,
+    Map<String, String> environment,
+    bool forwardStdio = false}) async {
+  if (!File(d.path("pubspec.lock")).existsSync()) {
+    await (await TestProcess.start(
+            "pub", ["get", "--offline", "--no-precompile"],
+            forwardStdio: forwardStdio, workingDirectory: _appDir))
+        .shouldExit(0);
+  }
 
   return await TestProcess.start("pub", ["run", "grinder", ...arguments],
       forwardStdio: forwardStdio,
-      workingDirectory: directory,
-      environment: {...?environment, "_CLI_PKG_TESTING": "true"});
+      workingDirectory: _appDir,
+      environment: {
+        ...?environment,
+        "_CLI_PKG_TESTING": "true",
+        if (server != null) "_CLI_PKG_TEST_HOST": server.url.toString()
+      });
+}
+
+/// Runs Git in the application directory with the given [arguments].
+Future<void> git(List<String> arguments) async {
+  await (await TestProcess.start("git", arguments, workingDirectory: _appDir))
+      .shouldExit(0);
 }
 
 /// Extracts the contents of [archive] to [destination], both within `d.sandbox`.
