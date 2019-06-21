@@ -23,7 +23,7 @@ import 'package:test_process/test_process.dart';
 ///
 /// Runs `pub get` first.
 Future<TestProcess> grind(List<String> arguments,
-    {bool forwardStdio: false}) async {
+    {bool forwardStdio = false}) async {
   var directory = Directory(d.sandbox).listSync().single.path;
 
   await (await TestProcess.start("pub", ["get", "--offline", "--no-precompile"],

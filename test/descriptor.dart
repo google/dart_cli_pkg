@@ -40,7 +40,8 @@ final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
 DirectoryDescriptor package(
-    String name, Map<String, Object> pubspec, String grindDotDart, [List<Descriptor> files]) {
+    String name, Map<String, Object> pubspec, String grindDotDart,
+    [List<Descriptor> files]) {
   pubspec = {
     "executables": {},
     ...pubspec,
