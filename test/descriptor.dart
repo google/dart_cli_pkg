@@ -54,7 +54,7 @@ DirectoryDescriptor package(
 
   var executables = pubspec.containsKey("executables")
       ? (pubspec["executables"] as Map<String, Object>).values.toSet()
-      : const {};
+      : const <Object>{};
 
   return dir(name, [
     file("pubspec.yaml", json.encode(pubspec)),

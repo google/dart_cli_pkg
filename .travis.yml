@@ -1,0 +1,22 @@
+language: dart
+
+dart:
+  - dev
+  - stable
+
+dart_task:
+  - test
+
+matrix:
+  include:
+  - dart: stable
+    dart_task: {dartfmt: --fix}
+  - dart: stable
+    dart_task: {dartanalyzer: --fatal-warnings --fatal-infos .}
+
+branches:
+  only: [master]
+
+cache:
+  directories:
+    - $HOME/.pub-cache
