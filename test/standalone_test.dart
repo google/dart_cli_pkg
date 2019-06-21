@@ -215,13 +215,17 @@ void main() {
   });
 
   test("includes the package's license and Dart's license", () async {
-    await d.package("my_app", {
-      "name": "my_app",
-      "version": "1.2.3",
-      "executables": {"foo": "foo"}
-    }, _exportStandalone, [
-      d.file("LICENSE", "Please use my code")
-    ]).create();
+    await d
+        .package(
+            "my_app",
+            {
+              "name": "my_app",
+              "version": "1.2.3",
+              "executables": {"foo": "foo"}
+            },
+            _exportStandalone,
+            [d.file("LICENSE", "Please use my code")])
+        .create();
     await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
     await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [

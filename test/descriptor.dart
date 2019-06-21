@@ -40,7 +40,8 @@ final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
 DirectoryDescriptor package(
-    String name, Map<String, Object> pubspec, String grindDotDart, [List<Descriptor> files]) {
+    String name, Map<String, Object> pubspec, String grindDotDart,
+    [List<Descriptor> files]) {
   pubspec = {
     "executables": {},
     ...pubspec,
@@ -53,7 +54,7 @@ DirectoryDescriptor package(
 
   var executables = pubspec.containsKey("executables")
       ? (pubspec["executables"] as Map<String, Object>).values.toSet()
-      : const {};
+      : const <Object>{};
 
   return dir(name, [
     file("pubspec.yaml", json.encode(pubspec)),
