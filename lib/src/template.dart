@@ -20,8 +20,10 @@ import 'package:mustache/mustache.dart';
 import 'package:path/path.dart' as p;
 
 /// The template directory in the `cli_pkg` package.
-final _dir = p.fromUri(waitFor(
-    Isolate.resolvePackageUri(Uri.parse('package:cli_pkg/src/templates'))));
+final Future<String> _dir = () async {
+  return p.fromUri(await Isolate.resolvePackageUri(
+      Uri.parse('package:cli_pkg/src/templates')));
+}();
 
 /// A cache of parsed templates.
 final _cache = p.PathMap<Template>();
@@ -29,7 +31,7 @@ final _cache = p.PathMap<Template>();
 /// Loads the template from [path] (relative to `lib/src/templates`, without the
 /// trailing `.mustache`) and renders it using [variables].
 String renderTemplate(String path, Map<String, String> variables) {
-  path = p.join(_dir, path);
+  path = p.join(waitFor(_dir), path);
   return _cache
       .putIfAbsent(path,
           () => Template(File("$path.mustache").readAsStringSync(), name: path))
