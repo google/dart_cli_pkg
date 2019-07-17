@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'src/info.dart';
@@ -136,17 +137,18 @@ Future<void> pkgStandaloneWindowsX64({http.Client client}) async {
 /// If [client] is passed, it's used to download the corresponding Dart SDK
 /// versions.
 @Task('Build all standalone packages.')
-Future<void> pkgStandaloneAll() async {
-  var client = http.Client();
-  await Future.wait([
-    pkgStandaloneLinuxIa32(client: client),
-    pkgStandaloneLinuxX64(client: client),
-    pkgStandaloneWindowsIa32(client: client),
-    pkgStandaloneWindowsX64(client: client),
-    pkgStandaloneMacOsIa32(client: client),
-    pkgStandaloneMacOsX64(client: client)
-  ]);
-  await client.close();
+@Depends(pkgCompileSnapshot, pkgCompileNative)
+Future<void> pkgStandaloneAll({http.Client client}) {
+  return withClient(client, (client) {
+    return Future.wait([
+      _buildPackage("linux", x64: false, client: client),
+      _buildPackage("linux", x64: true, client: client),
+      _buildPackage("macos", x64: false, client: client),
+      _buildPackage("macos", x64: true, client: client),
+      _buildPackage("windows", x64: false, client: client),
+      _buildPackage("windows", x64: true, client: client),
+    ]);
+  });
 }
 
 /// Compiles a native executable if it's supported for the OS/architecture
@@ -235,6 +237,10 @@ Future<List<int>> _dartExecutable(String os,
     return File(p.join(
             sdkDir.path, "bin/dartaotruntime${os == 'windows' ? '.exe' : ''}"))
         .readAsBytesSync();
+  } else if (isTesting) {
+    // Don't actually download full SDKs in test mode, just return a dummy
+    // executable.
+    return utf8.encode("Dart $os ${_arch(x64)}");
   }
 
   // TODO(nweiz): Compile a single executable that embeds the Dart VM and the

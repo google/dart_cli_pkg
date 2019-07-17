@@ -1,2 +1,0 @@
-# These tests involve a lot of long integrations.
-timeout: 4x

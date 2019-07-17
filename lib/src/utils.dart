@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:http/http.dart' as http;
 import 'package:pub_semver/pub_semver.dart';
 
 import 'info.dart';
@@ -28,6 +29,9 @@ final Version dartVersion = Version.parse(Platform.version.split(" ").first);
 
 /// Whether we're using a dev Dart SDK.
 bool get isDevSdk => dartVersion.isPreRelease;
+
+/// Returns whether tasks are being run in a test environment.
+bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
 
 /// Ensure that the `build/` directory exists.
 void ensureBuild() {
@@ -57,3 +61,17 @@ ArchiveFile fileFromString(String path, String contents,
 ArchiveFile file(String target, String source, {bool executable = false}) =>
     fileFromBytes(target, File(source).readAsBytesSync(),
         executable: executable);
+
+/// Passes [client] to [callback] and returns the result.
+///
+/// If [client] is `null`, creates a client just for the duration of [callback].
+Future<T> withClient<T>(
+    http.Client client, Future<T> callback(http.Client client)) async {
+  var createdClient = client == null;
+  client ??= http.Client();
+  try {
+    return await callback(client);
+  } finally {
+    if (createdClient) await client.close();
+  }
+}
