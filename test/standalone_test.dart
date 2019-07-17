@@ -229,8 +229,90 @@ void main() {
     await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
     await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
-      d.file("LICENSE", "Please use my code"),
-      d.file("DART_LICENSE", contains("Dart project authors"))
-    ]);
+      d.dir("my_app/src", [
+        d.file("LICENSE", "Please use my code"),
+        d.file("DART_LICENSE", contains("Dart project authors"))
+      ])
+    ]).validate();
+  });
+
+  group("creates a package for", () {
+    setUp(() => d
+        .package(
+            "my_app",
+            {
+              "name": "my_app",
+              "version": "1.2.3",
+              "executables": {"foo": "foo"}
+            },
+            _exportStandalone)
+        .create());
+
+    d.Descriptor archive(String name, {bool windows = false}) =>
+        d.archive(name, [
+          d.dir("my_app", [
+            d.file("foo${windows ? '.bat' : ''}", anything),
+            d.dir("src", [
+              d.file("DART_LICENSE", anything),
+              d.file("dart${windows ? '.exe' : ''}", anything),
+              d.file("foo.dart.snapshot", anything)
+            ])
+          ])
+        ]);
+
+    group("Mac OS", () {
+      test("32-bit", () async {
+        await (await grind(["pkg-standalone-mac-os-ia32"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-macos-ia32.tar.gz").validate();
+      });
+
+      test("64-bit", () async {
+        await (await grind(["pkg-standalone-mac-os-x64"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate();
+      });
+    });
+
+    group("Linux", () {
+      test("32-bit", () async {
+        await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-linux-ia32.tar.gz").validate();
+      });
+
+      test("64-bit", () async {
+        await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-linux-x64.tar.gz").validate();
+      });
+    });
+
+    group("Windows", () {
+      test("32-bit", () async {
+        await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-windows-ia32.zip",
+                windows: true)
+            .validate();
+      });
+
+      test("64-bit", () async {
+        await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
+        await archive("my_app/build/my_app-1.2.3-windows-x64.zip",
+                windows: true)
+            .validate();
+      });
+    });
+
+    test("all platforms", () async {
+      await (await grind(["pkg-standalone-all"])).shouldExit(0);
+
+      await Future.wait([
+        archive("my_app/build/my_app-1.2.3-macos-ia32.tar.gz").validate(),
+        archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate(),
+        archive("my_app/build/my_app-1.2.3-linux-ia32.tar.gz").validate(),
+        archive("my_app/build/my_app-1.2.3-linux-x64.tar.gz").validate(),
+        archive("my_app/build/my_app-1.2.3-windows-ia32.zip", windows: true)
+            .validate(),
+        archive("my_app/build/my_app-1.2.3-windows-x64.zip", windows: true)
+            .validate()
+      ]);
+    });
   });
 }
