@@ -47,7 +47,7 @@ String _pkgName;
 /// may be modified, but the values must be paths to executable files in the
 /// package.
 Map<String, String> pkgExecutables = () {
-  var executables = _rawPubspec['executables'] as Map;
+  var executables = _rawPubspec['executables'] as Map<Object, Object>;
 
   return {
     for (var entry in (executables ?? {}).entries)
