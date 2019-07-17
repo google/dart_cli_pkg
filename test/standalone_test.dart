@@ -225,8 +225,10 @@ void main() {
     await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
     await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
-      d.file("LICENSE", "Please use my code"),
-      d.file("DART_LICENSE", contains("Dart project authors"))
-    ]);
+      d.dir("my_app/src", [
+        d.file("LICENSE", "Please use my code"),
+        d.file("DART_LICENSE", contains("Dart project authors"))
+      ])
+    ]).validate();
   });
 }
