@@ -34,12 +34,12 @@ final _archiveSuffix = _target + (Platform.isWindows ? ".zip" : ".tar.gz");
 /// The extension for executable scripts on the current platform.
 final _dotBat = Platform.isWindows ? ".bat" : "";
 
-/// The contents of a `grind.dart` file that just exports
-/// `package:cli_pkg/standalone.dart`.
-final _exportStandalone = """
-  export 'package:cli_pkg/standalone.dart';
-
-  void main(List<String> args) => grind(args);
+/// The contents of a `grind.dart` file that just enables standalone tasks.
+final _enableStandalone = """
+  void main(List<String> args) {
+    pkg.addStandaloneTasks();
+    grind(args);
+  }
 """;
 
 void main() {
@@ -50,8 +50,8 @@ void main() {
       "executables": {"foo": "foo"}
     };
 
-    test("default to pkgDartName", () async {
-      await d.package("my_app", pubspec, _exportStandalone).create();
+    test("default to pkg.dartName", () async {
+      await d.package("my_app", pubspec, _enableStandalone).create();
 
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
@@ -59,12 +59,11 @@ void main() {
           [d.dir("my_app")]).validate();
     });
 
-    test("prefer pkgName to pkgDartName", () async {
+    test("prefer pkg.name to pkg.dartName", () async {
       await d.package("my_app", pubspec, """
-        export 'package:cli_pkg/standalone.dart';
-
         void main(List<String> args) {
-          pkgName = "my-app";
+          pkg.name = "my-app";
+          pkg.addStandaloneTasks();
           grind(args);
         }
       """).create();
@@ -75,14 +74,12 @@ void main() {
           [d.dir("my-app")]).validate();
     });
 
-    test("prefer pkgStandaloneName to pkgName", () async {
+    test("prefer pkg.standaloneName to pkg.name", () async {
       await d.package("my_app", pubspec, """
-        import 'package:cli_pkg/standalone.dart';
-        export 'package:cli_pkg/standalone.dart';
-
         void main(List<String> args) {
-          pkgName = "my-app";
-          pkgStandaloneName = "my-sa-app";
+          pkg.name = "my-app";
+          pkg.standaloneName = "my-sa-app";
+          pkg.addStandaloneTasks();
           grind(args);
         }
       """).create();
@@ -102,7 +99,7 @@ void main() {
     };
 
     test("default to the pubspec's executables", () async {
-      await d.package("my_app", pubspec, _exportStandalone).create();
+      await d.package("my_app", pubspec, _enableStandalone).create();
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
@@ -121,10 +118,9 @@ void main() {
 
     test("can be removed by the user", () async {
       await d.package("my_app", pubspec, """
-        export 'package:cli_pkg/standalone.dart';
-
         void main(List<String> args) {
-          pkgExecutables.remove("foo");
+          pkg.executables.remove("foo");
+          pkg.addStandaloneTasks();
           grind(args);
         }
       """).create();
@@ -146,10 +142,9 @@ void main() {
 
     test("can be added by the user", () async {
       await d.package("my_app", pubspec, """
-        export 'package:cli_pkg/standalone.dart';
-
         void main(List<String> args) {
-          pkgExecutables["zip"] = "bin/foo.dart";
+          pkg.executables["zip"] = "bin/foo.dart";
+          pkg.addStandaloneTasks();
           grind(args);
         }
       """).create();
@@ -174,7 +169,7 @@ void main() {
     // Normally each of these would be separate test cases, but running grinder
     // takes so long that we collapse them for efficiency.
     test("can be invoked", () async {
-      await d.package("my_app", pubspec, _exportStandalone).create();
+      await d.package("my_app", pubspec, _enableStandalone).create();
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
@@ -223,7 +218,7 @@ void main() {
               "version": "1.2.3",
               "executables": {"foo": "foo"}
             },
-            _exportStandalone,
+            _enableStandalone,
             [d.file("LICENSE", "Please use my code")])
         .create();
     await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
@@ -245,7 +240,7 @@ void main() {
               "version": "1.2.3",
               "executables": {"foo": "foo"}
             },
-            _exportStandalone)
+            _enableStandalone)
         .create());
 
     d.Descriptor archive(String name, {bool windows = false}) =>
@@ -262,12 +257,12 @@ void main() {
 
     group("Mac OS", () {
       test("32-bit", () async {
-        await (await grind(["pkg-standalone-mac-os-ia32"])).shouldExit(0);
+        await (await grind(["pkg-standalone-macos-ia32"])).shouldExit(0);
         await archive("my_app/build/my_app-1.2.3-macos-ia32.tar.gz").validate();
       });
 
       test("64-bit", () async {
-        await (await grind(["pkg-standalone-mac-os-x64"])).shouldExit(0);
+        await (await grind(["pkg-standalone-macos-x64"])).shouldExit(0);
         await archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate();
       });
     });
