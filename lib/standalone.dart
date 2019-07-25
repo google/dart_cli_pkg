@@ -249,9 +249,8 @@ Future<List<int>> _dartExecutable(String os,
   var url = "https://storage.googleapis.com/dart-archive/channels/$channel/"
       "release/$dartVersion/sdk/dartsdk-$os-${_arch(x64)}-release.zip";
   log("Downloading $url...");
-  var response = client == null
-      ? await http.get(Uri.parse(url))
-      : await client.get(Uri.parse(url));
+  var response =
+      await withClient(client, (client) => client.get(Uri.parse(url)));
   if (response.statusCode ~/ 100 != 2) {
     fail("Failed to download package: ${response.statusCode} "
         "${response.reasonPhrase}.");

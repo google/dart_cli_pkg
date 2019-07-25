@@ -14,9 +14,10 @@
 
 import 'package:grinder/grinder.dart';
 
+import 'github.dart' as github;
 import 'standalone.dart' as standalone;
 
-export 'src/info.dart';
+export 'src/info.dart' hide pubspec;
 
 // Manually export tasks to work around google/grinder.dart#337
 
@@ -50,3 +51,18 @@ Future<void> pkgStandaloneWindowsX64() => standalone.pkgStandaloneWindowsX64();
 
 @Task('Build all standalone packages.')
 Future<void> pkgStandaloneAll() => standalone.pkgStandaloneAll();
+
+@Task('Create a GitHub release, without executables.')
+Future<void> pkgGithubRelease() => github.pkgGithubRelease();
+
+@Task('Release Linux executables to GitHub.')
+Future<void> pkgGithubLinux() => github.pkgGithubLinux();
+
+@Task('Release Mac OS executables to GitHub.')
+Future<void> pkgGithubMacOs() => pkgGithubMacOs();
+
+@Task('Release Windows executables to GitHub.')
+Future<void> pkgGithubWindows() => pkgGithubWindows();
+
+@Task('Create a GitHub release with all executables.')
+Future<void> pkgGithubAll() => pkgGithubAll();
