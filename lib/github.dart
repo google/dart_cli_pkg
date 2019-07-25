@@ -37,7 +37,6 @@ String get pkgGithubRepo {
   if (_pkgGithubRepo != null) return _pkgGithubRepo;
 
   fail("pkgGithubRepo must be set to deploy to GitHub.");
-  return null; // google/grinder.dart#339
 }
 
 set pkgGithubRepo(String value) => _pkgGithubRepo = value;
@@ -86,7 +85,6 @@ String get pkgGithubUser {
   if (_pkgGithubUser != null) return _pkgGithubUser;
 
   fail("pkgGithubUser must be set to deploy to GitHub.");
-  return null; // google/grinder.dart#339
 }
 
 set pkgGithubUser(String value) => _pkgGithubUser = value;
@@ -111,7 +109,6 @@ String get pkgGithubPassword {
   if (_pkgGithubPassword != null) return _pkgGithubPassword;
 
   fail("pkgGithubPassword must be set to deploy to GitHub.");
-  return null; // google/grinder.dart#339
 }
 
 set pkgGithubPassword(String value) => _pkgGithubPassword = value;

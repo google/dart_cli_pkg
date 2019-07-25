@@ -435,7 +435,7 @@ String _exportGithub({bool user = true, bool password = true}) {
 /// given [repo], passes that POST request to [verify], and returns a 201
 /// CREATED response.
 Future<void> _release(String repo,
-    {Future<void> verify(shelf.Request request),
+    {FutureOr<void> verify(shelf.Request request),
     Map<String, String> environment}) async {
   var server = await ShelfTestServer.create();
   server.handler.expect("POST", "/repos/$repo/releases",
