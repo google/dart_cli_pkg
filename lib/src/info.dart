@@ -27,34 +27,34 @@ final _rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
 /// The name of the package, as specified in the pubspec.
-final pkgDartName = pubspec.name;
+final dartName = pubspec.name;
 
 /// The package's version, as specified in the pubspec.
-final pkgVersion = pubspec.version;
+final version = pubspec.version;
 
 /// The default name of the package on package managers other than pub.
 ///
 /// Pub requires that a package name be a valid Dart identifier, but other
 /// package managers do not and users may wish to choose a different name for
-/// them. This defaults to [pkgDartName].
-String get pkgName => _pkgName ?? pkgDartName;
-set pkgName(String value) => _pkgName = value;
-String _pkgName;
+/// them. This defaults to [dartName].
+String get name => _name ?? dartName;
+set name(String value) => _name = value;
+String _name;
 
 /// The human-friendly name of the package.
 ///
 /// This is used in places where the package name is only meant to be read by
-/// humans, not used as a filename or identifier. It defaults to [pkgName].
-String get pkgHumanName => _pkgHumanName ?? pkgName;
-set pkgHumanName(String value) => _pkgHumanName = value;
-String _pkgHumanName;
+/// humans, not used as a filename or identifier. It defaults to [name].
+String get humanName => _humanName ?? name;
+set humanName(String value) => _humanName = value;
+String _humanName;
 
 /// A mutable map from executable names to those executables' paths in `bin/`.
 ///
 /// This defaults to a map derived from the pubspec's `executables` field. It
 /// may be modified, but the values must be paths to executable files in the
 /// package.
-Map<String, String> pkgExecutables = () {
+Map<String, String> executables = () {
   var executables = _rawPubspec['executables'] as Map<Object, Object>;
 
   return {

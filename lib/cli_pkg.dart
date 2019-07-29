@@ -12,57 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:grinder/grinder.dart';
+import 'src/github.dart';
+import 'src/standalone.dart';
 
-import 'github.dart' as github;
-import 'standalone.dart' as standalone;
+export 'src/info.dart';
+export 'src/github.dart';
+export 'src/standalone.dart';
 
-export 'src/info.dart' hide pubspec;
-
-// Manually export tasks to work around google/grinder.dart#337
-
-@Task('Build Dart script snapshot(s).')
-void pkgCompileSnapshot() => standalone.pkgCompileSnapshot();
-
-@Task('Build Dart native executable(s).')
-void pkgCompileNative() => standalone.pkgCompileNative();
-
-@Depends(pkgCompileSnapshot)
-@Task('Build a standalone 32-bit package for Linux.')
-Future<void> pkgStandaloneLinuxIa32() => standalone.pkgStandaloneLinuxIa32();
-
-@Task('Build a standalone 64-bit package for Linux.')
-Future<void> pkgStandaloneLinuxX64() => standalone.pkgStandaloneLinuxX64();
-
-@Depends(pkgCompileSnapshot)
-@Task('Build a standalone 32-bit package for Mac OS.')
-Future<void> pkgStandaloneMacOsIa32() => standalone.pkgStandaloneMacOsIa32();
-
-@Task('Build a standalone 64-bit package for Mac OS.')
-Future<void> pkgStandaloneMacOsX64() => standalone.pkgStandaloneMacOsX64();
-
-@Depends(pkgCompileSnapshot)
-@Task('Build a standalone 32-bit package for Windows.')
-Future<void> pkgStandaloneWindowsIa32() =>
-    standalone.pkgStandaloneWindowsIa32();
-
-@Task('Build a standalone 64-bit package for Windows.')
-Future<void> pkgStandaloneWindowsX64() => standalone.pkgStandaloneWindowsX64();
-
-@Task('Build all standalone packages.')
-Future<void> pkgStandaloneAll() => standalone.pkgStandaloneAll();
-
-@Task('Create a GitHub release, without executables.')
-Future<void> pkgGithubRelease() => github.pkgGithubRelease();
-
-@Task('Release Linux executables to GitHub.')
-Future<void> pkgGithubLinux() => github.pkgGithubLinux();
-
-@Task('Release Mac OS executables to GitHub.')
-Future<void> pkgGithubMacOs() => pkgGithubMacOs();
-
-@Task('Release Windows executables to GitHub.')
-Future<void> pkgGithubWindows() => pkgGithubWindows();
-
-@Task('Create a GitHub release with all executables.')
-Future<void> pkgGithubAll() => pkgGithubAll();
+/// Enables all tasks from the `cli_pkg` package.
+void addAllTasks() {
+  addGithubTasks();
+  addStandaloneTasks();
+}

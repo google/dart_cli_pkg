@@ -22,7 +22,7 @@ import 'package:pub_semver/pub_semver.dart';
 import 'info.dart';
 
 /// The set of entrypoint for executables defined by this package.
-Set<String> get entrypoints => pkgExecutables.values.toSet();
+Set<String> get entrypoints => executables.values.toSet();
 
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
@@ -32,6 +32,11 @@ bool get isDevSdk => dartVersion.isPreRelease;
 
 /// Returns whether tasks are being run in a test environment.
 bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
+
+/// A shared client to use across all HTTP requests.
+///
+/// This will automatically be cleaned up when the process exits.
+final client = http.Client();
 
 /// Ensure that the `build/` directory exists.
 void ensureBuild() {
@@ -74,16 +79,16 @@ Uri url(String url) {
       scheme: parsedHost.scheme, host: parsedHost.host, port: parsedHost.port);
 }
 
-/// Passes [client] to [callback] and returns the result.
-///
-/// If [client] is `null`, creates a client just for the duration of [callback].
-Future<T> withClient<T>(
-    http.Client client, Future<T> callback(http.Client client)) async {
-  var createdClient = client == null;
-  client ??= http.Client();
-  try {
-    return await callback(client);
-  } finally {
-    if (createdClient) await client.close();
+/// Returns the human-friendly name for the given [os] string.
+String humanOSName(String os) {
+  switch (os) {
+    case "linux":
+      return "Linux";
+    case "macos":
+      return "Mac OS";
+    case "windows":
+      return "Windows";
+    default:
+      throw ArgumentError("Unknown OS $os.");
   }
 }

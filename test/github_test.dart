@@ -41,13 +41,13 @@ void main() {
   group("repo name", () {
     group("throws an error", () {
       test("if it's not set anywhere", () async {
-        await d.package("my_app", pubspec, _exportGithub()).create();
+        await d.package("my_app", pubspec, _enableGithub()).create();
 
         var process = await grind(["pkg-github-release"]);
         expect(
             process.stdout,
             emitsThrough(
-                contains("pkgGithubRepo must be set to deploy to GitHub.")));
+                contains("pkg.githubRepo must be set to deploy to GitHub.")));
         await process.shouldExit(1);
       });
 
@@ -56,19 +56,19 @@ void main() {
             .package(
                 "my_app",
                 {...pubspec, "homepage": "http://my-cool-package.pkg"},
-                _exportGithub())
+                _enableGithub())
             .create();
 
         var process = await grind(["pkg-github-release"]);
         expect(
             process.stdout,
             emitsThrough(
-                contains("pkgGithubRepo must be set to deploy to GitHub.")));
+                contains("pkg.githubRepo must be set to deploy to GitHub.")));
         await process.shouldExit(1);
       });
 
       test("if it's not parsable from the Git config", () async {
-        await d.package("my_app", pubspec, _exportGithub()).create();
+        await d.package("my_app", pubspec, _enableGithub()).create();
         await git(["init"]);
         await git(["remote", "add", "origin", "git://random-url.com/repo"]);
 
@@ -76,7 +76,7 @@ void main() {
         expect(
             process.stdout,
             emitsThrough(
-                contains("pkgGithubRepo must be set to deploy to GitHub.")));
+                contains("pkg.githubRepo must be set to deploy to GitHub.")));
         await process.shouldExit(1);
       });
     });
@@ -85,7 +85,7 @@ void main() {
       Future<void> assertParses(String homepage, String repo) async {
         await d
             .package(
-                "my_app", {...pubspec, "homepage": homepage}, _exportGithub())
+                "my_app", {...pubspec, "homepage": homepage}, _enableGithub())
             .create();
         await _release(repo);
       }
@@ -112,7 +112,7 @@ void main() {
           .package(
               "my_app",
               {...pubspec, "homepage": "http://github.com/google/wrong"},
-              _exportGithub())
+              _enableGithub())
           .create();
 
       await git(["init"]);
@@ -123,7 +123,7 @@ void main() {
 
     group("parses from the Git origin", () {
       Future<void> assertParses(String origin, String repo) async {
-        await d.package("my_app", pubspec, _exportGithub()).create();
+        await d.package("my_app", pubspec, _enableGithub()).create();
         await git(["init"]);
         await git(["remote", "add", "origin", origin]);
         await _release(repo);
@@ -162,13 +162,11 @@ void main() {
 
     test("prefers an explicit repo URL to Git origin", () async {
       await d.package("my_app", pubspec, """
-        import 'package:cli_pkg/github.dart';
-        export 'package:cli_pkg/github.dart';
-
         void main(List<String> args) {
-          pkgGithubUser = "usr";
-          pkgGithubPassword = "pwd";
-          pkgGithubRepo = "google/right";
+          pkg.githubUser = "usr";
+          pkg.githubPassword = "pwd";
+          pkg.githubRepo = "google/right";
+          pkg.addGithubTasks();
           grind(args);
         }
       """).create();
@@ -189,27 +187,27 @@ void main() {
 
     test("throws an error if it's not set anywhere", () async {
       await d
-          .package("my_app", pubspecWithHomepage, _exportGithub(user: false))
+          .package("my_app", pubspecWithHomepage, _enableGithub(user: false))
           .create();
 
       var process = await grind(["pkg-github-release"]);
       expect(
           process.stdout,
           emitsThrough(
-              contains("pkgGithubUser must be set to deploy to GitHub.")));
+              contains("pkg.githubUser must be set to deploy to GitHub.")));
       await process.shouldExit(1);
     });
 
     test("parses from the GITHUB_USER environment variable", () async {
       await d
-          .package("my_app", pubspecWithHomepage, _exportGithub(user: false))
+          .package("my_app", pubspecWithHomepage, _enableGithub(user: false))
           .create();
       await assertUsername("fblthp", environment: {"GITHUB_USER": "fblthp"});
     });
 
     test("prefers an explicit username to the GITHUB_USER environment variable",
         () async {
-      await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
       await assertUsername("usr", environment: {"GITHUB_USER": "wrong"});
     });
   });
@@ -225,21 +223,21 @@ void main() {
     test("throws an error if it's not set anywhere", () async {
       await d
           .package(
-              "my_app", pubspecWithHomepage, _exportGithub(password: false))
+              "my_app", pubspecWithHomepage, _enableGithub(password: false))
           .create();
 
       var process = await grind(["pkg-github-release"]);
       expect(
           process.stdout,
           emitsThrough(
-              contains("pkgGithubPassword must be set to deploy to GitHub.")));
+              contains("pkg.githubPassword must be set to deploy to GitHub.")));
       await process.shouldExit(1);
     });
 
     test("parses from the GITHUB_TOKEN environment variable", () async {
       await d
           .package(
-              "my_app", pubspecWithHomepage, _exportGithub(password: false))
+              "my_app", pubspecWithHomepage, _enableGithub(password: false))
           .create();
       await assertPassword("secret", environment: {"GITHUB_TOKEN": "secret"});
     });
@@ -248,7 +246,7 @@ void main() {
         () async {
       await d
           .package(
-              "my_app", pubspecWithHomepage, _exportGithub(password: false))
+              "my_app", pubspecWithHomepage, _enableGithub(password: false))
           .create();
       await assertPassword("right",
           environment: {"GITHUB_PASSWORD": "right", "GITHUB_TOKEN": "wrong"});
@@ -257,7 +255,7 @@ void main() {
     test(
         "prefers an explicit username to the GITHUB_PASSWORD environment variable",
         () async {
-      await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
       await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
     });
   });
@@ -272,13 +270,13 @@ void main() {
 
     Future<void> assertReleaseNotesFromChangelog(
         String changelog, matcher) async {
-      await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
       await d.file("my_app/CHANGELOG.md", changelog).create();
       await assertReleaseNotes(matcher);
     }
 
     test("isn't set in the request if it's not set anywhere", () async {
-      await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
 
       await _release("my_org/my_app", verify: (request) async {
         expect(
@@ -368,13 +366,11 @@ void main() {
 
     test("prefers explicit release notes to the CHANGELOG", () async {
       await d.package("my_app", pubspecWithHomepage, """
-        import 'package:cli_pkg/github.dart';
-        export 'package:cli_pkg/github.dart';
-
         void main(List<String> args) {
-          pkgGithubUser = "usr";
-          pkgGithubPassword = "pwd";
-          pkgGithubReleaseNotes = "right";
+          pkg.githubUser = "usr";
+          pkg.githubPassword = "pwd";
+          pkg.githubReleaseNotes = "right";
+          pkg.addGithubTasks();
           grind(args);
         }
       """).create();
@@ -383,17 +379,17 @@ void main() {
     });
   });
 
-  test("pkg-github-mac-os uploads standalone Mac OS archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+  test("pkg-github-macos uploads standalone Mac OS archives", () async {
+    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("macos");
-    await (await grind(["pkg-github-mac-os"], server: server)).shouldExit(0);
+    await (await grind(["pkg-github-macos"], server: server)).shouldExit(0);
     await server.close();
   });
 
   test("pkg-github-linux uploads standalone Linux archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("linux");
@@ -402,7 +398,7 @@ void main() {
   });
 
   test("pkg-github-windows uploads standalone Windows archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _exportGithub()).create();
+    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("windows");
@@ -411,22 +407,20 @@ void main() {
   });
 }
 
-/// The contents of a `grind.dart` file that just exports
-/// `package:cli_pkg/github.dart`.
+/// The contents of a `grind.dart` file that just enables GitHub tasks.
 ///
 /// If [user] and [password] are `true`, this sets default values for
-/// `pkgGithubUser` and `pkgGithubPassword`, respectively.
-String _exportGithub({bool user = true, bool password = true}) {
+/// `pkg.githubUser` and `pkg.githubPassword`, respectively.
+String _enableGithub({bool user = true, bool password = true}) {
   var buffer = StringBuffer("""
-    import 'package:cli_pkg/github.dart';
-    export 'package:cli_pkg/github.dart';
-
     void main(List<String> args) {
   """);
 
-  if (user) buffer.writeln('pkgGithubUser = "usr";');
-  if (password) buffer.writeln('pkgGithubPassword = "pwd";');
-  buffer.writeln("grind(args);\n}");
+  if (user) buffer.writeln('pkg.githubUser = "usr";');
+  if (password) buffer.writeln('pkg.githubPassword = "pwd";');
+  buffer.writeln("pkg.addGithubTasks();");
+  buffer.writeln("grind(args);");
+  buffer.writeln("}");
 
   return buffer.toString();
 }
