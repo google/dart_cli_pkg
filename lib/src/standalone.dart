@@ -118,10 +118,8 @@ bool _useNative(String os, {@required bool x64}) =>
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, {@required bool x64}) async {
   var archive = Archive()
-    ..addFile(fileFromBytes(
-        "$standaloneName/src/dart${_binaryExtension(os)}",
-        await _dartExecutable(os, x64: x64),
-        executable: true))
+    ..addFile(fileFromBytes("$standaloneName/src/dart${_binaryExtension(os)}",
+        await _dartExecutable(os, x64: x64), executable: true))
     ..addFile(file(
         "$standaloneName/src/DART_LICENSE", p.join(sdkDir.path, 'LICENSE')));
 
@@ -171,8 +169,8 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (_useNative(os, x64: x64)) {
-    return File(p.join(
-            sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
+    return File(
+            p.join(sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
         .readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
