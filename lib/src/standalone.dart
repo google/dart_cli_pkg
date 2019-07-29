@@ -115,11 +115,11 @@ void addStandaloneTasks() {
 bool _useNative(String os, {@required bool x64}) =>
     os == Platform.operatingSystem && x64 == _is64Bit;
 
-/// Builds a Sass package for the given [os] and architecture.
+/// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, {@required bool x64}) async {
   var archive = Archive()
     ..addFile(fileFromBytes(
-        "$standaloneName/src/dart${os == 'windows' ? '.exe' : ''}",
+        "$standaloneName/src/dart${_binaryExtension(os)}",
         await _dartExecutable(os, x64: x64),
         executable: true))
     ..addFile(file(
@@ -172,7 +172,7 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
   // disk rather than downloading it fresh.
   if (_useNative(os, x64: x64)) {
     return File(p.join(
-            sdkDir.path, "bin/dartaotruntime${os == 'windows' ? '.exe' : ''}"))
+            sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
         .readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
@@ -192,7 +192,7 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
         "${response.reasonPhrase}.");
   }
 
-  var filename = "/bin/dart${os == 'windows' ? '.exe' : ''}";
+  var filename = "/bin/dart${_binaryExtension(os)}";
   return ZipDecoder()
       .decodeBytes(response.bodyBytes)
       .firstWhere((file) => file.name.endsWith(filename))
@@ -201,3 +201,6 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
 
 /// Returns the architecture name for the given boolean.
 String _arch(bool x64) => x64 ? "x64" : "ia32";
+
+/// Returns the binary extension for the given [os].
+String _binaryExtension(String os) => os == 'windows' ? '.exe' : '';
