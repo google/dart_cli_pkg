@@ -22,7 +22,7 @@ var jsFlags = <String>[];
 var jsDevFlags = <String>[];
 
 /// A modifiable list of flags to pass to `dart2js` only when compiling
-/// executables in development mode.
+/// executables in release mode.
 ///
 /// By default, this contains `-O4`, `--no-minify`, and `--fast-startup`. This
 /// doesn't minify by default because download size isn't especially important
@@ -140,7 +140,7 @@ String get npmToken {
 set npmToken(String value) => _npmToken = value;
 String _npmToken;
 
-/// Whehter [addNpmTasks] has been called yet.
+/// Whether [addNpmTasks] has been called yet.
 var _addedNpmTasks = false;
 
 /// Enables tasks for building packages for npm.
