@@ -28,5 +28,6 @@ individually:
 
 * [Creating standalone archives for your package.](doc/standalone.md)
 * [Uploading standalone archives to GitHub releases.](doc/github.md)
+* [Compiling to JavaScript and publishing to npm.](doc/npm.md)
 
 It's strongly recommended that this package be imported with the prefix `pkg`.

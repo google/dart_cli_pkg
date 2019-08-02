@@ -5,11 +5,17 @@ They're enabled by calling [`pkg.addStandaloneTasks()`][].
 
 [`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
+Standalone executables are built and executed in a context with the `version`
+environment declaration set to the package's version. This can be accessed with
+[`String.fromEnvironment()`][].
+
+[`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
+
 ## `pkg-compile-snapshot`
 
-Uses configuration: [`pkg.entrypoints`][]
+Uses configuration: [`pkg.executables`][]
 
-[`pkg.entrypoints`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/entrypoints.html
+[`pkg.executables`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/executables.html
 
 Output: `build/$entrypoint.snapshot`
 
@@ -19,7 +25,7 @@ Compiles each executable in the package to a [kernel snapshot][snapshot].
 
 ## `pkg-compile-native`
 
-Uses configuration: [`pkg.entrypoints`][], [`pkg.version`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 [`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
 
@@ -41,7 +47,7 @@ Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native`][]
 [`pkg-compile-snapshot`]: #pkg-compile-snapshot
 [`pkg-compile-native`]: #pkg-compile-native
 
-Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.entrypoints`][]
+Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executables`][]
 
 [`pkg.standaloneName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/standaloneName.html
 

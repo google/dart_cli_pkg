@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:grinder/grinder.dart';
 import 'package:http/http.dart' as http;
 import 'package:pub_semver/pub_semver.dart';
 
@@ -91,4 +92,10 @@ String humanOSName(String os) {
     default:
       throw ArgumentError("Unknown OS $os.");
   }
+}
+
+/// Like [File.writeAsStringSync], but logs that the file is being written.
+void write(String path, String text) {
+  log("writing $path");
+  File(path).writeAsStringSync(text);
 }

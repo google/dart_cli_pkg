@@ -1,6 +1,6 @@
 These tasks upload [standalone packages][] to GitHub releases. They're enabled
 by calling [`pkg.addGithubTasks()`][], which automatically calls
-[`pkg.addStandaloneTasks()`][]
+[`pkg.addStandaloneTasks()`][].
 
 [standalone packages]: standalone.md
 [`pkg.addGithubTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addGithubTasks.html
@@ -45,7 +45,7 @@ build steps.
 ## `pkg-github-all`
 
 Depends on: [`pkg-github-release`][], [`pkg-github-linux`, `pkg-github-macos`,
-`pkg-github-windows`][].
+`pkg-github-windows`][]
 
 [`pkg-github-linux`, `pkg-github-macos`, `pkg-github-windows`]: #pkg-github-os
 

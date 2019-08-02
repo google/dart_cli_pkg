@@ -17,6 +17,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'package:shelf_test_handler/shelf_test_handler.dart';
+import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 import 'package:test_process/test_process.dart';
 
@@ -80,3 +81,14 @@ Future<void> extract(String path, String destination) async {
     }
   }
 }
+
+/// Returns a matcher that asserts that [matcher] matches the given value after
+/// it's been passed through the [transformation] function.
+///
+/// If [description] is passed
+Matcher after<T>(Object Function(T) transformation, matcher) =>
+    predicate((value) {
+      expect(value, isA<T>());
+      expect(transformation(value as T), matcher);
+      return true;
+    });

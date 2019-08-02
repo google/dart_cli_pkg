@@ -13,14 +13,17 @@
 // limitations under the License.
 
 import 'src/github.dart';
+import 'src/npm.dart';
 import 'src/standalone.dart';
 
 export 'src/info.dart';
 export 'src/github.dart';
+export 'src/npm.dart';
 export 'src/standalone.dart';
 
 /// Enables all tasks from the `cli_pkg` package.
 void addAllTasks() {
   addGithubTasks();
+  addNpmTasks();
   addStandaloneTasks();
 }
