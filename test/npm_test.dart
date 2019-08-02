@@ -46,25 +46,24 @@ void main() {
     // might change in the future.
 
     test("replaces dynamic require()s with eager require()s", () async {
-      await d.package("my_app", pubspec, _enableNpm, [
-        _packageJson,
-        d.dir("bin", [
-          d.file("foo.dart", """
-            import 'package:js/js.dart';
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
 
-            @JS()
-            class FS {
-              external void rmdirSync(String path);
-            }
+      await d.dir("my_app/bin", [
+        d.file("foo.dart", """
+          import 'package:js/js.dart';
 
-            @JS()
-            external FS require(String name);
+          @JS()
+          class FS {
+            external void rmdirSync(String path);
+          }
 
-            void main(List<String> args) {
-              require("fs").rmdirSync(args.first);
-            }
-          """)
-        ])
+          @JS()
+          external FS require(String name);
+
+          void main(List<String> args) {
+            require("fs").rmdirSync(args.first);
+          }
+        """)
       ]).create();
 
       await (await grind(["pkg-js-dev"])).shouldExit();
@@ -190,19 +189,19 @@ void main() {
 
     test("with access to the node, version, and dart-version constants",
         () async {
-      await d.package("my_app", pubspec, _enableNpm, [
-        _packageJson,
-        d.dir("bin", [
-          d.file("foo.dart", r"""
-            void main() {
-              print("node: ${const bool.fromEnvironment('node')}");
-              print("version: ${const String.fromEnvironment('version')}");
-              print("dart-version: "
-                  "${const String.fromEnvironment('dart-version')}");
-            }
-          """)
-        ])
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+
+      await d.dir("my_app/bin", [
+        d.file("foo.dart", r"""
+          void main() {
+            print("node: ${const bool.fromEnvironment('node')}");
+            print("version: ${const String.fromEnvironment('version')}");
+            print("dart-version: "
+                "${const String.fromEnvironment('dart-version')}");
+          }
+        """)
       ]).create();
+
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       var process =
@@ -219,17 +218,17 @@ void main() {
     });
 
     test("with access to command-line args", () async {
-      await d.package("my_app", pubspec, _enableNpm, [
-        _packageJson,
-        d.dir("bin", [
-          d.file("foo.dart", r"""
-            void main(List<String> args) {
-              print("args is List<String>: ${args is List<String>}");
-              print("args: $args");
-            }
-          """)
-        ])
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+
+      await d.dir("my_app/bin", [
+        d.file("foo.dart", r"""
+          void main(List<String> args) {
+            print("args is List<String>: ${args is List<String>}");
+            print("args: $args");
+          }
+        """)
       ]).create();
+
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       var process = await TestProcess.start(
@@ -250,18 +249,20 @@ void main() {
         d.dir("lib", [
           d.file("input_vm.dart", "final value = 'vm';"),
           d.file("input_js.dart", "final value = 'js';")
-        ]),
-        d.dir("bin", [
-          d.file("foo.dart", r"""
-            import 'package:my_app/input_vm.dart'
-                if (dart.library.js) 'package:my_app/input_js.dart';
-
-            void main(List<String> args) {
-              print(value);
-            }
-          """)
         ])
       ]).create();
+
+      await d.dir("my_app/bin", [
+        d.file("foo.dart", r"""
+          import 'package:my_app/input_vm.dart'
+              if (dart.library.js) 'package:my_app/input_js.dart';
+
+          void main(List<String> args) {
+            print(value);
+          }
+        """)
+      ]).create();
+
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       var process =
