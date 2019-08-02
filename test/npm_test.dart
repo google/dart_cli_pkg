@@ -1,0 +1,447 @@
+// Copyright 2019 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import 'dart:convert';
+
+import 'package:test/test.dart';
+import 'package:test_process/test_process.dart';
+
+import 'package:cli_pkg/src/utils.dart';
+
+import 'descriptor.dart' as d;
+import 'utils.dart';
+
+/// The contents of a `grind.dart` file that just enables npm tasks.
+final _enableNpm = """
+  void main(List<String> args) {
+    pkg.addNpmTasks();
+    grind(args);
+  }
+""";
+
+/// A minimal package.json file.
+final _packageJson = d.file("package.json", jsonEncode({"name": "my_app"}));
+
+void main() {
+  var pubspec = {
+    "name": "my_app",
+    "version": "1.2.3",
+    "executables": {"foo": "foo"}
+  };
+
+  group("JS compilation", () {
+    // Unfortunately, there's no reliable way to test dart2js flags without
+    // tightly coupling these tests to specific details of dart2js output that
+    // might change in the future.
+
+    test("replaces dynamic require()s with eager require()s", () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", """
+            import 'package:js/js.dart';
+
+            @JS()
+            class FS {
+              external void rmdirSync(String path);
+            }
+
+            @JS()
+            external FS require(String name);
+
+            void main(List<String> args) {
+              require("fs").rmdirSync(args.first);
+            }
+          """)
+        ])
+      ]).create();
+
+      await (await grind(["pkg-js-dev"])).shouldExit();
+
+      // Test that the only occurrence of `require("fs")` is the one assigning
+      // it to a global variable.
+      await d
+          .file(
+              "my_app/build/my_app.dart.js",
+              allOf([
+                contains('self.fs = require("fs");'),
+                predicate((string) =>
+                    RegExp(r'require\("fs"\);')
+                        .allMatches(string as String)
+                        .length ==
+                    1)
+              ]))
+          .validate();
+    });
+
+    test("includes a source map comment in dev mode", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-js-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/my_app.dart.js",
+              contains("\n//# sourceMappingURL="))
+          .validate();
+    });
+
+    test("doesn't include a source map comment in release mode", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-js-release"])).shouldExit();
+
+      await d
+          .file("my_app/build/my_app.dart.js",
+              isNot(contains("\n//# sourceMappingURL=")))
+          .validate();
+    });
+
+    test("exports from jsModuleMainLibrary can be imported", () async {
+      await d.package("my_app", pubspec, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary = "lib/src/exports.dart";
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        _packageJson,
+        d.dir("lib/src", [
+          d.file("exports.dart", """
+            import 'package:js/js.dart';
+
+            @JS()
+            class Exports {
+              external set hello(String value);
+            }
+
+            @JS()
+            external Exports get exports;
+
+            void main() {
+              exports.hello = "Hi, there!";
+            }
+          """)
+        ])
+      ]).create();
+
+      await (await grind(["pkg-js-dev"])).shouldExit();
+
+      await d.file("test.js", """
+        var my_app = require("./my_app/build/my_app.dart.js");
+
+        console.log(my_app.hello);
+      """).create();
+
+      var process = await TestProcess.start("node", [d.path("test.js")]);
+      expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
+      await process.shouldExit(0);
+    });
+
+    test("takes its name from the package.json name field", () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        d.file("package.json", jsonEncode({"name": "mine-owne-app"}))
+      ]).create();
+      await (await grind(["pkg-js-dev"])).shouldExit();
+
+      await d.file("my_app/build/mine-owne-app.dart.js", anything).validate();
+    });
+  });
+
+  group("generates executables", () {
+    test("that can be invoked", () async {
+      await d
+          .package(
+              "my_app",
+              {
+                "name": "my_app",
+                "version": "1.2.3",
+                "executables": {"foo": "foo", "bar": "bar", "qux": "zang"}
+              },
+              _enableNpm,
+              [_packageJson])
+          .create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process =
+          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["in foo", emitsDone]));
+      await process.shouldExit(0);
+
+      process =
+          await TestProcess.start("node", [d.path("my_app/build/npm/bar.js")]);
+      expect(process.stdout, emitsInOrder(["in bar", emitsDone]));
+      await process.shouldExit(0);
+
+      process =
+          await TestProcess.start("node", [d.path("my_app/build/npm/qux.js")]);
+      expect(process.stdout, emitsInOrder(["in zang", emitsDone]));
+      await process.shouldExit(0);
+    });
+
+    test("with access to the node, version, and dart-version constants",
+        () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", r"""
+            void main() {
+              print("node: ${const bool.fromEnvironment('node')}");
+              print("version: ${const String.fromEnvironment('version')}");
+              print("dart-version: "
+                  "${const String.fromEnvironment('dart-version')}");
+            }
+          """)
+        ])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process =
+          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      expect(
+          process.stdout,
+          emitsInOrder([
+            "node: true",
+            "version: 1.2.3",
+            "dart-version: $dartVersion",
+            emitsDone
+          ]));
+      await process.shouldExit(0);
+    });
+
+    test("with access to command-line args", () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", r"""
+            void main(List<String> args) {
+              print("args is List<String>: ${args is List<String>}");
+              print("args: $args");
+            }
+          """)
+        ])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node", [d.path("my_app/build/npm/foo.js"), "foo", "bar", "baz"]);
+      expect(
+          process.stdout,
+          emitsInOrder([
+            "args is List<String>: true",
+            "args: [foo, bar, baz]",
+            emitsDone
+          ]));
+      await process.shouldExit(0);
+    });
+
+    test("with the ability to do conditional imports", () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("lib", [
+          d.file("input_vm.dart", "final value = 'vm';"),
+          d.file("input_js.dart", "final value = 'js';")
+        ]),
+        d.dir("bin", [
+          d.file("foo.dart", r"""
+            import 'package:my_app/input_vm.dart'
+                if (dart.library.js) 'package:my_app/input_js.dart';
+
+            void main(List<String> args) {
+              print(value);
+            }
+          """)
+        ])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process =
+          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["js", emitsDone]));
+      await process.shouldExit(0);
+    });
+  });
+
+  group("package.json", () {
+    test("throws an error if it doesn't exist on disk", () async {
+      await d.package("my_app", pubspec, _enableNpm).create();
+
+      var process = await grind(["pkg-npm-dev"]);
+      expect(
+          process.stdout,
+          emitsThrough(contains(
+              "pkg.npmPackageJson must be set to build an npm package.")));
+      await process.shouldExit(1);
+    });
+
+    test("is loaded from disk by default", () async {
+      await d.package("my_app", pubspec, _enableNpm, [
+        d.file(
+            "package.json", jsonEncode({"name": "my_app", "some": "attribute"}))
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/package.json",
+              after(jsonDecode, containsPair("some", "attribute")))
+          .validate();
+    });
+
+    test("prefers an explicit package.json to one from disk", () async {
+      await d.package("my_app", pubspec, """
+        void main(List<String> args) {
+          pkg.npmPackageJson = {
+            "name": "my_app",
+            "another": "attribute"
+          };
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        d.file(
+            "package.json", jsonEncode({"name": "my_app", "some": "attribute"}))
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  allOf([
+                    containsPair("another", "attribute"),
+                    isNot(containsPair("some", "attribute"))
+                  ])))
+          .validate();
+    });
+
+    test("automatically adds the version", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/package.json",
+              after(jsonDecode, containsPair("version", "1.2.3")))
+          .validate();
+    });
+
+    test("automatically adds executables", () async {
+      await d
+          .package(
+              "my_app",
+              {
+                "name": "my_app",
+                "version": "1.2.3",
+                "executables": {"foo": "foo", "bar": "bar", "qux": "zang"}
+              },
+              _enableNpm,
+              [_packageJson])
+          .create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("bin",
+                      {"foo": "foo.js", "bar": "bar.js", "qux": "qux.js"})))
+          .validate();
+    });
+
+    test("doesn't add main if jsModuleMainLibrary isn't set", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/package.json",
+              after(jsonDecode, isNot(contains("main"))))
+          .validate();
+    });
+
+    test("automatically adds main if jsModuleMainLibrary is set", () async {
+      await d.package("my_app", pubspec, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary = "lib/src/module_main.dart";
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        _packageJson,
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/package.json",
+              after(jsonDecode, containsPair("main", "my_app.dart.js")))
+          .validate();
+    });
+  });
+
+  group("README.md", () {
+    test("isn't added if it doesn't exist on disk", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d.nothing("my_app/build/npm/README.md").validate();
+    });
+
+    test("is loaded from disk by default", () async {
+      await d.package("my_app", pubspec, _enableNpm,
+          [_packageJson, d.file("README.md", "Some README text")]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d.file("my_app/build/npm/README.md", "Some README text").validate();
+    });
+
+    test("prefers an explicit npmReadme to one from disk", () async {
+      await d.package("my_app", pubspec, """
+        void main(List<String> args) {
+          pkg.npmReadme = "Other README text";
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [_packageJson, d.file("README.md", "Some README text")]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/README.md", "Other README text")
+          .validate();
+    });
+  });
+
+  group("LICENSE", () {
+    test("isn't added if it doesn't exist on disk", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d.nothing("my_app/build/npm/LICENSE").validate();
+    });
+
+    test("is loaded from disk by default", () async {
+      await d.package("my_app", pubspec, _enableNpm,
+          [_packageJson, d.file("LICENSE", "Do whatever")]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d.file("my_app/build/npm/LICENSE", "Do whatever").validate();
+    });
+  });
+}
