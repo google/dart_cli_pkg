@@ -14,6 +14,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
@@ -34,6 +35,12 @@ bool get isDevSdk => dartVersion.isPreRelease;
 
 /// Returns whether tasks are being run in a test environment.
 bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
+
+/// The `src/` directory in the `cli_pkg` package.
+final Future<String> cliPkgSrc = () async {
+  return p.fromUri(
+      await Isolate.resolvePackageUri(Uri.parse('package:cli_pkg/src')));
+}();
 
 /// A shared client to use across all HTTP requests.
 ///
@@ -102,9 +109,15 @@ String humanOSName(String os) {
 }
 
 /// Like [File.writeAsStringSync], but logs that the file is being written.
-void write(String path, String text) {
+void writeString(String path, String text) {
   log("writing $path");
   File(path).writeAsStringSync(text);
+}
+
+/// Like [File.writeAsBytesSync], but logs that the file is being written.
+void writeBytes(String path, List<int> contents) {
+  log("writing $path");
+  File(path).writeAsBytesSync(contents);
 }
 
 /// Like Grinder's [copy], but without Windows bugs (google/grinder.dart#345).

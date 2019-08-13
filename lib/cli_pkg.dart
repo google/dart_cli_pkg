@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'src/chocolatey.dart';
 import 'src/github.dart';
 import 'src/npm.dart';
 import 'src/standalone.dart';
 
+export 'src/chocolatey.dart';
 export 'src/info.dart';
 export 'src/github.dart';
 export 'src/npm.dart';
@@ -23,6 +25,7 @@ export 'src/standalone.dart';
 
 /// Enables all tasks from the `cli_pkg` package.
 void addAllTasks() {
+  addChocolateyTasks();
   addGithubTasks();
   addNpmTasks();
   addStandaloneTasks();
