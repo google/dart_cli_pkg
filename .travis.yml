@@ -1,18 +1,32 @@
 language: dart
 
 dart:
-  - dev
-  - stable
+- stable
+- dev
 
-dart_task:
-  - test
+os:
+- linux
+- osx
+- windows
+
+dart_task: test
+
+before_install:
+- if [[ "$TRAVIS_OS_NAME" = windows ]]; then
+    choco install nodejs.install;
+    export PATH="$PATH:/c/Program Files/nodejs";
+  fi
 
 matrix:
   include:
-  - dart: stable
+  - name: code formatting
+    dart: stable
     dart_task: {dartfmt: --fix}
-  - dart: stable
+    os: linux
+  - name: static analysis
+    dart: stable
     dart_task: {dartanalyzer: --fatal-warnings --fatal-infos .}
+    os: linux
 
 branches:
   only: [master]

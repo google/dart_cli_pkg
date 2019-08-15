@@ -21,6 +21,8 @@ import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 import 'package:test_process/test_process.dart';
 
+import 'package:cli_pkg/src/utils.dart';
+
 /// Returns the application directory.
 ///
 /// This assumes that there's a single directory in the sandbox which is the
@@ -42,12 +44,12 @@ Future<TestProcess> grind(List<String> arguments,
     bool forwardStdio = false}) async {
   if (!File(d.path("pubspec.lock")).existsSync()) {
     await (await TestProcess.start(
-            "pub", ["get", "--offline", "--no-precompile"],
+            "pub$dotBat", ["get", "--offline", "--no-precompile"],
             forwardStdio: forwardStdio, workingDirectory: _appDir))
         .shouldExit(0);
   }
 
-  return await TestProcess.start("pub", ["run", "grinder", ...arguments],
+  return await TestProcess.start("pub$dotBat", ["run", "grinder", ...arguments],
       forwardStdio: forwardStdio,
       workingDirectory: _appDir,
       environment: {

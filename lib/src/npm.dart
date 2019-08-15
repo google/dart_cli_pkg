@@ -261,12 +261,13 @@ String get _wrapperLibrary {
   // Dart-import each executable library so we can JS-export their `main()`
   // methods and call them from individual files in the npm package.
   executables.forEach((name, path) {
-    wrapper.writeln("import ${jsonEncode(p.join('..', path))} as "
-        "${_executableIdentifiers[name]};");
+    var import = jsonEncode(p.toUri(p.join('..', path)).toString());
+    wrapper.writeln("import $import as ${_executableIdentifiers[name]};");
   });
   if (jsModuleMainLibrary != null) {
-    wrapper.writeln("import ${jsonEncode(p.join('..', jsModuleMainLibrary))} "
-        "as module_main;");
+    var target =
+        jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary)).toString());
+    wrapper.writeln("import $target as module_main;");
   }
 
   // Define a JS-interop "exports" field that we can use to export the various
@@ -329,7 +330,7 @@ void _buildPackage() {
         if (jsModuleMainLibrary != null) "main": "$_npmName.dart.js"
       }));
 
-  copy(File('build/$_npmName.dart.js'), dir);
+  safeCopy('build/$_npmName.dart.js', dir.path);
   for (var name in executables.keys) {
     write(p.join('build', 'npm', '$name.js'), """
 #!/usr/bin/env node
@@ -342,7 +343,7 @@ module.${_executableIdentifiers[name]}(process.argv.slice(2));
   var readme = npmReadme;
   if (readme != null) write('build/npm/README.md', readme);
 
-  if (File("LICENSE").existsSync()) copy(File("LICENSE"), dir);
+  if (File("LICENSE").existsSync()) safeCopy("LICENSE", dir.path);
 }
 
 /// Publishes the contents of `build/npm` to npm.
