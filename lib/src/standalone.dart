@@ -51,14 +51,14 @@ void _compileSnapshot() {
 void _compileNative() {
   ensureBuild();
 
-  if (!File(p.join(sdkDir.path, 'bin/dart2aot')).existsSync()) {
+  if (!File(p.join(sdkDir.path, 'bin/dart2aot$dotBat')).existsSync()) {
     fail(
         "Your SDK doesn't have dart2aot. This probably means that you're using "
         "a 32-bit SDK, which doesn't support native compilation.");
   }
 
   for (var entrypoint in entrypoints) {
-    run(p.join(sdkDir.path, 'bin/dart2aot'), arguments: [
+    run(p.join(sdkDir.path, 'bin/dart2aot$dotBat'), arguments: [
       entrypoint,
       '-Dversion=$version',
       'build/${p.basename(entrypoint)}.native'

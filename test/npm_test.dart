@@ -141,7 +141,7 @@ void main() {
         console.log(my_app.hello);
       """).create();
 
-      var process = await TestProcess.start("node", [d.path("test.js")]);
+      var process = await TestProcess.start("node$dotExe", [d.path("test.js")]);
       expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
       await process.shouldExit(0);
     });
@@ -171,18 +171,18 @@ void main() {
           .create();
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
-      var process =
-          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
       expect(process.stdout, emitsInOrder(["in foo", emitsDone]));
       await process.shouldExit(0);
 
-      process =
-          await TestProcess.start("node", [d.path("my_app/build/npm/bar.js")]);
+      process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/bar.js")]);
       expect(process.stdout, emitsInOrder(["in bar", emitsDone]));
       await process.shouldExit(0);
 
-      process =
-          await TestProcess.start("node", [d.path("my_app/build/npm/qux.js")]);
+      process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/qux.js")]);
       expect(process.stdout, emitsInOrder(["in zang", emitsDone]));
       await process.shouldExit(0);
     });
@@ -204,8 +204,8 @@ void main() {
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
-      var process =
-          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
       expect(
           process.stdout,
           emitsInOrder([
@@ -231,8 +231,8 @@ void main() {
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
-      var process = await TestProcess.start(
-          "node", [d.path("my_app/build/npm/foo.js"), "foo", "bar", "baz"]);
+      var process = await TestProcess.start("node$dotExe",
+          [d.path("my_app/build/npm/foo.js"), "foo", "bar", "baz"]);
       expect(
           process.stdout,
           emitsInOrder([
@@ -265,8 +265,8 @@ void main() {
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
-      var process =
-          await TestProcess.start("node", [d.path("my_app/build/npm/foo.js")]);
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
       expect(process.stdout, emitsInOrder(["js", emitsDone]));
       await process.shouldExit(0);
     });

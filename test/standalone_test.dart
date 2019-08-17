@@ -17,6 +17,8 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
+import 'package:cli_pkg/src/utils.dart';
+
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
@@ -30,9 +32,6 @@ final _target = Platform.operatingSystem +
 
 /// The archive suffix for the current platform.
 final _archiveSuffix = _target + (Platform.isWindows ? ".zip" : ".tar.gz");
-
-/// The extension for executable scripts on the current platform.
-final _dotBat = Platform.isWindows ? ".bat" : "";
 
 /// The contents of a `grind.dart` file that just enables standalone tasks.
 final _enableStandalone = """
@@ -89,7 +88,7 @@ void main() {
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
           [d.dir("my-sa-app")]).validate();
     });
-  });
+  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 
   group("executables", () {
     var pubspec = {
@@ -104,9 +103,9 @@ void main() {
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
-          d.file("foo$_dotBat", anything),
-          d.file("bar$_dotBat", anything),
-          d.file("qux$_dotBat", anything),
+          d.file("foo$dotBat", anything),
+          d.file("bar$dotBat", anything),
+          d.file("qux$dotBat", anything),
           d.dir("src", [
             d.file("foo.dart.snapshot", anything),
             d.file("bar.dart.snapshot", anything),
@@ -129,9 +128,9 @@ void main() {
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
-          d.nothing("foo$_dotBat"),
-          d.file("bar$_dotBat", anything),
-          d.file("qux$_dotBat", anything),
+          d.nothing("foo$dotBat"),
+          d.file("bar$dotBat", anything),
+          d.file("qux$dotBat", anything),
           d.dir("src", [
             d.nothing("foo.dart.snapshot"),
             d.file("bar.dart.snapshot", anything)
@@ -153,10 +152,10 @@ void main() {
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
-          d.file("foo$_dotBat", anything),
-          d.file("bar$_dotBat", anything),
-          d.file("qux$_dotBat", anything),
-          d.file("zip$_dotBat", anything),
+          d.file("foo$dotBat", anything),
+          d.file("bar$dotBat", anything),
+          d.file("qux$dotBat", anything),
+          d.file("zip$dotBat", anything),
           d.dir("src", [
             d.file("foo.dart.snapshot", anything),
             d.file("bar.dart.snapshot", anything),
@@ -175,26 +174,26 @@ void main() {
 
       // Directly
       var executable = await TestProcess.start(
-          d.path("out/my_app/foo$_dotBat"), [],
+          d.path("out/my_app/foo$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in foo"));
       await executable.shouldExit(0);
 
       // Through a redirect
-      executable = await TestProcess.start(d.path("out/my_app/qux$_dotBat"), [],
+      executable = await TestProcess.start(d.path("out/my_app/qux$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in bar"));
       await executable.shouldExit(0);
 
       // Through a relative symlink
-      Link(d.path("foo-relative")).createSync("out/my_app/foo$_dotBat");
+      Link(d.path("foo-relative")).createSync("out/my_app/foo$dotBat");
       executable = await TestProcess.start(d.path("foo-relative"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in foo"));
       await executable.shouldExit(0);
 
       // Through an absolute symlink
-      Link(d.path("foo-absolute")).createSync(d.path("out/my_app/foo$_dotBat"));
+      Link(d.path("foo-absolute")).createSync(d.path("out/my_app/foo$dotBat"));
       executable = await TestProcess.start(d.path("foo-absolute"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in foo"));
@@ -207,7 +206,7 @@ void main() {
       expect(executable.stdout, emits("in foo"));
       await executable.shouldExit(0);
     });
-  });
+  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 
   test("includes the package's license and Dart's license", () async {
     await d
@@ -229,7 +228,7 @@ void main() {
         d.file("DART_LICENSE", contains("Dart project authors"))
       ])
     ]).validate();
-  });
+  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 
   group("creates a package for", () {
     setUp(() => d
@@ -292,7 +291,7 @@ void main() {
         await archive("my_app/build/my_app-1.2.3-windows-x64.zip",
                 windows: true)
             .validate();
-      });
+      }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
     });
 
     test("all platforms", () async {
@@ -308,6 +307,6 @@ void main() {
         archive("my_app/build/my_app-1.2.3-windows-x64.zip", windows: true)
             .validate()
       ]);
-    });
+    }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
   });
 }

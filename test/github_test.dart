@@ -404,7 +404,7 @@ void main() {
     var server = await _assertUploadsPackage("windows");
     await (await grind(["pkg-github-windows"], server: server)).shouldExit(0);
     await server.close();
-  });
+  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 }
 
 /// The contents of a `grind.dart` file that just enables GitHub tasks.

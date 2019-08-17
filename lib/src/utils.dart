@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 
 import 'info.dart';
@@ -38,6 +39,12 @@ bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
 ///
 /// This will automatically be cleaned up when the process exits.
 final client = http.Client();
+
+/// The `.bat` extension on Windows, the empty string everywhere else.
+final dotBat = Platform.isWindows ? ".bat" : "";
+
+/// The `.exe` extension on Windows, the empty string everywhere else.
+final dotExe = Platform.isWindows ? ".exe" : "";
 
 /// Ensure that the `build/` directory exists.
 void ensureBuild() {
@@ -98,4 +105,10 @@ String humanOSName(String os) {
 void write(String path, String text) {
   log("writing $path");
   File(path).writeAsStringSync(text);
+}
+
+/// Like Grinder's [copy], but without Windows bugs (google/grinder.dart#345).
+void safeCopy(String source, String destination) {
+  log("copying $source to $destination");
+  File(source).copySync(p.join(destination, p.basename(source)));
 }
