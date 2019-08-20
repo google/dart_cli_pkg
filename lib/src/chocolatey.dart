@@ -207,6 +207,8 @@ Future<void> _build() async {
   var install = StringBuffer();
   var uninstall = StringBuffer();
   executables.forEach((name, path) {
+    // Write PoewrShell code to install/uninstall each batch script. Note that
+    // `$packageFolder` here is a PowerShell variable, not a Dart variable.
     var args = '"$name" "\$packageFolder\\tools\\$name.bat"';
     install.writeln("Generate-BinFile $args");
     uninstall.writeln("Remove-BinFile $args");
