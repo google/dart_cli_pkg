@@ -272,9 +272,10 @@ void main() {
       await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
         d.file(
             "tools/chocolateyInstall.ps1",
-            containsAll([
-              r'Generate-BinFile "foo" "$packageFolder\tools\foo.bat"',
-              r'Generate-BinFile "bar" "$packageFolder\tools\bar.bat"'
+            allOf([
+              contains(
+                  r'Generate-BinFile "foo" "$packageFolder\tools\foo.bat"'),
+              contains(r'Generate-BinFile "bar" "$packageFolder\tools\bar.bat"')
             ]))
       ]).validate();
     });
@@ -288,9 +289,9 @@ void main() {
       await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
         d.file(
             "tools/chocolateyUninstall.ps1",
-            containsAll([
-              r'Remove-BinFile "foo" "$packageFolder\tools\foo.bat"',
-              r'Remove-BinFile "bar" "$packageFolder\tools\bar.bat"'
+            allOf([
+              contains(r'Remove-BinFile "foo" "$packageFolder\tools\foo.bat"'),
+              contains(r'Remove-BinFile "bar" "$packageFolder\tools\bar.bat"')
             ]))
       ]).validate();
     });
