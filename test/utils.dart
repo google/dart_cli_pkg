@@ -68,7 +68,7 @@ Future<void> git(List<String> arguments) async {
 /// Extracts the contents of [archive] to [destination], both within `d.sandbox`.
 Future<void> extract(String path, String destination) async {
   var bytes = File(d.path(path)).readAsBytesSync();
-  var archive = path.endsWith(".zip")
+  var archive = path.endsWith(".zip") || path.endsWith(".nupkg")
       ? ZipDecoder().decodeBytes(bytes)
       : TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
 

@@ -66,7 +66,7 @@ void _compileNative() {
   }
 }
 
-/// Whehter [addStandaloneTasks] has been called yet.
+/// Whether [addStandaloneTasks] has been called yet.
 var _addedStandaloneTasks = false;
 
 /// Enables tasks for building standalone Dart VM packages.

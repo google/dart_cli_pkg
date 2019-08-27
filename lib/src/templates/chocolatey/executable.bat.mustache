@@ -1,0 +1,7 @@
+@echo off
+REM This script drives the standalone {{{name}}} package, which bundles together a
+REM Dart executable and a snapshot of {{{name}}}.
+
+set SCRIPTPATH=%~dp0
+set arguments=%*
+dart.exe {{#version}}"-Dversion={{{version}}}"{{/version}} "%SCRIPTPATH%\{{{executable}}}.snapshot" %arguments%

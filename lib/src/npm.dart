@@ -81,8 +81,8 @@ String jsModuleMainLibrary;
 /// repository. It's modifiable.
 ///
 /// `cli_pkg` will automatically add `"version"` and `"bin"` fields when
-/// building the `npm` package. If [jsModuleMainLibrary] is set, it will also
-/// add a `"main"` field.
+/// building the npm package. If [jsModuleMainLibrary] is set, it will also add
+/// a `"main"` field.
 Map<String, Object> get npmPackageJson {
   if (_npmPackageJson != null) return _npmPackageJson;
   if (!File("package.json").existsSync()) {
@@ -321,7 +321,7 @@ void _buildPackage() {
   if (dir.existsSync()) dir.deleteSync(recursive: true);
   dir.createSync(recursive: true);
 
-  write(
+  writeString(
       p.join('build', 'npm', 'package.json'),
       jsonEncode({
         ...npmPackageJson,
@@ -332,7 +332,7 @@ void _buildPackage() {
 
   safeCopy('build/$_npmName.dart.js', dir.path);
   for (var name in executables.keys) {
-    write(p.join('build', 'npm', '$name.js'), """
+    writeString(p.join('build', 'npm', '$name.js'), """
 #!/usr/bin/env node
 
 var module = require('./$_npmName.dart.js');
@@ -341,7 +341,7 @@ module.${_executableIdentifiers[name]}(process.argv.slice(2));
   }
 
   var readme = npmReadme;
-  if (readme != null) write('build/npm/README.md', readme);
+  if (readme != null) writeString('build/npm/README.md', readme);
 
   if (File("LICENSE").existsSync()) safeCopy("LICENSE", dir.path);
 }
