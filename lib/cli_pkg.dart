@@ -15,12 +15,14 @@
 import 'src/chocolatey.dart';
 import 'src/github.dart';
 import 'src/npm.dart';
+import 'src/pub.dart';
 import 'src/standalone.dart';
 
 export 'src/chocolatey.dart';
 export 'src/info.dart';
 export 'src/github.dart';
 export 'src/npm.dart';
+export 'src/pub.dart';
 export 'src/standalone.dart';
 
 /// Enables all tasks from the `cli_pkg` package.
@@ -28,5 +30,6 @@ void addAllTasks() {
   addChocolateyTasks();
   addGithubTasks();
   addNpmTasks();
+  addPubTasks();
   addStandaloneTasks();
 }
