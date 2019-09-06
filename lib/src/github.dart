@@ -59,7 +59,7 @@ String _repoFromPubspec() =>
     pubspec.homepage == null ? null : _parseHttp(pubspec.homepage);
 
 /// Parses a GitHub repo name from an SSH reference or a `git://` URL.
-///
+//
 /// Returns `null` if it couldn't be parsed.
 String _parseGit(String url) {
   var match = RegExp(r"^(git@github\.com:|git://github\.com/)"
