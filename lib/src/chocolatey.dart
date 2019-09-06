@@ -43,7 +43,7 @@ String get _chocolateyVersion {
   if (components.length == 1) return components.first;
   assert(components.length == 2);
 
-  var first = true;
+  /*var first = true;
   var prerelease = components.last.replaceAllMapped('.', (_) {
     if (first) {
       first = false;
@@ -51,8 +51,9 @@ String get _chocolateyVersion {
     } else {
       return '-';
     }
-  });
-  return "${components.first}-$prerelease";
+  });*/
+  var preRelease = components.last.replaceAll('.', '');
+  return "${components.first}-$preRelease";
 }
 
 /// The text contents of the Chocolatey package's [`.nuspec` file][].

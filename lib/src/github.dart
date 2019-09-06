@@ -65,7 +65,7 @@ String _parseGit(String url) {
   var match = RegExp(r"^(git@github\.com:|git://github\.com/)"
           r"(?<repo>[^/]+/[^/]+?)(\.git)?$")
       .firstMatch(url);
-  return match == null ? null : match.namedGroup('repo');
+  return match == null ? null : (match as RegExpMatch).namedGroup('repo');
 }
 
 /// Parses a GitHub repo name from an HTTP or HTTPS URL.
