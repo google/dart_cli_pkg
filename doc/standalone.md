@@ -36,7 +36,7 @@ calls an ["AOT Application snapshot"][snapshot]). This is unavailable on 32-bit
 host systems.
 
 Defines an environment constant named `version` set to [`pkg.version`][] that
-can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
+can be accessed from within each entry point via [`String.fromEnvironment()`][].
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
@@ -53,7 +53,7 @@ Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executabl
 
 Output: `build/$standaloneName-$version-$os-$arch.(tar.gz|zip)`
 
-Creates an archive that contains all this package's entrypoints along with the
+Creates an archive that contains all this package's entry points along with the
 Dart VM for the given operating system and architecture, with top-level scripts
 that can be used to invoke them.
 
