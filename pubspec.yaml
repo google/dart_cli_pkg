@@ -5,8 +5,10 @@ environment:
 
 dependencies:
   archive: ">=1.0.0 <3.0.0"
+  collection: ">=1.8.0 <2.0.0"
   grinder: '^0.8.0'
   http: ">=0.11.0 <0.13.0"
+  package_config: '^1.1.0'
   pubspec_parse: '^0.1.0'
   meta: "^1.1.7"
   mustache: "^1.0.0"

@@ -119,13 +119,9 @@ bool _useNative(String os, {@required bool x64}) =>
 Future<void> _buildPackage(String os, {@required bool x64}) async {
   var archive = Archive()
     ..addFile(fileFromBytes("$standaloneName/src/dart${_binaryExtension(os)}",
-        await _dartExecutable(os, x64: x64), executable: true))
-    ..addFile(file(
-        "$standaloneName/src/DART_LICENSE", p.join(sdkDir.path, 'LICENSE')));
-
-  if (File("LICENSE").existsSync()) {
-    archive.addFile(file("$standaloneName/src/LICENSE", "LICENSE"));
-  }
+        await _dartExecutable(os, x64: x64),
+        executable: true))
+    ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
   for (var entrypoint in entrypoints) {
     var basename = p.basename(entrypoint);

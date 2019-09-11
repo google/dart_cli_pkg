@@ -203,11 +203,8 @@ Future<void> _build() async {
         renderTemplate("chocolatey/rels.xml", {"name": _chocolateyName})))
     ..addFile(fileFromString(
         "package/services/metadata/core-properties/properties.psmdcp",
-        _nupkgProperties));
-
-  if (File("LICENSE").existsSync()) {
-    archive.addFile(file("tools/LICENSE", "LICENSE"));
-  }
+        _nupkgProperties))
+    ..addFile(fileFromString("tools/LICENSE", await license));
 
   for (var entrypoint in entrypoints) {
     var snapshot = "${p.basename(entrypoint)}.snapshot";

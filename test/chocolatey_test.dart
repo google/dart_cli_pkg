@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -253,14 +254,75 @@ void main() {
       });
     });
 
-    test("copies in the LICENSE if it exists", () async {
-      await d.package("my_app", pubspec, _enableChocolatey(),
-          [_nuspec(), d.file("LICENSE", "do what you want")]).create();
+    group("the LICENSE file", () {
+      // Normally each of these would be separate test cases, but running
+      // grinder takes so long that we collapse them for efficiency.
+      test(
+          "includes the license for the package, Dart, direct dependencies, "
+          "and transitive dependencies", () async {
+        await d
+            .package(
+                "my_app",
+                {
+                  ...pubspec,
+                  "dependencies": {
+                    "direct_dep": {"path": "direct_dep"}
+                  }
+                },
+                _enableChocolatey(),
+                [
+                  _nuspec(),
+                  d.file("LICENSE", "Please use my code"),
+                  d.dir("direct_dep", [
+                    d.file(
+                        "pubspec.yaml",
+                        json.encode({
+                          "name": "direct_dep",
+                          "version": "1.0.0",
+                          "environment": {"sdk": ">=2.0.0 <3.0.0"},
+                          "dependencies": {
+                            "indirect_dep": {"path": "../indirect_dep"}
+                          }
+                        })),
+                    d.file("LICENSE.md", "Direct dependency license")
+                  ]),
+                  d.dir("indirect_dep", [
+                    d.file(
+                        "pubspec.yaml",
+                        json.encode({
+                          "name": "indirect_dep",
+                          "version": "1.0.0",
+                          "environment": {"sdk": ">=2.0.0 <3.0.0"}
+                        })),
+                    d.file("COPYING", "Indirect dependency license")
+                  ])
+                ])
+            .create();
+        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
+          d.file(
+              "tools/LICENSE",
+              allOf([
+                contains("Please use my code"),
+                contains("This license applies to all parts of Dart"),
+                contains("Direct dependency license"),
+                contains("Indirect dependency license")
+              ]))
+        ]).validate();
+      });
 
-      await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg",
-          [d.file("tools/LICENSE", "do what you want")]).validate();
+      test("is still generated if the package doesn't have a license",
+          () async {
+        await d.package(
+            "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+
+        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
+          d.file("tools/LICENSE",
+              contains("This license applies to all parts of Dart"))
+        ]).validate();
+      });
     });
 
     test("includes an installation script", () async {

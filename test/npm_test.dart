@@ -428,21 +428,72 @@ void main() {
     });
   });
 
-  group("LICENSE", () {
-    test("isn't added if it doesn't exist on disk", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
-      await (await grind(["pkg-npm-dev"])).shouldExit();
+  group("the LICENSE file", () {
+    // Normally each of these would be separate test cases, but running grinder
+    // takes so long that we collapse them for efficiency.
+    test(
+        "includes the license for the package, Dart, direct dependencies, and "
+        "transitive dependencies", () async {
+      await d
+          .package(
+              "my_app",
+              {
+                ...pubspec,
+                "dependencies": {
+                  "direct_dep": {"path": "direct_dep"}
+                }
+              },
+              _enableNpm,
+              [
+                _packageJson,
+                d.file("LICENSE", "Please use my code"),
+                d.dir("direct_dep", [
+                  d.file(
+                      "pubspec.yaml",
+                      json.encode({
+                        "name": "direct_dep",
+                        "version": "1.0.0",
+                        "environment": {"sdk": ">=2.0.0 <3.0.0"},
+                        "dependencies": {
+                          "indirect_dep": {"path": "../indirect_dep"}
+                        }
+                      })),
+                  d.file("LICENSE.md", "Direct dependency license")
+                ]),
+                d.dir("indirect_dep", [
+                  d.file(
+                      "pubspec.yaml",
+                      json.encode({
+                        "name": "indirect_dep",
+                        "version": "1.0.0",
+                        "environment": {"sdk": ">=2.0.0 <3.0.0"}
+                      })),
+                  d.file("COPYING", "Indirect dependency license")
+                ])
+              ])
+          .create();
+      await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
-      await d.nothing("my_app/build/npm/LICENSE").validate();
+      await d
+          .file(
+              "my_app/build/npm/LICENSE",
+              allOf([
+                contains("Please use my code"),
+                contains("This license applies to all parts of Dart"),
+                contains("Direct dependency license"),
+                contains("Indirect dependency license")
+              ]))
+          .validate();
     });
 
-    test("is loaded from disk by default", () async {
-      await d.package("my_app", pubspec, _enableNpm,
-          [_packageJson, d.file("LICENSE", "Do whatever")]).create();
+    test("is still generated if the package doesn't have a license", () async {
+      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
-      await (await grind(["pkg-npm-dev"])).shouldExit();
-
-      await d.file("my_app/build/npm/LICENSE", "Do whatever").validate();
+      await d
+          .file("my_app/build/npm/LICENSE",
+              contains("This license applies to all parts of Dart"))
+          .validate();
     });
   });
 }

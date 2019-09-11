@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
@@ -42,13 +43,13 @@ final _enableStandalone = """
 """;
 
 void main() {
-  group("directory and archive name", () {
-    var pubspec = {
-      "name": "my_app",
-      "version": "1.2.3",
-      "executables": {"foo": "foo"}
-    };
+  var pubspec = {
+    "name": "my_app",
+    "version": "1.2.3",
+    "executables": {"foo": "foo"}
+  };
 
+  group("directory and archive name", () {
     test("default to pkg.dartName", () async {
       await d.package("my_app", pubspec, _enableStandalone).create();
 
@@ -208,27 +209,77 @@ void main() {
     });
   }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 
-  test("includes the package's license and Dart's license", () async {
-    await d
-        .package(
-            "my_app",
-            {
-              "name": "my_app",
-              "version": "1.2.3",
-              "executables": {"foo": "foo"}
-            },
-            _enableStandalone,
-            [d.file("LICENSE", "Please use my code")])
-        .create();
-    await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+  group("the LICENSE file", () {
+    // Normally each of these would be separate test cases, but running grinder
+    // takes so long that we collapse them for efficiency.
+    test(
+        "includes the license for the package, Dart, direct dependencies, and "
+        "transitive dependencies", () async {
+      await d
+          .package(
+              "my_app",
+              {
+                ...pubspec,
+                "dependencies": {
+                  "direct_dep": {"path": "direct_dep"}
+                }
+              },
+              _enableStandalone,
+              [
+                d.file("LICENSE", "Please use my code"),
+                d.dir("direct_dep", [
+                  d.file(
+                      "pubspec.yaml",
+                      json.encode({
+                        "name": "direct_dep",
+                        "version": "1.0.0",
+                        "environment": {"sdk": ">=2.0.0 <3.0.0"},
+                        "dependencies": {
+                          "indirect_dep": {"path": "../indirect_dep"}
+                        }
+                      })),
+                  d.file("LICENSE.md", "Direct dependency license")
+                ]),
+                d.dir("indirect_dep", [
+                  d.file(
+                      "pubspec.yaml",
+                      json.encode({
+                        "name": "indirect_dep",
+                        "version": "1.0.0",
+                        "environment": {"sdk": ">=2.0.0 <3.0.0"}
+                      })),
+                  d.file("COPYING", "Indirect dependency license")
+                ])
+              ])
+          .create();
+      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
-    await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
-      d.dir("my_app/src", [
-        d.file("LICENSE", "Please use my code"),
-        d.file("DART_LICENSE", contains("Dart project authors"))
-      ])
-    ]).validate();
-  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
+        d.dir("my_app/src", [
+          d.file(
+              "LICENSE",
+              allOf([
+                contains("Please use my code"),
+                contains("This license applies to all parts of Dart"),
+                contains("Direct dependency license"),
+                contains("Indirect dependency license")
+              ]))
+        ])
+      ]).validate();
+    });
+
+    test("is still generated if the package doesn't have a license", () async {
+      await d.package("my_app", pubspec, _enableStandalone).create();
+      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+
+      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
+        d.dir("my_app/src", [
+          d.file(
+              "LICENSE", contains("This license applies to all parts of Dart"))
+        ])
+      ]).validate();
+    });
+  });
 
   group("creates a package for", () {
     setUp(() => d
@@ -247,7 +298,7 @@ void main() {
           d.dir("my_app", [
             d.file("foo${windows ? '.bat' : ''}", anything),
             d.dir("src", [
-              d.file("DART_LICENSE", anything),
+              d.file("LICENSE", anything),
               d.file("dart${windows ? '.exe' : ''}", anything),
               d.file("foo.dart.snapshot", anything)
             ])
