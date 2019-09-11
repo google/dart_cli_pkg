@@ -57,8 +57,12 @@ Future<TestProcess> grind(List<String> arguments,
 }
 
 /// Runs Git in the application directory with the given [arguments].
-Future<void> git(List<String> arguments) async {
-  await (await TestProcess.start("git", arguments, workingDirectory: appDir))
+///
+/// The Git process is run in [workingDirectory], which should be relative to
+/// [d.sandbox]. If it's not passed, [appDir] is used instead.
+Future<void> git(List<String> arguments, {String workingDirectory}) async {
+  await (await TestProcess.start("git", arguments,
+          workingDirectory: d.path(workingDirectory ?? appDir)))
       .shouldExit(0);
 }
 

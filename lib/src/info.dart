@@ -49,6 +49,22 @@ String get humanName => _humanName ?? name;
 set humanName(String value) => _humanName = value;
 String _humanName;
 
+/// The human-friendly name to use for non-authentication-related recordings by
+/// this automation tool, such as Git commit metadata.
+///
+/// Defaults to `"cli_pkg"`.
+String get botName => _botName ?? "cli_pkg";
+set botName(String value) => _botName = value;
+String _botName;
+
+/// The email address to use for non-authentication-related recordings, such as
+/// Git commit metadata.
+///
+/// Defaults to `"cli_pkg@none"`.
+String get botEmail => _botEmail ?? "cli_pkg@none";
+set botEmail(String value) => _botEmail = value;
+String _botEmail;
+
 /// A mutable map from executable names to those executables' paths in `bin/`.
 ///
 /// This defaults to a map derived from the pubspec's `executables` field. It
