@@ -432,42 +432,41 @@ void main() {
     test(
         "includes the license for the package, Dart, direct dependencies, and "
         "transitive dependencies", () async {
+      await d.dir("direct_dep", [
+        d.file(
+            "pubspec.yaml",
+            json.encode({
+              "name": "direct_dep",
+              "version": "1.0.0",
+              "environment": {"sdk": ">=2.0.0 <3.0.0"},
+              "dependencies": {
+                "indirect_dep": {"path": "../indirect_dep"}
+              }
+            })),
+        d.file("LICENSE.md", "Direct dependency license")
+      ]).create();
+
+      await d.dir("indirect_dep", [
+        d.file(
+            "pubspec.yaml",
+            json.encode({
+              "name": "indirect_dep",
+              "version": "1.0.0",
+              "environment": {"sdk": ">=2.0.0 <3.0.0"}
+            })),
+        d.file("COPYING", "Indirect dependency license")
+      ]).create();
+
       await d
           .package(
               {
                 ...pubspec,
                 "dependencies": {
-                  "direct_dep": {"path": "direct_dep"}
+                  "direct_dep": {"path": "../direct_dep"}
                 }
               },
               _enableNpm,
-              [
-                _packageJson,
-                d.file("LICENSE", "Please use my code"),
-                d.dir("direct_dep", [
-                  d.file(
-                      "pubspec.yaml",
-                      json.encode({
-                        "name": "direct_dep",
-                        "version": "1.0.0",
-                        "environment": {"sdk": ">=2.0.0 <3.0.0"},
-                        "dependencies": {
-                          "indirect_dep": {"path": "../indirect_dep"}
-                        }
-                      })),
-                  d.file("LICENSE.md", "Direct dependency license")
-                ]),
-                d.dir("indirect_dep", [
-                  d.file(
-                      "pubspec.yaml",
-                      json.encode({
-                        "name": "indirect_dep",
-                        "version": "1.0.0",
-                        "environment": {"sdk": ">=2.0.0 <3.0.0"}
-                      })),
-                  d.file("COPYING", "Indirect dependency license")
-                ])
-              ])
+              [_packageJson, d.file("LICENSE", "Please use my code")])
           .create();
       await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
