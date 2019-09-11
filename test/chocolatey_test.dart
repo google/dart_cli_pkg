@@ -38,8 +38,8 @@ void main() {
   group("version", () {
     Future<void> assertVersion(String original, String expected) async {
       await d
-          .package("my_app", {...pubspec, "version": original},
-              _enableChocolatey(), [_nuspec()])
+          .package({...pubspec, "version": original}, _enableChocolatey(),
+              [_nuspec()])
           .create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
@@ -75,7 +75,7 @@ void main() {
       group("throws an error if", () {
         Future<void> assertNuspecError(
             String nuspec, String errorFragment) async {
-          await d.package("my_app", pubspec, _enableChocolatey(),
+          await d.package(pubspec, _enableChocolatey(),
               [d.file("my_app_choco.nuspec", nuspec)]).create();
 
           var grinder = await grind(["pkg-chocolatey-build"]);
@@ -122,8 +122,7 @@ void main() {
       });
 
       test("adds <version> and a dependency on the Dart SDK", () async {
-        await d.package(
-            "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+        await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
         await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -148,7 +147,7 @@ void main() {
 
       test("adds a dependency on the Dart SDK to existing dependencies",
           () async {
-        await d.package("my_app", pubspec, _enableChocolatey(), [
+        await d.package(pubspec, _enableChocolatey(), [
           _nuspec("""
             <dependencies>
               <dependency id="something" version="[1.2.3]"/>
@@ -180,8 +179,7 @@ void main() {
     });
 
     test("[Content_Types] is copied in", () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -196,8 +194,7 @@ void main() {
     });
 
     test(".rels.xml is copied in", () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -208,8 +205,7 @@ void main() {
 
     group("properties.psmdcp", () {
       test("is created from required nuspec entries", () async {
-        await d.package(
-            "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+        await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
         await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -230,7 +226,7 @@ void main() {
       });
 
       test("gets extra information from <tags>", () async {
-        await d.package("my_app", pubspec, _enableChocolatey(),
+        await d.package(pubspec, _enableChocolatey(),
             [_nuspec("<tags>foo, bar, baz</tags>")]).create();
 
         await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
@@ -242,7 +238,7 @@ void main() {
       });
 
       test("gets extra information from <title>", () async {
-        await d.package("my_app", pubspec, _enableChocolatey(),
+        await d.package(pubspec, _enableChocolatey(),
             [_nuspec("<title>My App</title>")]).create();
 
         await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
@@ -262,7 +258,6 @@ void main() {
           "and transitive dependencies", () async {
         await d
             .package(
-                "my_app",
                 {
                   ...pubspec,
                   "dependencies": {
@@ -314,8 +309,7 @@ void main() {
 
       test("is still generated if the package doesn't have a license",
           () async {
-        await d.package(
-            "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+        await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
         await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
         await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
@@ -326,8 +320,7 @@ void main() {
     });
 
     test("includes an installation script", () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -343,8 +336,7 @@ void main() {
     });
 
     test("includes an uninstallation script", () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
 
@@ -359,8 +351,7 @@ void main() {
     });
 
     test("includes executables that can be invoked", () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
       await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
       await extract("my_app/build/my_app_choco.1.2.3.nupkg", "out");
@@ -383,8 +374,8 @@ void main() {
     }
 
     test("throws an error if it's not set anywhere", () async {
-      await d.package("my_app", pubspec, _enableChocolatey(token: false),
-          [_nuspec()]).create();
+      await d.package(
+          pubspec, _enableChocolatey(token: false), [_nuspec()]).create();
 
       var process = await grind(["pkg-chocolatey-deploy"]);
       expect(
@@ -395,16 +386,15 @@ void main() {
     });
 
     test("parses from the CHOCOLATEY_TOKEN environment variable", () async {
-      await d.package("my_app", pubspec, _enableChocolatey(token: false),
-          [_nuspec()]).create();
+      await d.package(
+          pubspec, _enableChocolatey(token: false), [_nuspec()]).create();
       await assertToken("secret", environment: {"CHOCOLATEY_TOKEN": "secret"});
     });
 
     test(
         "prefers an explicit username to the CHOCOLATEY_TOKEN environment variable",
         () async {
-      await d.package(
-          "my_app", pubspec, _enableChocolatey(), [_nuspec()]).create();
+      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
       await assertToken("tkn", environment: {"CHOCOLATEY_TOKEN": "wrong"});
     });
   });

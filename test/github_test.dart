@@ -41,7 +41,7 @@ void main() {
   group("repo name", () {
     group("throws an error", () {
       test("if it's not set anywhere", () async {
-        await d.package("my_app", pubspec, _enableGithub()).create();
+        await d.package(pubspec, _enableGithub()).create();
 
         var process = await grind(["pkg-github-release"]);
         expect(
@@ -52,12 +52,8 @@ void main() {
       });
 
       test("if it's not parsable from the pubspec homepage", () async {
-        await d
-            .package(
-                "my_app",
-                {...pubspec, "homepage": "http://my-cool-package.pkg"},
-                _enableGithub())
-            .create();
+        await d.package({...pubspec, "homepage": "http://my-cool-package.pkg"},
+            _enableGithub()).create();
 
         var process = await grind(["pkg-github-release"]);
         expect(
@@ -68,7 +64,7 @@ void main() {
       });
 
       test("if it's not parsable from the Git config", () async {
-        await d.package("my_app", pubspec, _enableGithub()).create();
+        await d.package(pubspec, _enableGithub()).create();
         await git(["init"]);
         await git(["remote", "add", "origin", "git://random-url.com/repo"]);
 
@@ -83,10 +79,8 @@ void main() {
 
     group("parses from the pubspec homepage", () {
       Future<void> assertParses(String homepage, String repo) async {
-        await d
-            .package(
-                "my_app", {...pubspec, "homepage": homepage}, _enableGithub())
-            .create();
+        await d.package(
+            {...pubspec, "homepage": homepage}, _enableGithub()).create();
         await _release(repo);
       }
 
@@ -108,12 +102,9 @@ void main() {
     });
 
     test("prefers the Git origin to the pubspec homepage", () async {
-      await d
-          .package(
-              "my_app",
-              {...pubspec, "homepage": "http://github.com/google/wrong"},
-              _enableGithub())
-          .create();
+      await d.package(
+          {...pubspec, "homepage": "http://github.com/google/wrong"},
+          _enableGithub()).create();
 
       await git(["init"]);
       await git(["remote", "add", "origin", "git://github.com/google/right"]);
@@ -123,7 +114,7 @@ void main() {
 
     group("parses from the Git origin", () {
       Future<void> assertParses(String origin, String repo) async {
-        await d.package("my_app", pubspec, _enableGithub()).create();
+        await d.package(pubspec, _enableGithub()).create();
         await git(["init"]);
         await git(["remote", "add", "origin", origin]);
         await _release(repo);
@@ -161,7 +152,7 @@ void main() {
     });
 
     test("prefers an explicit repo URL to Git origin", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.githubUser = "usr";
           pkg.githubPassword = "pwd";
@@ -186,9 +177,7 @@ void main() {
     }
 
     test("throws an error if it's not set anywhere", () async {
-      await d
-          .package("my_app", pubspecWithHomepage, _enableGithub(user: false))
-          .create();
+      await d.package(pubspecWithHomepage, _enableGithub(user: false)).create();
 
       var process = await grind(["pkg-github-release"]);
       expect(
@@ -199,15 +188,13 @@ void main() {
     });
 
     test("parses from the GITHUB_USER environment variable", () async {
-      await d
-          .package("my_app", pubspecWithHomepage, _enableGithub(user: false))
-          .create();
+      await d.package(pubspecWithHomepage, _enableGithub(user: false)).create();
       await assertUsername("fblthp", environment: {"GITHUB_USER": "fblthp"});
     });
 
     test("prefers an explicit username to the GITHUB_USER environment variable",
         () async {
-      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
       await assertUsername("usr", environment: {"GITHUB_USER": "wrong"});
     });
   });
@@ -222,8 +209,7 @@ void main() {
 
     test("throws an error if it's not set anywhere", () async {
       await d
-          .package(
-              "my_app", pubspecWithHomepage, _enableGithub(password: false))
+          .package(pubspecWithHomepage, _enableGithub(password: false))
           .create();
 
       var process = await grind(["pkg-github-release"]);
@@ -236,8 +222,7 @@ void main() {
 
     test("parses from the GITHUB_TOKEN environment variable", () async {
       await d
-          .package(
-              "my_app", pubspecWithHomepage, _enableGithub(password: false))
+          .package(pubspecWithHomepage, _enableGithub(password: false))
           .create();
       await assertPassword("secret", environment: {"GITHUB_TOKEN": "secret"});
     });
@@ -245,8 +230,7 @@ void main() {
     test("prefers the GITHUB_PASSWORD environment variable to GITHUB_TOKEN",
         () async {
       await d
-          .package(
-              "my_app", pubspecWithHomepage, _enableGithub(password: false))
+          .package(pubspecWithHomepage, _enableGithub(password: false))
           .create();
       await assertPassword("right",
           environment: {"GITHUB_PASSWORD": "right", "GITHUB_TOKEN": "wrong"});
@@ -255,7 +239,7 @@ void main() {
     test(
         "prefers an explicit username to the GITHUB_PASSWORD environment variable",
         () async {
-      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
       await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
     });
   });
@@ -270,13 +254,13 @@ void main() {
 
     Future<void> assertReleaseNotesFromChangelog(
         String changelog, matcher) async {
-      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
       await d.file("my_app/CHANGELOG.md", changelog).create();
       await assertReleaseNotes(matcher);
     }
 
     test("isn't set in the request if it's not set anywhere", () async {
-      await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
 
       await _release("my_org/my_app", verify: (request) async {
         expect(
@@ -365,7 +349,7 @@ void main() {
     });
 
     test("prefers explicit release notes to the CHANGELOG", () async {
-      await d.package("my_app", pubspecWithHomepage, """
+      await d.package(pubspecWithHomepage, """
         void main(List<String> args) {
           pkg.githubUser = "usr";
           pkg.githubPassword = "pwd";
@@ -380,7 +364,7 @@ void main() {
   });
 
   test("pkg-github-macos uploads standalone Mac OS archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("macos");
@@ -389,7 +373,7 @@ void main() {
   });
 
   test("pkg-github-linux uploads standalone Linux archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("linux");
@@ -398,7 +382,7 @@ void main() {
   });
 
   test("pkg-github-windows uploads standalone Windows archives", () async {
-    await d.package("my_app", pubspecWithHomepage, _enableGithub()).create();
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("windows");

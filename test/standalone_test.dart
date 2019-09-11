@@ -51,7 +51,7 @@ void main() {
 
   group("directory and archive name", () {
     test("default to pkg.dartName", () async {
-      await d.package("my_app", pubspec, _enableStandalone).create();
+      await d.package(pubspec, _enableStandalone).create();
 
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
@@ -60,7 +60,7 @@ void main() {
     });
 
     test("prefer pkg.name to pkg.dartName", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.name = "my-app";
           pkg.addStandaloneTasks();
@@ -75,7 +75,7 @@ void main() {
     });
 
     test("prefer pkg.standaloneName to pkg.name", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.name = "my-app";
           pkg.standaloneName = "my-sa-app";
@@ -99,7 +99,7 @@ void main() {
     };
 
     test("default to the pubspec's executables", () async {
-      await d.package("my_app", pubspec, _enableStandalone).create();
+      await d.package(pubspec, _enableStandalone).create();
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
@@ -117,7 +117,7 @@ void main() {
     });
 
     test("can be removed by the user", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.executables.remove("foo");
           pkg.addStandaloneTasks();
@@ -141,7 +141,7 @@ void main() {
     });
 
     test("can be added by the user", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.executables["zip"] = "bin/foo.dart";
           pkg.addStandaloneTasks();
@@ -169,7 +169,7 @@ void main() {
     // Normally each of these would be separate test cases, but running grinder
     // takes so long that we collapse them for efficiency.
     test("can be invoked", () async {
-      await d.package("my_app", pubspec, _enableStandalone).create();
+      await d.package(pubspec, _enableStandalone).create();
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
@@ -217,7 +217,6 @@ void main() {
         "transitive dependencies", () async {
       await d
           .package(
-              "my_app",
               {
                 ...pubspec,
                 "dependencies": {
@@ -269,7 +268,7 @@ void main() {
     });
 
     test("is still generated if the package doesn't have a license", () async {
-      await d.package("my_app", pubspec, _enableStandalone).create();
+      await d.package(pubspec, _enableStandalone).create();
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
@@ -282,16 +281,11 @@ void main() {
   });
 
   group("creates a package for", () {
-    setUp(() => d
-        .package(
-            "my_app",
-            {
-              "name": "my_app",
-              "version": "1.2.3",
-              "executables": {"foo": "foo"}
-            },
-            _enableStandalone)
-        .create());
+    setUp(() => d.package({
+          "name": "my_app",
+          "version": "1.2.3",
+          "executables": {"foo": "foo"}
+        }, _enableStandalone).create());
 
     d.Descriptor archive(String name, {bool windows = false}) =>
         d.archive(name, [
