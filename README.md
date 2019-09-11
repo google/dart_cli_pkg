@@ -30,5 +30,6 @@ individually:
 * [Uploading standalone archives to GitHub releases.](doc/github.md)
 * [Compiling to JavaScript and publishing to npm.](doc/npm.md)
 * [Uploading standalone archives to Chocolatey.](doc/chocolatey.md)
+* [Publishing to pub.](doc/pub.md)
 
 It's strongly recommended that this package be imported with the prefix `pkg`.
