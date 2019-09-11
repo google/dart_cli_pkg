@@ -299,7 +299,7 @@ void main() {
               "tools/LICENSE",
               allOf([
                 contains("Please use my code"),
-                contains("This license applies to all parts of Dart"),
+                contains("Copyright 2012, the Dart project authors."),
                 contains("Direct dependency license"),
                 contains("Indirect dependency license")
               ]))
@@ -313,7 +313,7 @@ void main() {
 
         await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
           d.file("tools/LICENSE",
-              contains("This license applies to all parts of Dart"))
+              contains("Copyright 2012, the Dart project authors."))
         ]).validate();
       });
     });

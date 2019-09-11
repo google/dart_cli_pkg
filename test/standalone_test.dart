@@ -259,7 +259,7 @@ void main() {
               "LICENSE",
               allOf([
                 contains("Please use my code"),
-                contains("This license applies to all parts of Dart"),
+                contains("Copyright 2012, the Dart project authors."),
                 contains("Direct dependency license"),
                 contains("Indirect dependency license")
               ]))
@@ -274,7 +274,7 @@ void main() {
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
           d.file(
-              "LICENSE", contains("This license applies to all parts of Dart"))
+              "LICENSE", contains("Copyright 2012, the Dart project authors."))
         ])
       ]).validate();
     });

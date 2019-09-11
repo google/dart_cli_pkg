@@ -475,7 +475,7 @@ void main() {
               "my_app/build/npm/LICENSE",
               allOf([
                 contains("Please use my code"),
-                contains("This license applies to all parts of Dart"),
+                contains("Copyright 2012, the Dart project authors."),
                 contains("Direct dependency license"),
                 contains("Indirect dependency license")
               ]))
@@ -488,7 +488,7 @@ void main() {
 
       await d
           .file("my_app/build/npm/LICENSE",
-              contains("This license applies to all parts of Dart"))
+              contains("Copyright 2012, the Dart project authors."))
           .validate();
     });
   });
