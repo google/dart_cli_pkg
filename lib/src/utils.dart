@@ -93,13 +93,18 @@ Future<String> get license => _licenseMemo.runOnce(() async {
 
         var dependencyLicense =
             _readLicense(p.dirname(p.fromUri(packageConfig[package])));
-        if (dependencyLicense != null) {
+        if (dependencyLicense == null) {
+          log("WARNING: $package has no license and may not be legal to "
+              "redistribute.");
+        } else {
           licenses.putIfAbsent(dependencyLicense, () => []).add(package);
         }
       }
 
       return licenses.entries
-          .map((entry) => "${toSentence(entry.value)} license:\n\n${entry.key}")
+          .map((entry) =>
+              wordWrap("${toSentence(entry.value)} license:") +
+              "\n\n${entry.key}")
           .join("\n\n" + "-" * 80 + "\n\n");
     });
 final _licenseMemo = AsyncMemoizer<String>();
@@ -191,6 +196,41 @@ String toSentence(Iterable<Object> iter, {String conjunction}) {
   if (iter.length == 1) return iter.first.toString();
   conjunction ??= 'and';
   return iter.take(iter.length - 1).join(", ") + " $conjunction ${iter.last}";
+}
+
+/// The maximum line length for [wordWrap]
+const _lineLength = 80;
+
+/// Wraps [text] so that it fits within [_lineLength] characters.
+///
+/// This preserves existing newlines and only splits words on spaces, not on
+/// other sorts of whitespace.
+String wordWrap(String text) {
+  return text.split("\n").map((originalLine) {
+    var buffer = StringBuffer();
+    var lengthSoFar = 0;
+    var firstLine = true;
+    for (var word in originalLine.split(" ")) {
+      var wordLength = word.length;
+      if (wordLength > _lineLength) {
+        if (lengthSoFar != 0) buffer.writeln();
+        buffer.writeln(word);
+        firstLine = false;
+      } else if (lengthSoFar == 0) {
+        buffer.write(word);
+        lengthSoFar = wordLength;
+      } else if (lengthSoFar + 1 + wordLength > _lineLength) {
+        buffer.writeln();
+        buffer.write(word);
+        lengthSoFar = wordLength;
+        firstLine = false;
+      } else {
+        buffer.write(" $word");
+        lengthSoFar += 1 + wordLength;
+      }
+    }
+    return buffer.toString();
+  }).join("\n");
 }
 
 /// Like [File.writeAsStringSync], but logs that the file is being written.
