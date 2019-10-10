@@ -113,7 +113,11 @@ void addStandaloneTasks() {
 /// on 64-bit machines, because currently Dart doesn't support cross-compilation
 /// (dart-lang/sdk#28617) and only 64-bit Dart SDKs ship with `dart2aot`.
 bool _useNative(String os, {@required bool x64}) =>
-    os == Platform.operatingSystem && x64 == _is64Bit;
+    // Don't compile native executables on Windows until dart-lang/sdk#37897 is
+    // fixed. This bug means we can't provide them the same constant-definiton
+    // API as other platforms, so play it safe and compile the slow but
+    // compatible way instead.
+    os != 'windows' && os == Platform.operatingSystem && x64 == _is64Bit;
 
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, {@required bool x64}) async {
