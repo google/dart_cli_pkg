@@ -18,8 +18,6 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
-import 'package:cli_pkg/src/utils.dart';
-
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
@@ -264,7 +262,7 @@ void main() {
 /// If [config] is passed, it's injected as code in `main()`.
 ///
 /// If [repo] is `false`, this won't set `pkg.homebrewRepo`.
-String _enableHomebrew({String config, bool repo: true}) => """
+String _enableHomebrew({String config, bool repo = true}) => """
   void main(List<String> args) {
     ${config ?? ''}
     ${repo ? 'pkg.homebrewRepo = "me/homebrew";' : ''}
