@@ -209,13 +209,11 @@ String wordWrap(String text) {
   return text.split("\n").map((originalLine) {
     var buffer = StringBuffer();
     var lengthSoFar = 0;
-    var firstLine = true;
     for (var word in originalLine.split(" ")) {
       var wordLength = word.length;
       if (wordLength > _lineLength) {
         if (lengthSoFar != 0) buffer.writeln();
         buffer.writeln(word);
-        firstLine = false;
       } else if (lengthSoFar == 0) {
         buffer.write(word);
         lengthSoFar = wordLength;
@@ -223,7 +221,6 @@ String wordWrap(String text) {
         buffer.writeln();
         buffer.write(word);
         lengthSoFar = wordLength;
-        firstLine = false;
       } else {
         buffer.write(" $word");
         lengthSoFar += 1 + wordLength;
