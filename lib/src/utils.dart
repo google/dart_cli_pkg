@@ -53,6 +53,19 @@ final dotBat = Platform.isWindows ? ".bat" : "";
 /// The `.exe` extension on Windows, the empty string everywhere else.
 final dotExe = Platform.isWindows ? ".exe" : "";
 
+/// The path to the `dart2native` executable in the Dart SDK.
+final dart2NativePath = p.join(sdkDir.path, 'bin/dart2native$dotBat');
+
+/// Whether we should compile native executables using `dart2native` rather than
+/// `dart2aot`.
+///
+/// Dart 2.6 and up uses an executable called "dart2native" to generate both
+/// bundled native code executables AND native snapshot "AOT" executables which
+/// need to be run with `dartaotruntime`. Earlier SDK versions use a different
+/// executable, `dart2aot`, which has a different calling convention and only
+/// generates "AOT" snapshots. We support both.
+final useDart2Native = File(dart2NativePath).existsSync();
+
 /// Ensure that the `build/` directory exists.
 void ensureBuild() {
   Directory('build').createSync(recursive: true);
