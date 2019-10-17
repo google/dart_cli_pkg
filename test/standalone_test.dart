@@ -205,7 +205,7 @@ void main() {
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in foo"));
       await executable.shouldExit(0);
-    });
+    }, onPlatform: {"windows": Skip("google/dart_cli_pkg#25")});
   }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
 
   test("includes the package's license and Dart's license", () async {
