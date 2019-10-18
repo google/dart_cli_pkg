@@ -24,8 +24,8 @@ import 'package:pub_semver/pub_semver.dart';
 
 import 'info.dart';
 
-/// The set of entrypoint for executables defined by this package.
-Set<String> get entrypoints => executables.values.toSet();
+/// The set of entrypoint paths for executables defined by this package.
+Set<String> get entrypoints => p.PathSet.of(executables.values);
 
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
