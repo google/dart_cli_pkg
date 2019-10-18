@@ -88,7 +88,7 @@ void main() {
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
           [d.dir("my-sa-app")]).validate();
     });
-  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
 
   group("executables", () {
     var pubspec = {
@@ -205,8 +205,8 @@ void main() {
           workingDirectory: d.sandbox);
       expect(executable.stdout, emits("in foo"));
       await executable.shouldExit(0);
-    });
-  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+    }, onPlatform: {"windows": Skip("google/dart_cli_pkg#25")});
+  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
 
   test("includes the package's license and Dart's license", () async {
     await d
@@ -228,7 +228,7 @@ void main() {
         d.file("DART_LICENSE", contains("Dart project authors"))
       ])
     ]).validate();
-  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
 
   group("creates a package for", () {
     setUp(() => d
@@ -291,7 +291,9 @@ void main() {
         await archive("my_app/build/my_app-1.2.3-windows-x64.zip",
                 windows: true)
             .validate();
-      }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+      }, onPlatform: {
+        if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
+      });
     });
 
     test("all platforms", () async {
@@ -307,6 +309,8 @@ void main() {
         archive("my_app/build/my_app-1.2.3-windows-x64.zip", windows: true)
             .validate()
       ]);
-    }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+    }, onPlatform: {
+      if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
+    });
   });
 }
