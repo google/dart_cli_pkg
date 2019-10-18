@@ -1,9 +1,9 @@
-This tasks updates an existing Homebrew formula to point to the latest source
+This task updates an existing Homebrew formula to point to the latest source
 archive for this package. It's enabled by calling [`pkg.addHomebrewTasks()`][].
 
 [`pkg.addHomebrewTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addHomebrewTasks.html
 
-The Homebrew tasks treats the package's Homebrew repository as the source of
+The Homebrew task treats the package's Homebrew repository as the source of
 truth for all configuration and metadata. This means that it's the user's
 responsibility to set up a reasonable installation formula ([Dart Sass's
 formula][] is a good starting point). All this task does is update the formula's
