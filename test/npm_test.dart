@@ -46,7 +46,7 @@ void main() {
     // might change in the future.
 
     test("replaces dynamic require()s with eager require()s", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
 
       await d.dir("my_app/bin", [
         d.file("foo.dart", """
@@ -85,7 +85,7 @@ void main() {
     });
 
     test("includes a source map comment in dev mode", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
       await (await grind(["pkg-js-dev"])).shouldExit();
 
       await d
@@ -95,7 +95,7 @@ void main() {
     });
 
     test("doesn't include a source map comment in release mode", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
       await (await grind(["pkg-js-release"])).shouldExit();
 
       await d
@@ -105,7 +105,7 @@ void main() {
     });
 
     test("exports from jsModuleMainLibrary can be imported", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.jsModuleMainLibrary = "lib/src/exports.dart";
 
@@ -147,7 +147,7 @@ void main() {
     });
 
     test("takes its name from the package.json name field", () async {
-      await d.package("my_app", pubspec, _enableNpm, [
+      await d.package(pubspec, _enableNpm, [
         d.file("package.json", jsonEncode({"name": "mine-owne-app"}))
       ]).create();
       await (await grind(["pkg-js-dev"])).shouldExit();
@@ -160,7 +160,6 @@ void main() {
     test("that can be invoked", () async {
       await d
           .package(
-              "my_app",
               {
                 "name": "my_app",
                 "version": "1.2.3",
@@ -189,7 +188,7 @@ void main() {
 
     test("with access to the node, version, and dart-version constants",
         () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
 
       await d.dir("my_app/bin", [
         d.file("foo.dart", r"""
@@ -218,7 +217,7 @@ void main() {
     });
 
     test("with access to command-line args", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
 
       await d.dir("my_app/bin", [
         d.file("foo.dart", r"""
@@ -244,7 +243,7 @@ void main() {
     });
 
     test("with the ability to do conditional imports", () async {
-      await d.package("my_app", pubspec, _enableNpm, [
+      await d.package(pubspec, _enableNpm, [
         _packageJson,
         d.dir("lib", [
           d.file("input_vm.dart", "final value = 'vm';"),
@@ -274,7 +273,7 @@ void main() {
 
   group("package.json", () {
     test("throws an error if it doesn't exist on disk", () async {
-      await d.package("my_app", pubspec, _enableNpm).create();
+      await d.package(pubspec, _enableNpm).create();
 
       var process = await grind(["pkg-npm-dev"]);
       expect(
@@ -285,7 +284,7 @@ void main() {
     });
 
     test("is loaded from disk by default", () async {
-      await d.package("my_app", pubspec, _enableNpm, [
+      await d.package(pubspec, _enableNpm, [
         d.file(
             "package.json", jsonEncode({"name": "my_app", "some": "attribute"}))
       ]).create();
@@ -299,7 +298,7 @@ void main() {
     });
 
     test("prefers an explicit package.json to one from disk", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.npmPackageJson = {
             "name": "my_app",
@@ -329,7 +328,7 @@ void main() {
     });
 
     test("automatically adds the version", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       await d
@@ -341,7 +340,6 @@ void main() {
     test("automatically adds executables", () async {
       await d
           .package(
-              "my_app",
               {
                 "name": "my_app",
                 "version": "1.2.3",
@@ -363,7 +361,7 @@ void main() {
     });
 
     test("doesn't add main if jsModuleMainLibrary isn't set", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       await d
@@ -373,7 +371,7 @@ void main() {
     });
 
     test("automatically adds main if jsModuleMainLibrary is set", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.jsModuleMainLibrary = "lib/src/module_main.dart";
 
@@ -395,14 +393,14 @@ void main() {
 
   group("README.md", () {
     test("isn't added if it doesn't exist on disk", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       await d.nothing("my_app/build/npm/README.md").validate();
     });
 
     test("is loaded from disk by default", () async {
-      await d.package("my_app", pubspec, _enableNpm,
+      await d.package(pubspec, _enableNpm,
           [_packageJson, d.file("README.md", "Some README text")]).create();
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
@@ -411,7 +409,7 @@ void main() {
     });
 
     test("prefers an explicit npmReadme to one from disk", () async {
-      await d.package("my_app", pubspec, """
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.npmReadme = "Other README text";
 
@@ -428,21 +426,70 @@ void main() {
     });
   });
 
-  group("LICENSE", () {
-    test("isn't added if it doesn't exist on disk", () async {
-      await d.package("my_app", pubspec, _enableNpm, [_packageJson]).create();
-      await (await grind(["pkg-npm-dev"])).shouldExit();
+  group("the LICENSE file", () {
+    // Normally each of these would be separate test cases, but running grinder
+    // takes so long that we collapse them for efficiency.
+    test(
+        "includes the license for the package, Dart, direct dependencies, and "
+        "transitive dependencies", () async {
+      await d.dir("direct_dep", [
+        d.file(
+            "pubspec.yaml",
+            json.encode({
+              "name": "direct_dep",
+              "version": "1.0.0",
+              "environment": {"sdk": ">=2.0.0 <3.0.0"},
+              "dependencies": {
+                "indirect_dep": {"path": "../indirect_dep"}
+              }
+            })),
+        d.file("LICENSE.md", "Direct dependency license")
+      ]).create();
 
-      await d.nothing("my_app/build/npm/LICENSE").validate();
+      await d.dir("indirect_dep", [
+        d.file(
+            "pubspec.yaml",
+            json.encode({
+              "name": "indirect_dep",
+              "version": "1.0.0",
+              "environment": {"sdk": ">=2.0.0 <3.0.0"}
+            })),
+        d.file("COPYING", "Indirect dependency license")
+      ]).create();
+
+      await d
+          .package(
+              {
+                ...pubspec,
+                "dependencies": {
+                  "direct_dep": {"path": "../direct_dep"}
+                }
+              },
+              _enableNpm,
+              [_packageJson, d.file("LICENSE", "Please use my code")])
+          .create();
+      await (await grind(["pkg-npm-dev"])).shouldExit(0);
+
+      await d
+          .file(
+              "my_app/build/npm/LICENSE",
+              allOf([
+                contains("Please use my code"),
+                contains("Copyright 2012, the Dart project authors."),
+                contains("Direct dependency license"),
+                contains("Indirect dependency license")
+              ]))
+          .validate();
     });
 
-    test("is loaded from disk by default", () async {
-      await d.package("my_app", pubspec, _enableNpm,
-          [_packageJson, d.file("LICENSE", "Do whatever")]).create();
+    test("is still generated if the package doesn't have a license", () async {
+      await d.package(pubspec, _enableNpm, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
-      await (await grind(["pkg-npm-dev"])).shouldExit();
-
-      await d.file("my_app/build/npm/LICENSE", "Do whatever").validate();
+      await d
+          .file("my_app/build/npm/LICENSE",
+              contains("Copyright 2012, the Dart project authors."))
+          .validate();
     });
   });
 }

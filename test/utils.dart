@@ -23,11 +23,8 @@ import 'package:test_process/test_process.dart';
 
 import 'package:cli_pkg/src/utils.dart';
 
-/// Returns the application directory.
-///
-/// This assumes that there's a single directory in the sandbox which is the
-/// application.
-String get _appDir => Directory(d.sandbox).listSync().single.path;
+/// The directory in which the main application exists.
+String get appDir => d.path("my_app");
 
 /// Runs [grinder] in the application directory with the given [arguments].
 ///
@@ -42,16 +39,16 @@ Future<TestProcess> grind(List<String> arguments,
     {ShelfTestServer server,
     Map<String, String> environment,
     bool forwardStdio = false}) async {
-  if (!File(d.path("pubspec.lock")).existsSync()) {
+  if (!File(d.path(p.join(appDir, ".packages"))).existsSync()) {
     await (await TestProcess.start(
             "pub$dotBat", ["get", "--offline", "--no-precompile"],
-            forwardStdio: forwardStdio, workingDirectory: _appDir))
+            forwardStdio: forwardStdio, workingDirectory: appDir))
         .shouldExit(0);
   }
 
   return await TestProcess.start("pub$dotBat", ["run", "grinder", ...arguments],
       forwardStdio: forwardStdio,
-      workingDirectory: _appDir,
+      workingDirectory: appDir,
       environment: {
         ...?environment,
         "_CLI_PKG_TESTING": "true",
@@ -61,7 +58,7 @@ Future<TestProcess> grind(List<String> arguments,
 
 /// Runs Git in the application directory with the given [arguments].
 Future<void> git(List<String> arguments) async {
-  await (await TestProcess.start("git", arguments, workingDirectory: _appDir))
+  await (await TestProcess.start("git", arguments, workingDirectory: appDir))
       .shouldExit(0);
 }
 

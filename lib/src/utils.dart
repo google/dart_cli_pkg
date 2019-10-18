@@ -17,8 +17,11 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:archive/archive.dart';
+import 'package:async/async.dart';
+import 'package:collection/collection.dart';
 import 'package:grinder/grinder.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_config/packages_file.dart' as package_config;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 
@@ -65,6 +68,83 @@ final dart2NativePath = p.join(sdkDir.path, 'bin/dart2native$dotBat');
 /// executable, `dart2aot`, which has a different calling convention and only
 /// generates "AOT" snapshots. We support both.
 final useDart2Native = File(dart2NativePath).existsSync();
+
+/// The combined license text for the package and all its dependencies.
+///
+/// We include all dependency licenses because their code may be compiled into
+/// binary and JS releases.
+Future<String> get license => _licenseMemo.runOnce(() async {
+      // A map from license texts to the set of packages that have that same
+      // license. This allows us to de-duplicate repeated licenses, such as those
+      // from Dart Team packages.
+      var licenses = <String, List<String>>{};
+      var thisPackageLicense = _readLicense(".");
+      if (thisPackageLicense != null) {
+        licenses[thisPackageLicense] = [humanName];
+      }
+
+      licenses
+          .putIfAbsent(
+              File(p.join(sdkDir.path, 'LICENSE')).readAsStringSync(), () => [])
+          .add("Dart SDK");
+
+      // Parse the package config rather than the pubspec so we include transitive
+      // dependencies. This also includes dev dependencies, but it's possible those
+      // are compiled into the distribution anyway (especially for stuff like
+      // `node_preamble`).
+      var packageConfigUrl = await Isolate.packageConfig;
+      var packageConfig = package_config.parse(
+          File(p.fromUri(packageConfigUrl)).readAsBytesSync(),
+          packageConfigUrl);
+
+      // Sort the dependencies alphabetically to guarantee a consistent
+      // ordering.
+      var dependencies = packageConfig.keys.toList()..sort();
+      for (var package in dependencies) {
+        // Don't double-include this package's license.
+        if (package == pubspec.name) continue;
+
+        var dependencyLicense =
+            _readLicense(p.dirname(p.fromUri(packageConfig[package])));
+        if (dependencyLicense == null) {
+          log("WARNING: $package has no license and may not be legal to "
+              "redistribute.");
+        } else {
+          licenses.putIfAbsent(dependencyLicense, () => []).add(package);
+        }
+      }
+
+      return licenses.entries
+          .map((entry) =>
+              wordWrap("${toSentence(entry.value)} license:") +
+              "\n\n${entry.key}")
+          .join("\n\n" + "-" * 80 + "\n\n");
+    });
+final _licenseMemo = AsyncMemoizer<String>();
+
+/// A regular expression that matches filenames that should be considered
+/// licenses.
+final _licenseRegExp =
+    RegExp(r"^(([a-zA-Z0-9]+[-_])?(LICENSE|COPYING)|UNLICENSE)(\..*)?$");
+
+/// Returns the contents of the `LICENSE` file in [dir], with various possible
+/// filenames and extensions, or `null`.
+String _readLicense(String dir) {
+  if (!Directory(dir).existsSync()) return null;
+
+  var possibilities = Directory(dir)
+      .listSync()
+      .whereType<File>()
+      .map((file) => p.basename(file.path))
+      .where(_licenseRegExp.hasMatch)
+      .toList();
+  if (possibilities.isEmpty) return null;
+
+  // If there are multiple possibilities, choose the shortest one because it's
+  // most likely to be canonical.
+  return File(p.join(dir, minBy(possibilities, (path) => path.length)))
+      .readAsStringSync();
+}
 
 /// Ensure that the `build/` directory exists.
 void ensureBuild() {
@@ -119,6 +199,48 @@ String humanOSName(String os) {
     default:
       throw ArgumentError("Unknown OS $os.");
   }
+}
+
+/// Returns a sentence fragment listing the elements of [iter].
+///
+/// This converts each element of [iter] to a string and separates them with
+/// commas and/or [conjunction] (`"and"` by default) where appropriate.
+String toSentence(Iterable<Object> iter, {String conjunction}) {
+  if (iter.length == 1) return iter.first.toString();
+  conjunction ??= 'and';
+  return iter.take(iter.length - 1).join(", ") + " $conjunction ${iter.last}";
+}
+
+/// The maximum line length for [wordWrap]
+const _lineLength = 80;
+
+/// Wraps [text] so that it fits within [_lineLength] characters.
+///
+/// This preserves existing newlines and only splits words on spaces, not on
+/// other sorts of whitespace.
+String wordWrap(String text) {
+  return text.split("\n").map((originalLine) {
+    var buffer = StringBuffer();
+    var lengthSoFar = 0;
+    for (var word in originalLine.split(" ")) {
+      var wordLength = word.length;
+      if (wordLength > _lineLength) {
+        if (lengthSoFar != 0) buffer.writeln();
+        buffer.writeln(word);
+      } else if (lengthSoFar == 0) {
+        buffer.write(word);
+        lengthSoFar = wordLength;
+      } else if (lengthSoFar + 1 + wordLength > _lineLength) {
+        buffer.writeln();
+        buffer.write(word);
+        lengthSoFar = wordLength;
+      } else {
+        buffer.write(" $word");
+        lengthSoFar += 1 + wordLength;
+      }
+    }
+    return buffer.toString();
+  }).join("\n");
 }
 
 /// Like [File.writeAsStringSync], but logs that the file is being written.

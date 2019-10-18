@@ -19,6 +19,8 @@ import 'package:path/path.dart' as p;
 import 'package:test_descriptor/test_descriptor.dart';
 import 'package:yaml/yaml.dart';
 
+import 'utils.dart';
+
 export 'package:test_descriptor/test_descriptor.dart';
 
 /// The `cli_pkg` package's pubpsec.
@@ -28,8 +30,8 @@ final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 /// The `cli_pkg` package's dependency on grinder.
 final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
 
-/// Returns a directory descriptor for a package with the given pubspec and
-/// `grind.dart` file, as well as other optional files.
+/// Returns a directory descriptor for a package in [appDir] with the given
+/// pubspec and `grind.dart` file, as well as other optional files.
 ///
 /// This automatically does a couple of useful things:
 ///
@@ -39,8 +41,7 @@ final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
 /// * Adds a dependency on grinder and `cli_pkg`.
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
-DirectoryDescriptor package(
-    String name, Map<String, Object> pubspec, String grindDotDart,
+DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
     [List<Descriptor> files]) {
   pubspec = {
     "executables": {},
@@ -56,7 +57,7 @@ DirectoryDescriptor package(
       ? (pubspec["executables"] as Map<String, Object>).values.toSet()
       : const <Object>{};
 
-  return dir(name, [
+  return dir(p.basename(appDir), [
     file("pubspec.yaml", json.encode(pubspec)),
 
     // Use our existing lockfile as a template so that "pub get" is as fast as
