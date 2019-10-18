@@ -26,7 +26,7 @@ import 'template.dart';
 import 'utils.dart';
 
 /// Whether we're using a 64-bit Dart SDK.
-bool get _is64Bit => Platform.version.contains("x64");
+final _is64Bit = Platform.version.contains("x64");
 
 /// The name of the standalone package.
 ///
@@ -51,16 +51,19 @@ void _compileSnapshot() {
 void _compileNative() {
   ensureBuild();
 
-  if (!File(p.join(sdkDir.path, 'bin/dart2aot$dotBat')).existsSync()) {
-    fail(
-        "Your SDK doesn't have dart2aot. This probably means that you're using "
-        "a 32-bit SDK, which doesn't support native compilation.");
+  var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');
+  if (!useDart2Native && !File(dart2AotPath).existsSync()) {
+    fail("Your SDK doesn't have dart2aot or dart2native. This probably means "
+        "that you're using a 32-bit SDK, which doesn't support native "
+        "compilation.");
   }
 
   for (var entrypoint in entrypoints) {
-    run(p.join(sdkDir.path, 'bin/dart2aot$dotBat'), arguments: [
+    run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
       entrypoint,
       '-Dversion=$version',
+      if (useDart2Native) '--output-kind=aot',
+      if (useDart2Native) '--output',
       'build/${p.basename(entrypoint)}.native'
     ]);
   }
@@ -112,12 +115,16 @@ void addStandaloneTasks() {
 /// We can only use the native executable on the current operating system *and*
 /// on 64-bit machines, because currently Dart doesn't support cross-compilation
 /// (dart-lang/sdk#28617) and only 64-bit Dart SDKs ship with `dart2aot`.
-bool _useNative(String os, {@required bool x64}) =>
-    // Don't compile native executables on Windows until dart-lang/sdk#37897 is
-    // fixed. This bug means we can't provide them the same constant-definiton
-    // API as other platforms, so play it safe and compile the slow but
-    // compatible way instead.
-    os != 'windows' && os == Platform.operatingSystem && x64 == _is64Bit;
+bool _useNative(String os, {@required bool x64}) {
+  if (os != Platform.operatingSystem) return false;
+  if (x64 != _is64Bit) return false;
+
+  // Don't compile native executables on Windows in SDK versions affected by
+  // dart-lang/sdk#37897.
+  if (os == 'windows' && !useDart2Native) return false;
+
+  return true;
+}
 
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, {@required bool x64}) async {
