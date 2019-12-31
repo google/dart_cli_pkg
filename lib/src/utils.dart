@@ -185,6 +185,8 @@ Uri url(String url) {
   var parsedHost = Uri.parse(host);
   return parsed.replace(
       scheme: parsedHost.scheme,
+      // Git doesn't accept Windows `file:` URLs with user info components.
+      userInfo: parsedHost.scheme == 'file' ? "" : null,
       host: parsedHost.host,
       port: parsedHost.port,
       path:

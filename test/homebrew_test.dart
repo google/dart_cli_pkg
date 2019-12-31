@@ -56,8 +56,8 @@ void main() {
     var process = await _homebrewUpdate();
     expect(
         process.stdout,
-        emitsThrough(contains(
-            "Couldn't find a url field in build/homebrew/my_app.rb.")));
+        emitsThrough(contains("Couldn't find a url field in "
+            "${p.join('build', 'homebrew', 'my_app.rb')}.")));
     await process.shouldExit(1);
   });
 
@@ -78,8 +78,8 @@ void main() {
     var process = await _homebrewUpdate();
     expect(
         process.stdout,
-        emitsThrough(contains(
-            "Couldn't find a sha256 field in build/homebrew/my_app.rb.")));
+        emitsThrough(contains("Couldn't find a sha256 field in "
+            "${p.join('build', 'homebrew', 'my_app.rb')}.")));
     await process.shouldExit(1);
   });
 
