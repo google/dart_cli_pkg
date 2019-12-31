@@ -85,7 +85,7 @@ Future<void> extract(String path, String destination) async {
 /// it's been passed through the [transformation] function.
 ///
 /// If [description] is passed
-Matcher after<T>(Object Function(T) transformation, matcher) =>
+Matcher after<T>(Object Function(T) transformation, Object matcher) =>
     predicate((value) {
       expect(value, isA<T>());
       expect(transformation(value as T), matcher);

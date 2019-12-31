@@ -16,12 +16,14 @@ dependencies:
   path: '^1.0.0'
   pub_semver: '^1.0.0'
   js: "^0.6.0"
-  xml: '^3.0.0'
+  xml: '^3.6.0'
   yaml: '^2.0.0'
 
 dev_dependencies:
   async: '>=1.13.0 <3.0.0'
   pedantic: '^1.6.0'
+  sass_analysis:
+    git: {url: git://github.com/sass/dart-sass, path: analysis}
   shelf: '^0.7.0'
   shelf_test_handler: '^1.0.0'
   test: '^1.0.0'
