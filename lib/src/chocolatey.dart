@@ -278,7 +278,7 @@ XmlElement _findElement(XmlParent parent, String name,
   var nesting = [name];
   while (parent is XmlElement) {
     nesting.add((parent as XmlElement).name.qualified);
-    parent = parent.parent as XmlParent; // renggli/dart-xml#63
+    parent = parent.parent;
   }
 
   var path = nesting.reversed.join(" > ");
