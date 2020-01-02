@@ -44,7 +44,7 @@ final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
 DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
     [List<Descriptor> files]) {
   pubspec = {
-    "executables": {},
+    "executables": <String, Object>{},
     ...pubspec,
     "dev_dependencies": {
       "grinder": _ourGrinderDependency,

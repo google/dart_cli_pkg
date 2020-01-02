@@ -184,7 +184,13 @@ Uri url(String url) {
 
   var parsedHost = Uri.parse(host);
   return parsed.replace(
-      scheme: parsedHost.scheme, host: parsedHost.host, port: parsedHost.port);
+      scheme: parsedHost.scheme,
+      // Git doesn't accept Windows `file:` URLs with user info components.
+      userInfo: parsedHost.scheme == 'file' ? "" : null,
+      host: parsedHost.host,
+      port: parsedHost.port,
+      path:
+          p.url.join(parsedHost.path, p.url.relative(parsed.path, from: "/")));
 }
 
 /// Returns the human-friendly name for the given [os] string.
@@ -259,4 +265,40 @@ void writeBytes(String path, List<int> contents) {
 void safeCopy(String source, String destination) {
   log("copying $source to $destination");
   File(source).copySync(p.join(destination, p.basename(source)));
+}
+
+/// Options for [run] that tell Git to commit using [botName] and [botemail.
+final botEnvironment = RunOptions(environment: {
+  "GIT_AUTHOR_NAME": botName,
+  "GIT_AUTHOR_EMAIL": botEmail,
+  "GIT_COMMITTER_NAME": botName,
+  "GIT_COMMITTER_EMAIL": botEmail
+});
+
+/// Ensure that the repository at [url] is cloned into the build directory and
+/// pointing to the latest master revision.
+///
+/// Returns the path to the repository.
+Future<String> cloneOrPull(String url) async {
+  var name = p.url.basename(url);
+  if (p.url.extension(name) == ".git") name = p.url.withoutExtension(name);
+
+  var path = p.join("build", name);
+
+  if (Directory(p.join(path, '.git')).existsSync()) {
+    log("Updating $url");
+    await runAsync("git",
+        arguments: ["fetch", "origin"], workingDirectory: path);
+  } else {
+    delete(Directory(path));
+    await runAsync("git", arguments: ["clone", url, path]);
+    await runAsync("git",
+        arguments: ["config", "advice.detachedHead", "false"],
+        workingDirectory: path);
+  }
+  await runAsync("git",
+      arguments: ["checkout", "origin/master"], workingDirectory: path);
+  log("");
+
+  return path;
 }

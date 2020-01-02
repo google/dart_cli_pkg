@@ -16,6 +16,8 @@ before_install:
     choco install nodejs.install;
     export PATH="$PATH:/c/Program Files/nodejs";
   fi
+- git config --global user.email "travis@local"
+- git config --global user.name "Travis CI"
 
 matrix:
   include:

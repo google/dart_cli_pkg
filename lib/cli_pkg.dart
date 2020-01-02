@@ -14,6 +14,7 @@
 
 import 'src/chocolatey.dart';
 import 'src/github.dart';
+import 'src/homebrew.dart';
 import 'src/npm.dart';
 import 'src/pub.dart';
 import 'src/standalone.dart';
@@ -21,6 +22,7 @@ import 'src/standalone.dart';
 export 'src/chocolatey.dart';
 export 'src/info.dart';
 export 'src/github.dart';
+export 'src/homebrew.dart';
 export 'src/npm.dart';
 export 'src/pub.dart';
 export 'src/standalone.dart';
@@ -29,6 +31,7 @@ export 'src/standalone.dart';
 void addAllTasks() {
   addChocolateyTasks();
   addGithubTasks();
+  addHomebrewTasks();
   addNpmTasks();
   addPubTasks();
   addStandaloneTasks();
