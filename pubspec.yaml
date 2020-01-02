@@ -1,4 +1,6 @@
 name: cli_pkg
+version: 1.0.0-beta.1
+description: Grinder tasks for releasing Dart CLI packages.
 
 environment:
   sdk: '>=2.3.0 <3.0.0'
