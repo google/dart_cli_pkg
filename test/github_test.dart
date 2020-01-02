@@ -245,7 +245,7 @@ void main() {
   });
 
   group("release notes", () {
-    Future<void> assertReleaseNotes(matcher) async {
+    Future<void> assertReleaseNotes(Object matcher) async {
       await _release("my_org/my_app", verify: (request) async {
         expect(json.decode(await request.readAsString())["body"] as String,
             matcher);
@@ -253,7 +253,7 @@ void main() {
     }
 
     Future<void> assertReleaseNotesFromChangelog(
-        String changelog, matcher) async {
+        String changelog, Object matcher) async {
       await d.package(pubspecWithHomepage, _enableGithub()).create();
       await d.file("my_app/CHANGELOG.md", changelog).create();
       await assertReleaseNotes(matcher);
