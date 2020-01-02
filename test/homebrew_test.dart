@@ -317,7 +317,7 @@ Future<TestProcess> _homebrewUpdate() => grind([
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
 /// reset to the new `master` branch.
-Future<void> _assertFormula(matcher) async {
+Future<void> _assertFormula(Object matcher) async {
   await git(["reset", "--hard", "master"], workingDirectory: "me/homebrew.git");
   await d.file("me/homebrew.git/my_app.rb", matcher).validate();
 }
