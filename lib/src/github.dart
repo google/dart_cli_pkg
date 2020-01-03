@@ -124,6 +124,9 @@ String get _authorization =>
 /// repository and uses the portion between the first and second level-2 `##`
 /// headers. It throws a [FormatException] if the CHANGELOG doesn't begin with
 /// `##` followed by [version].
+///
+/// If this is set to `null`, or by default if no `CHANGELOG.md` exists, no
+/// release notes will be added to the GitHub release.
 String get githubReleaseNotes {
   if (_githubReleaseNotes != null) return _githubReleaseNotes;
   if (!File("CHANGELOG.md").existsSync()) return null;

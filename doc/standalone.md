@@ -21,7 +21,7 @@ Output: `build/$entrypoint.snapshot`
 
 Compiles each executable in the package to a [kernel snapshot][snapshot].
 
-[snapshots]: https://github.com/dart-lang/sdk/wiki/Snapshots
+[snapshot]: https://github.com/dart-lang/sdk/wiki/Snapshots
 
 ## `pkg-compile-native`
 
