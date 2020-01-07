@@ -177,34 +177,34 @@ void main() {
       var executable = await TestProcess.start(
           d.path("out/my_app/foo$dotBat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo"));
+      expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
 
       // Through a redirect
       executable = await TestProcess.start(d.path("out/my_app/qux$dotBat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in bar"));
+      expect(executable.stdout, emits("in bar 1.2.3"));
       await executable.shouldExit(0);
 
       // Through a relative symlink
       Link(d.path("foo-relative")).createSync("out/my_app/foo$dotBat");
       executable = await TestProcess.start(d.path("foo-relative"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo"));
+      expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
 
       // Through an absolute symlink
       Link(d.path("foo-absolute")).createSync(d.path("out/my_app/foo$dotBat"));
       executable = await TestProcess.start(d.path("foo-absolute"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo"));
+      expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
 
       // Through a nested symlink
       Link(d.path("foo-nested")).createSync(d.path("foo-relative"));
       executable = await TestProcess.start(d.path("foo-nested"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo"));
+      expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
     }, onPlatform: {"windows": Skip("google/dart_cli_pkg#25")});
   }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});

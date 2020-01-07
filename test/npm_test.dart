@@ -172,17 +172,17 @@ void main() {
 
       var process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
-      expect(process.stdout, emitsInOrder(["in foo", emitsDone]));
+      expect(process.stdout, emitsInOrder(["in foo 1.2.3", emitsDone]));
       await process.shouldExit(0);
 
       process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/bar.js")]);
-      expect(process.stdout, emitsInOrder(["in bar", emitsDone]));
+      expect(process.stdout, emitsInOrder(["in bar 1.2.3", emitsDone]));
       await process.shouldExit(0);
 
       process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/qux.js")]);
-      expect(process.stdout, emitsInOrder(["in zang", emitsDone]));
+      expect(process.stdout, emitsInOrder(["in zang 1.2.3", emitsDone]));
       await process.shouldExit(0);
     });
 

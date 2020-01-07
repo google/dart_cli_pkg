@@ -66,7 +66,12 @@ DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
 
     dir("bin", [
       for (var basename in executables)
-        file("$basename.dart", 'void main() => print("in $basename");')
+        file(
+            "$basename.dart",
+            // Include the version variable to ensure that executables we invoke
+            // have access to it.
+            'void main() => print("in $basename '
+                '\${const String.fromEnvironment("version")}");')
     ]),
 
     dir("tool", [
