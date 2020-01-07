@@ -95,7 +95,7 @@ String _githubUser;
 /// **Do not check this in directly.** This should only come from secure
 /// sources.
 ///
-/// This can be either the username itself, a [personal access token][], or an
+/// This can be either the password itself, a [personal access token][], or an
 /// OAuth token.
 ///
 /// [personal access token]: https://github.com/settings/tokens

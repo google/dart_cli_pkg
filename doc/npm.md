@@ -2,6 +2,8 @@ These tasks compile the package to JavaScript, build [npm][] packages, and
 upload them to the npm registry. They're enabled by calling
 [`pkg.addNpmTasks()`][].
 
+[`pkg.addNpmTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addNpmTasks.html
+
 Note that all JS compilation requires that a `package.json` file exist at the
 root of your package, *or* that you set the [`pkg.npmPackageJson`][] field.
 Either way, you must at least include the `"name"` field.
