@@ -143,7 +143,7 @@ Future<void> _buildDev() async {
     writeString(
         script,
         renderTemplate(
-            "standalone/executable-dev.${Platform.isWindows ? '.bat' : 'sh'}", {
+            "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
           "dart": Platform.resolvedExecutable,
           "version": version.toString(),
           "executable": "${p.basename(path)}.snapshot"
