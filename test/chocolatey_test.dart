@@ -357,7 +357,7 @@ void main() {
 
       var executable = await TestProcess.start(d.path("out/tools/foo.bat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo"));
+      expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
     }, testOn: "windows");
   });

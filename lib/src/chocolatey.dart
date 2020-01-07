@@ -222,11 +222,8 @@ Future<void> _build() async {
 
     archive.addFile(fileFromString(
         "tools/$name.bat",
-        renderTemplate("chocolatey/executable.bat", {
-          "name": _chocolateyName,
-          "version": version.toString(),
-          "executable": p.basename(path)
-        }),
+        renderTemplate("chocolatey/executable.bat",
+            {"name": _chocolateyName, "executable": p.basename(path)}),
         executable: true));
   });
 
