@@ -87,6 +87,13 @@ void addStandaloneTasks() {
       taskFunction: _compileNative,
       description: 'Build Dart native executable(s).'));
 
+  addTask(GrinderTask('pkg-standalone-dev',
+      taskFunction: _buildDev,
+      description: 'Build standalone executable(s) for testing.',
+      // TODO(nweiz): Build a native executable on platforms that support it
+      // when dart-lang/sdk#39973 is fixed.
+      depends: ['pkg-compile-snapshot']));
+
   for (var os in ["linux", "macos", "windows"]) {
     addTask(GrinderTask('pkg-standalone-$os-ia32',
         taskFunction: () => _buildPackage(os, x64: false),
@@ -126,6 +133,24 @@ bool _useNative(String os, {@required bool x64}) {
   if (os == 'windows' && !useDart2Native) return false;
 
   return true;
+}
+
+/// Builds scripts for testing each executable on the current OS and
+/// architecture.
+Future<void> _buildDev() async {
+  executables.forEach((name, path) {
+    var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
+    writeString(
+        script,
+        renderTemplate(
+            "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
+          "dart": Platform.resolvedExecutable,
+          "version": version.toString(),
+          "executable": "${p.basename(path)}.snapshot"
+        }));
+
+    if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
+  });
 }
 
 /// Builds a package for the given [os] and architecture.

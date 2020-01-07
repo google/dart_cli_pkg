@@ -17,7 +17,6 @@ repo.
 
 [`pkg.githubRepo`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubRepo.html
 
-
 ## `pkg-homebrew-update`
 
 Uses configuration: [`pkg.version`][], [`pkg.humanName`][], [`pkg.botName`][],

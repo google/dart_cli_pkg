@@ -30,6 +30,35 @@ individually:
 * [Uploading standalone archives to GitHub releases.](doc/github.md)
 * [Compiling to JavaScript and publishing to npm.](doc/npm.md)
 * [Uploading standalone archives to Chocolatey.](doc/chocolatey.md)
+* [Updating a Homebrew formula to download from GitHub releases.](doc/homebrew.md)
 * [Publishing to pub.](doc/pub.md)
 
 It's strongly recommended that this package be imported with the prefix `pkg`.
+
+### Configuration
+
+This package is highly configurable, using properties defined [at the top level
+of the library][]. By default, it infers as much configuration as possible from
+the package's pubspec, but almost all properties can be overridden in the
+`main()` method:
+
+[at the top level of the library]: https://pub.dev/documentation/sass/latest/sass/sass-library.html#properties
+
+```dart
+import 'package:cli_pkg/cli_pkg.dart' as pkg;
+import 'package:grinder/grinder.dart';
+
+void main(List<String> args) {
+  pkg.name = "bot-name";
+  pkg.humanName = "My App";
+
+  pkg.addAllTasks();
+  grind(args);
+}
+```
+
+Each task describes exactly which configuration variables it uses. Configuration
+that just applies to one set of tasks is always prefixed with a corresponding
+name. For example, [`pkg.jsFlags`][] applies to JavaScript compilation.
+
+[`pkg.jsFlags`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsFlags.html

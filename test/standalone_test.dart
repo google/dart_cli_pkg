@@ -358,4 +358,32 @@ void main() {
       if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
     });
   });
+
+  group("pkg-standalone-dev creates an executable", () {
+    test("that can be invoked", () async {
+      await d.package(pubspec, _enableStandalone).create();
+      await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+
+      var executable = await TestProcess.start(
+          d.path("my_app/build/foo$dotBat"), [],
+          workingDirectory: d.sandbox);
+      expect(executable.stdout, emits("in foo 1.2.3"));
+      await executable.shouldExit(0);
+    });
+
+    test("that runs with asserts enabled", () async {
+      await d.package(pubspec, _enableStandalone).create();
+      await d
+          .file("my_app/bin/foo.dart", "void main() { assert(false); }")
+          .create();
+
+      await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+
+      var executable = await TestProcess.start(
+          d.path("my_app/build/foo$dotBat"), [],
+          workingDirectory: d.sandbox);
+      expect(executable.stderr, emitsThrough(contains("Failed assertion")));
+      await executable.shouldExit(255);
+    });
+  });
 }

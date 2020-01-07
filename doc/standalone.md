@@ -21,7 +21,7 @@ Output: `build/$entrypoint.snapshot`
 
 Compiles each executable in the package to a [kernel snapshot][snapshot].
 
-[snapshots]: https://github.com/dart-lang/sdk/wiki/Snapshots
+[snapshot]: https://github.com/dart-lang/sdk/wiki/Snapshots
 
 ## `pkg-compile-native`
 
@@ -39,6 +39,23 @@ Defines an environment constant named `version` set to [`pkg.version`][] that
 can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
+
+## `pkg-standalone-dev`
+
+Depends on: [`pkg-compile-snapshot`][]
+
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
+
+[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
+
+Output: `build/$executable` (on Linux and Mac OS) or `build/$executable.bat` (on
+Windows)
+
+Creates scripts for each of this package's executables that executes them with
+asserts enabled. The details of how the executables are compiled may change over
+time or from platform to platform for increased efficiency, but they'll always
+be invoked through the same scripts. This makes it easy to run executable
+integration tests as efficiently as possible across platforms.
 
 ## `pkg-standalone-$os-$arch`
 
