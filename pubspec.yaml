@@ -1,29 +1,32 @@
 name: cli_pkg
 version: 1.0.0-beta.1
 description: Grinder tasks for releasing Dart CLI packages.
+homepage: https://github.com/google/dart_cli_pkg
 
 environment:
   sdk: '>=2.3.0 <3.0.0'
 
 dependencies:
   archive: ">=1.0.0 <3.0.0"
-  crypto: "^2.0.0"
+  async: '>=1.13.0 <3.0.0'
+  charcode: "^1.1.0"
   collection: ">=1.8.0 <2.0.0"
+  crypto: "^2.0.0"
   grinder: '^0.8.0'
   http: ">=0.11.0 <0.13.0"
-  package_config: '^1.1.0'
-  pubspec_parse: '^0.1.0'
+  js: "^0.6.0"
   meta: "^1.1.7"
   mustache: "^1.0.0"
   node_preamble: "^1.1.0"
+  package_config: '^1.1.0'
   path: '^1.0.0'
   pub_semver: '^1.0.0'
-  js: "^0.6.0"
+  pubspec_parse: '^0.1.0'
+  string_scanner: '^1.0.0'
   xml: '^3.6.0'
   yaml: '^2.0.0'
 
 dev_dependencies:
-  async: '>=1.13.0 <3.0.0'
   pedantic: '^1.6.0'
   sass_analysis:
     git: {url: git://github.com/sass/dart-sass, path: analysis}
