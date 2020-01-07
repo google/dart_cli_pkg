@@ -41,8 +41,10 @@ void _compileSnapshot() {
   ensureBuild();
 
   for (var entrypoint in entrypoints) {
-    Dart.run(entrypoint,
-        vmArgs: ['--snapshot=build/${p.basename(entrypoint)}.snapshot']);
+    Dart.run(entrypoint, vmArgs: [
+      '-Dversion=$version',
+      '--snapshot=build/${p.basename(entrypoint)}.snapshot'
+    ]);
   }
 }
 
@@ -149,11 +151,8 @@ Future<void> _buildPackage(String os, {@required bool x64}) async {
     archive.addFile(fileFromString(
         "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
         renderTemplate(
-            "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}", {
-          "name": standaloneName,
-          "version": _useNative(os, x64: x64) ? null : version.toString(),
-          "executable": p.basename(path)
-        }),
+            "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
+            {"name": standaloneName, "executable": p.basename(path)}),
         executable: true));
   });
 
