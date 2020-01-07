@@ -3,7 +3,7 @@ of the package's executables, which can then be easily distributed. They're the
 basis for many other tasks that upload the packages to various package managers.
 They're enabled by calling [`pkg.addStandaloneTasks()`][].
 
-[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addStandaloneTasks.html
+[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
 Standalone executables are built and executed in a context with the `version`
 environment declaration set to the package's version. This can be accessed with
@@ -15,7 +15,7 @@ environment declaration set to the package's version. This can be accessed with
 
 Uses configuration: [`pkg.executables`][]
 
-[`pkg.executables`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/executables.html
+[`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
 
 Output: `build/$entrypoint.snapshot`
 
@@ -27,7 +27,7 @@ Compiles each executable in the package to a [kernel snapshot][snapshot].
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 
 Output: `build/$entrypoint.native`
 
@@ -46,7 +46,7 @@ Depends on: [`pkg-compile-snapshot`][]
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 
 Output: `build/$executable` (on Linux and Mac OS) or `build/$executable.bat` (on
 Windows)
@@ -66,7 +66,7 @@ Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native`][]
 
 Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executables`][]
 
-[`pkg.standaloneName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/standaloneName.html
+[`pkg.standaloneName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/standaloneName.html
 
 Output: `build/$standaloneName-$version-$os-$arch.(tar.gz|zip)`
 

@@ -10,7 +10,7 @@ automatically deploy packages.
 To use this package, import `package:cli_pkg/cli_pkg.dart` and call
 [`pkg.addAllTasks()`][] before calling [`grind()`][]:
 
-[`pkg.addAllTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addAllTasks.html
+[`pkg.addAllTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addAllTasks.html
 [`grind()`]: https://pub.dev/documentation/grinder/latest/grinder/grind.html
 
 ```dart
@@ -61,4 +61,4 @@ Each task describes exactly which configuration variables it uses. Configuration
 that just applies to one set of tasks is always prefixed with a corresponding
 name. For example, [`pkg.jsFlags`][] applies to JavaScript compilation.
 
-[`pkg.jsFlags`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsFlags.html
+[`pkg.jsFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsFlags.html

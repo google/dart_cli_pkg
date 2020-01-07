@@ -5,8 +5,8 @@ anywhere: they don't require Chocolatey to be installed, and they don't need to
 be run on Windows.
 
 [Chocolatey]: https://chocolatey.org
-[`pkg.addChocolateyTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addChocolateyTasks.html
-[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addStandaloneTasks.html
+[`pkg.addChocolateyTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addChocolateyTasks.html
+[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
 
 ## `pkg-chocolatey-build`
@@ -18,9 +18,9 @@ Depends on: [`pkg-compile-snapshot`][]
 Uses configuration: [`pkg.version`][], [`pkg.executables`][],
 [`pkg.chocolateyNuspec`][]
 
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
-[`pkg.executables`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/executables.html
-[`pkg.chocolateyNuspec`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/chocolateyNuspec.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
+[`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
+[`pkg.chocolateyNuspec`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyNuspec.html
 
 Ouput: `build/${name}.${version}.nupkg`
 
@@ -34,6 +34,6 @@ Depends on: [`pkg-chocolatey-build`][]
 
 Uses configuration: [`pkg.chocolateyToken`][]
 
-[`pkg.chocolateyToken`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/chocolateyToken.html
+[`pkg.chocolateyToken`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyToken.html
 
 Releases the package to Chocolatey.

@@ -6,7 +6,7 @@ Note that all JS compilation requires that a `package.json` file exist at the
 root of your package, *or* that you set the [`pkg.npmPackageJson`][] field.
 Either way, you must at least include the `"name"` field.
 
-[`pkg.npmPackageJson`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/npmPackageJson.html
+[`pkg.npmPackageJson`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmPackageJson.html
 
 When compiled to JS, the package has access to the `version` and `dartVersion`
 environment declarations, which provide the package's version and the version of
@@ -36,7 +36,7 @@ You can export JavaScript functions from your package so it can be loaded as a
 library in addition to having its executables invoked. See
 [`pkg.jsModuleMainLibrary`][] for more details.
 
-[`pkg.jsModuleMainLibrary`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsModuleMainLibrary.html
+[`pkg.jsModuleMainLibrary`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsModuleMainLibrary.html
 
 ## `pkg-js-dev`
 
@@ -44,11 +44,11 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.jsFlags`][],
 [`pkg.jsDevFlags`][], [`pkg.jsRequires`][], [`pkg.jsModuleMainLibrary`][],
 [`pkg.npmPackageJson`][]
 
-[`pkg.executables`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/executables.html
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
-[`pkg.jsFlags`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsFlags.html
-[`pkg.jsDevFlags`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsDevFlags.html
-[`pkg.jsRequires`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsRequires.html
+[`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
+[`pkg.jsFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsFlags.html
+[`pkg.jsDevFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsDevFlags.html
+[`pkg.jsRequires`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsRequires.html
 
 Output: `build/$name.dart.js`
 
@@ -61,7 +61,7 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.jsFlags`][],
 [`pkg.jsReleaseFlags`][], [`pkg.jsRequires`][], [`pkg.jsModuleMainLibrary`][],
 [`pkg.npmPackageJson`][]
 
-[`pkg.jsReleaseFlags`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/jsReleaseFlags.html
+[`pkg.jsReleaseFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsReleaseFlags.html
 
 Output: `build/$name.dart.js`
 
@@ -77,7 +77,7 @@ Depends on: [`pkg-js-dev`][]
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][]
 
-[`pkg.npmReadme`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/npmReadme.html
+[`pkg.npmReadme`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmReadme.html
 
 Output: `build/npm/*`
 
@@ -113,6 +113,6 @@ Depends on: [`pkg-npm-release`][]
 
 Uses configuration: [`pkg.npmToken`][]
 
-[`pkg.npmToken`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/npmToken.html
+[`pkg.npmToken`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmToken.html
 
 Publishes the package to the npm registry.
