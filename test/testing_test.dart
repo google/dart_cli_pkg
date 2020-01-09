@@ -132,9 +132,7 @@ void main() {
     group("fails if a modification was made to", () {
       test("the lib directory", () async {
         await Future.delayed(Duration(seconds: 1));
-        await d.dir("my_app/lib", [
-          d.file("something.dart")
-        ]).create();
+        await d.dir("my_app/lib", [d.file("something.dart")]).create();
 
         await _testCase("""
           expect(() => pkg.ensureUpToDate('to-check', ''),
