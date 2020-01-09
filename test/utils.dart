@@ -40,10 +40,7 @@ Future<TestProcess> grind(List<String> arguments,
     Map<String, String> environment,
     bool forwardStdio = false}) async {
   if (!File(d.path(p.join(appDir, ".packages"))).existsSync()) {
-    await (await TestProcess.start(
-            "pub$dotBat", ["get", "--offline", "--no-precompile"],
-            forwardStdio: forwardStdio, workingDirectory: appDir))
-        .shouldExit(0);
+    await pubGet(forwardStdio: forwardStdio);
   }
 
   return await TestProcess.start("pub$dotBat", ["run", "grinder", ...arguments],
@@ -54,6 +51,14 @@ Future<TestProcess> grind(List<String> arguments,
         "_CLI_PKG_TESTING": "true",
         if (server != null) "_CLI_PKG_TEST_HOST": server.url.toString()
       });
+}
+
+/// Runs `pub get` in [appDir].
+Future<void> pubGet({bool forwardStdio = false}) async {
+  await (await TestProcess.start(
+          "pub$dotBat", ["get", "--offline", "--no-precompile"],
+          forwardStdio: forwardStdio, workingDirectory: appDir))
+      .shouldExit(0);
 }
 
 /// Runs Git in the application directory with the given [arguments].

@@ -27,8 +27,11 @@ export 'package:test_descriptor/test_descriptor.dart';
 final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
-/// The `cli_pkg` package's dependency on grinder.
+/// The `cli_pkg` package's dependency on `grinder`.
 final _ourGrinderDependency = _ourPubpsec["dependencies"]["grinder"] as String;
+
+/// The `cli_pkg` package's dependency on `test`.
+final _ourTestDependency = _ourPubpsec["dependencies"]["test"] as String;
 
 /// Returns a directory descriptor for a package in [appDir] with the given
 /// pubspec and `grind.dart` file, as well as other optional files.
@@ -48,6 +51,7 @@ DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
     ...pubspec,
     "dev_dependencies": {
       "grinder": _ourGrinderDependency,
+      "test": _ourTestDependency,
       "cli_pkg": {"path": p.current},
       ...?(pubspec["dev_dependencies"] as Map<String, Object>),
     }

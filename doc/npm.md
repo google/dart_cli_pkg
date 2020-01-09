@@ -90,6 +90,13 @@ dev-mode JavaScript, shims to invoke each executable's `main()` method, and its
 It will also include a README if [`pkg.npmReadme`][] isn't null, and a LICENSE
 if one exists at the top level of the package.
 
+Executables from this package can be invoked using testing APIs such as
+[`pkg.start()`][], [`pkg.executableRunner()`][], and [`pkg.executableArgs()`][].
+
+[`pkg.start()`]: https://pub.dev/documentation/cli_pkg/latest/testing/version.html
+[`pkg.executableRunner()`]: https://pub.dev/documentation/cli_pkg/latest/testing/executableRunner.html
+[`pkg.executableArgs()`]: https://pub.dev/documentation/cli_pkg/latest/testing/executableArgs.html
+
 ## `pkg-npm-release`
 
 Depends on: [`pkg-js-release`][]
