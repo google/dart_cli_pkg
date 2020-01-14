@@ -213,7 +213,7 @@ void main() {
       await _testCase("""
           var result = Process.runSync(
               pkg.executableRunner("foo"), pkg.executableArgs("foo"));
-          expect(result.stdout, equals("in foo 1.2.3\\n"));
+          expect(result.stdout, startsWith("in foo 1.2.3"));
           expect(result.exitCode, equals(0));
         """).create();
 
@@ -227,7 +227,7 @@ void main() {
         await _testCase("""
           var result = Process.runSync(
               pkg.executableRunner("foo"), pkg.executableArgs("foo"));
-          expect(result.stdout, equals("in foo 1.2.3\\n"));
+          expect(result.stdout, startsWith("in foo 1.2.3"));
           expect(result.exitCode, equals(0));
         """).create();
 
@@ -254,7 +254,7 @@ void main() {
           var result = Process.runSync(
               pkg.executableRunner("foo", node: true),
               pkg.executableArgs("foo", node: true));
-          expect(result.stdout, equals("in foo 1.2.3\\n"));
+          expect(result.stdout, startsWith("in foo 1.2.3"));
           expect(result.exitCode, equals(0));
         """).create();
 
