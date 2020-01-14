@@ -54,6 +54,8 @@ can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
 
 Depends on: [`pkg-compile-snapshot-dev`][]
 
+[`pkg-compile-snapshot-dev`]: #pkg-compile-snapshot-dev
+
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable` (on Linux and Mac OS) or `build/$executable.bat` (on
