@@ -9,7 +9,12 @@ os:
 - osx
 - windows
 
-dart_task: test
+# Shard tests to avoid running into Travis VM time limits, especially on Windows
+# and OS X.
+dart_task:
+- test: --total-shards 3 --shard-index 0
+- test: --total-shards 3 --shard-index 1
+- test: --total-shards 3 --shard-index 2
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" = windows ]]; then

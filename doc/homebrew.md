@@ -1,7 +1,7 @@
 This task updates an existing Homebrew formula to point to the latest source
 archive for this package. It's enabled by calling [`pkg.addHomebrewTasks()`][].
 
-[`pkg.addHomebrewTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addHomebrewTasks.html
+[`pkg.addHomebrewTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addHomebrewTasks.html
 
 The Homebrew task treats the package's Homebrew repository as the source of
 truth for all configuration and metadata. This means that it's the user's
@@ -15,7 +15,7 @@ This task assumes that the package is published on GitHub (specifically to
 [`pkg.githubRepo`][]), and that the task is running in a clone of that GitHub
 repo.
 
-[`pkg.githubRepo`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubRepo.html
+[`pkg.githubRepo`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubRepo.html
 
 ## `pkg-homebrew-update`
 
@@ -24,15 +24,15 @@ Uses configuration: [`pkg.version`][], [`pkg.humanName`][], [`pkg.botName`][],
 [`pkg.githubPassword`][], [`pkg.homebrewRepo`][], [`pkg.homebrewFormula`][],
 [`pkg.homebrewTag`][]
 
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
-[`pkg.humanName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/humanName.html
-[`pkg.botName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/botName.html
-[`pkg.botEmail`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/botEmail.html
-[`pkg.githubUser`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubUser.html
-[`pkg.githubPassword`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubPassword.html
-[`pkg.homebrewRepo`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/homebrewRepo.html
-[`pkg.homebrewFormula`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/homebrewFormula.html
-[`pkg.homebrewTag`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/homebrewTag.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
+[`pkg.humanName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/humanName.html
+[`pkg.botName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/botName.html
+[`pkg.botEmail`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/botEmail.html
+[`pkg.githubUser`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubUser.html
+[`pkg.githubPassword`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubPassword.html
+[`pkg.homebrewRepo`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewRepo.html
+[`pkg.homebrewFormula`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewFormula.html
+[`pkg.homebrewTag`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewTag.html
 
 Checks out [`pkg.homebrewRepo`][] and pushes a commit updating
 [`pkg.homebrewFormula`][]'s `url` and `sha256` fields to point to the

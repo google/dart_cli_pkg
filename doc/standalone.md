@@ -3,7 +3,7 @@ of the package's executables, which can then be easily distributed. They're the
 basis for many other tasks that upload the packages to various package managers.
 They're enabled by calling [`pkg.addStandaloneTasks()`][].
 
-[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addStandaloneTasks.html
+[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
 Standalone executables are built and executed in a context with the `version`
 environment declaration set to the package's version. This can be accessed with
@@ -13,21 +13,31 @@ environment declaration set to the package's version. This can be accessed with
 
 ## `pkg-compile-snapshot`
 
-Uses configuration: [`pkg.executables`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-[`pkg.executables`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/executables.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
+
+[`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
 
 Output: `build/$entrypoint.snapshot`
 
-Compiles each executable in the package to a [kernel snapshot][snapshot].
+Compiles each executable in the package to a [kernel snapshot][snapshot] with
+asserts disabled.
 
 [snapshot]: https://github.com/dart-lang/sdk/wiki/Snapshots
+
+## `pkg-compile-snapshot-dev`
+
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
+
+Output: `build/$entrypoint.snapshot`
+
+Compiles each executable in the package to a [kernel snapshot][snapshot] with
+asserts enabled.
 
 ## `pkg-compile-native`
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
-
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
 
 Output: `build/$entrypoint.native`
 
@@ -42,11 +52,11 @@ can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
 
 ## `pkg-standalone-dev`
 
-Depends on: [`pkg-compile-snapshot`][]
+Depends on: [`pkg-compile-snapshot-dev`][]
+
+[`pkg-compile-snapshot-dev`]: #pkg-compile-snapshot-dev
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
-
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
 
 Output: `build/$executable` (on Linux and Mac OS) or `build/$executable.bat` (on
 Windows)
@@ -54,8 +64,17 @@ Windows)
 Creates scripts for each of this package's executables that executes them with
 asserts enabled. The details of how the executables are compiled may change over
 time or from platform to platform for increased efficiency, but they'll always
-be invoked through the same scripts. This makes it easy to run executable
-integration tests as efficiently as possible across platforms.
+be invoked through the same scripts and testing APIs such as [`pkg.start()`][],
+[`pkg.executableRunner()`][], and [`pkg.executableArgs()`][] will always work
+with them.
+
+[`pkg.start()`]: https://pub.dev/documentation/cli_pkg/latest/testing/version.html
+[`pkg.executableRunner()`]: https://pub.dev/documentation/cli_pkg/latest/testing/executableRunner.html
+[`pkg.executableArgs()`]: https://pub.dev/documentation/cli_pkg/latest/testing/executableArgs.html
+
+**Note:** We recommend that you use the testing APIs rather than invoking the
+wrapper scripts from your test code. Killing a batch script on Windows won't
+kill its child process, which can cause unexpected errors when testing.
 
 ## `pkg-standalone-$os-$arch`
 
@@ -66,7 +85,7 @@ Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native`][]
 
 Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executables`][]
 
-[`pkg.standaloneName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/standaloneName.html
+[`pkg.standaloneName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/standaloneName.html
 
 Output: `build/$standaloneName-$version-$os-$arch.(tar.gz|zip)`
 

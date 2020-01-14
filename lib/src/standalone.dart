@@ -37,11 +37,14 @@ String _standaloneName;
 
 /// For each executable entrypoint in [executables], builds a script snapshot
 /// to `build/${executable}.snapshot`.
-void _compileSnapshot() {
+///
+/// If [release] is `false`, this compiles with `--enable-asserts`.
+void _compileSnapshot({@required bool release}) {
   ensureBuild();
 
   for (var entrypoint in entrypoints) {
     Dart.run(entrypoint, vmArgs: [
+      if (!release) '--enable-asserts',
       '-Dversion=$version',
       '--snapshot=build/${p.basename(entrypoint)}.snapshot'
     ]);
@@ -80,8 +83,12 @@ void addStandaloneTasks() {
   _addedStandaloneTasks = true;
 
   addTask(GrinderTask('pkg-compile-snapshot',
-      taskFunction: _compileSnapshot,
-      description: 'Build Dart script snapshot(s).'));
+      taskFunction: () => _compileSnapshot(release: true),
+      description: 'Build Dart script snapshot(s) in release mode.'));
+
+  addTask(GrinderTask('pkg-compile-snapshot-dev',
+      taskFunction: () => _compileSnapshot(release: false),
+      description: 'Build Dart script snapshot(s) in dev mode.'));
 
   addTask(GrinderTask('pkg-compile-native',
       taskFunction: _compileNative,
@@ -92,7 +99,7 @@ void addStandaloneTasks() {
       description: 'Build standalone executable(s) for testing.',
       // TODO(nweiz): Build a native executable on platforms that support it
       // when dart-lang/sdk#39973 is fixed.
-      depends: ['pkg-compile-snapshot']));
+      depends: ['pkg-compile-snapshot-dev']));
 
   for (var os in ["linux", "macos", "windows"]) {
     addTask(GrinderTask('pkg-standalone-$os-ia32',

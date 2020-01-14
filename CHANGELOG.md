@@ -1,3 +1,8 @@
+# 1.0.0-beta.3
+
+* Add a `cli_pkg/testing.dart` library to make it easier for users to
+  efficiently and reliably test their executables.
+
 # 1.0.0-beta.2
 
 * Add a `pkg-standalone-dev` task for building a script that can be invoked for

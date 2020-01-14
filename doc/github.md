@@ -3,18 +3,21 @@ by calling [`pkg.addGithubTasks()`][], which automatically calls
 [`pkg.addStandaloneTasks()`][].
 
 [standalone packages]: standalone.md
-[`pkg.addGithubTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addGithubTasks.html
-[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/addStandaloneTasks.html
+[`pkg.addGithubTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addGithubTasks.html
+[`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
 ## `pkg-github-release`
 
 Uses configuration: [`pkg.humanName`][], [`pkg.version`][],
-[`pkg.githubRepo`][], [`pkg.githubReleaseNotes`][]
+[`pkg.githubRepo`][], [`pkg.githubUser`][], [`pkg.githubPassword`][],
+[`pkg.githubReleaseNotes`][]
 
-[`pkg.humanName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/humanName.html
-[`pkg.version`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/version.html
-[`pkg.githubRepo`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubRepo.html
-[`pkg.githubReleaseNotes`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/githubReleaseNotes.html
+[`pkg.humanName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/humanName.html
+[`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
+[`pkg.githubRepo`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubRepo.html
+[`pkg.githubUser`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubUser.html
+[`pkg.githubPassword`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubPassword.html
+[`pkg.githubReleaseNotes`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubReleaseNotes.html
 
 Creates a GitHub release for the current version of this package, without any
 files uploaded to it.
@@ -25,9 +28,10 @@ Depends on: [`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`][]
 
 [`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`]: standalone.md#pkg-standalone-os-arch
 
-Uses configuration: [`pkg.version`][], [`pkg.githubRepo`][], [`pkg.standaloneName`][]
+Uses configuration: [`pkg.version`][], [`pkg.githubRepo`][],
+[`pkg.githubUser`][], [`pkg.githubPassword`][], [`pkg.standaloneName`][]
 
-[`pkg.standaloneName`]: https://pub.dev/documentation/dart_cli_pkg/latest/cli_pkg/standaloneName.html
+[`pkg.standaloneName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/standaloneName.html
 
 Uploads 32- and 64-bit executable packages for the given operating system
 (`linux`, `windows`, or `macos`) to the GitHub release for the current version.
