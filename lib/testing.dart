@@ -59,6 +59,7 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
         bool forwardStdio = false}) async =>
     await TestProcess.start(executableRunner(executable, node: node),
         [...executableArgs(executable, node: node), ...arguments],
+        workingDirectory: workingDirectory,
         environment: environment,
         includeParentEnvironment: includeParentEnvironment,
         runInShell: runInShell,
