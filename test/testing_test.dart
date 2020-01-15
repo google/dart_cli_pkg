@@ -274,6 +274,80 @@ void main() {
       });
     });
   });
+
+  group("ensureExecutableUpToDate", () {
+    test("in standalone source mode doesn't throw", () async {
+      await pubGet();
+      // This just shouldn't throw an error.
+      await _testCase("pkg.ensureExecutableUpToDate('foo');").create();
+
+      await (await _test()).shouldExit(0);
+    });
+
+    test("fails multiple times", () async {
+      await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+      _touch("my_app/bin/foo.dart");
+
+      await _testCase("""
+        expect(
+            () => pkg.ensureExecutableUpToDate('foo'),
+            throwsA(isA<TestFailure>()));
+
+        // This caches results but that shouldn't prevent future failures.
+        expect(
+            () => pkg.ensureExecutableUpToDate('foo'),
+            throwsA(isA<TestFailure>()));
+      """).create();
+      await (await _test()).shouldExit(0);
+    });
+
+    group("in standalone compiled mode", () {
+      test("doesn't throw if the snapshot is up-to-date", () async {
+        await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+
+        // This just shouldn't throw an error.
+        await _testCase("pkg.ensureExecutableUpToDate('foo');").create();
+
+        await (await _test()).shouldExit(0);
+      });
+
+      test("fails if a modification was made to the executable", () async {
+        await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+        _touch("my_app/bin/foo.dart");
+
+        await _testCase("""
+          expect(
+              () => pkg.ensureExecutableUpToDate('foo'),
+              throwsA(isA<TestFailure>()));
+        """).create();
+        await (await _test()).shouldExit(0);
+      });
+    });
+
+    group("in Node.js mode", () {
+      test("can be used to manually run an executable", () async {
+        await (await grind(["pkg-npm-dev"])).shouldExit(0);
+
+        // This just shouldn't throw an error.
+        await _testCase("pkg.ensureExecutableUpToDate('foo', node: true);")
+            .create();
+
+        await (await _test()).shouldExit(0);
+      });
+
+      test("fails if a modification was made to the executable", () async {
+        await (await grind(["pkg-npm-dev"])).shouldExit(0);
+        _touch("my_app/bin/foo.dart");
+
+        await _testCase("""
+          expect(
+              () => pkg.ensureExecutableUpToDate('foo', node: true),
+              throwsA(isA<TestFailure>()));
+        """).create();
+        await (await _test()).shouldExit(0);
+      });
+    });
+  });
 }
 
 /// Returns a descriptor for a test file in `test.dart` that contains a single

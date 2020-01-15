@@ -48,6 +48,10 @@ final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
 ///
 /// This throws a [TestFailure] if it would run a compiled executable that's
 /// out-of-date relative to the pubspec or to source files in `lib/` or `bin/`.
+///
+/// When using this in multiple tests, consider calling [setUpAll] with
+/// [ensureExecutableUpToDate] to avoid having many redundant test failures for
+/// an out-of-date executable.
 Future<TestProcess> start(String executable, Iterable<String> arguments,
         {bool node = false,
         String workingDirectory,
@@ -59,6 +63,7 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
         bool forwardStdio = false}) async =>
     await TestProcess.start(executableRunner(executable, node: node),
         [...executableArgs(executable, node: node), ...arguments],
+        workingDirectory: workingDirectory,
         environment: environment,
         includeParentEnvironment: includeParentEnvironment,
         runInShell: runInShell,
@@ -131,18 +136,17 @@ String executableRunner(String executable, {bool node = false}) =>
 /// ```
 ///
 /// Note that in practice it's usually easier to use [start].
+///
+/// When using this in multiple tests, consider calling [setUpAll] with
+/// [ensureExecutableUpToDate] to avoid having many redundant test failures for
+/// an out-of-date executable.
 List<String> executableArgs(String executable, {bool node = false}) {
-  if (node) {
-    var js = p.absolute("build/npm/$executable.js");
-    _ensureExecutableUpToDate(executable, js, 'pkg-npm-dev');
-    return [js];
-  }
+  ensureExecutableUpToDate(executable, node: node);
+
+  if (node) return [p.absolute("build/npm/$executable.js")];
 
   var snapshot = p.absolute("build/$executable.dart.snapshot");
-  if (File(snapshot).existsSync()) {
-    _ensureExecutableUpToDate(executable, snapshot, 'pkg-standalone-dev');
-    return [snapshot];
-  }
+  if (File(snapshot).existsSync()) return [snapshot];
 
   return [
     "-Dversion=$version",
@@ -151,12 +155,30 @@ List<String> executableArgs(String executable, {bool node = false}) {
   ];
 }
 
-/// Ensures that the [executable]'s compiled output at [path] is up-to-date
-/// relative to the sources that generate it.
-void _ensureExecutableUpToDate(
-    String executable, String path, String commandToRun) {
-  if (_executableUpToDateCache.add(path)) {
-    ensureUpToDate(path, commandToRun, dependencies: ['bin/$executable.dart']);
+/// Throws a [TestFailure] if [executable]'s compiled output isn't up-to-date
+/// relative to the pubspec or to source files in `lib/` or `bin/`.
+///
+/// This is automatically run by [start] and [executableArgs]. However, it's
+/// presented as a separate function so that users can run it in [setUpAll] to
+/// get only a single error per file rather than many.
+void ensureExecutableUpToDate(String executable, {bool node = false}) {
+  String path;
+  if (node) {
+    path = p.absolute("build/npm/$executable.js");
+  } else {
+    path = p.absolute("build/$executable.dart.snapshot");
+    if (!File(path).existsSync()) return;
+  }
+
+  if (!_executableUpToDateCache.contains(path)) {
+    ensureUpToDate(
+        path, "pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
+        dependencies: ['bin/$executable.dart']);
+
+    // Only add this after ensuring that the executable is up-to-date, so that
+    // running it multiple times for out-of-date inputs will cause multiple
+    // errors.
+    _executableUpToDateCache.add(path);
   }
 }
 
