@@ -276,8 +276,7 @@ void main() {
   });
 
   group("ensureExecutableUpToDate", () {
-    test("in standalone source mode doesn't throw",
-        () async {
+    test("in standalone source mode doesn't throw", () async {
       await pubGet();
       // This just shouldn't throw an error.
       await _testCase("pkg.ensureExecutableUpToDate('foo');").create();
@@ -306,8 +305,8 @@ void main() {
       test("doesn't throw if the snapshot is up-to-date", () async {
         await (await grind(["pkg-standalone-dev"])).shouldExit(0);
 
-      // This just shouldn't throw an error.
-      await _testCase("pkg.ensureExecutableUpToDate('foo');").create();
+        // This just shouldn't throw an error.
+        await _testCase("pkg.ensureExecutableUpToDate('foo');").create();
 
         await (await _test()).shouldExit(0);
       });
@@ -329,8 +328,9 @@ void main() {
       test("can be used to manually run an executable", () async {
         await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
-      // This just shouldn't throw an error.
-      await _testCase("pkg.ensureExecutableUpToDate('foo', node: true);").create();
+        // This just shouldn't throw an error.
+        await _testCase("pkg.ensureExecutableUpToDate('foo', node: true);")
+            .create();
 
         await (await _test()).shouldExit(0);
       });

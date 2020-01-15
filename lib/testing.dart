@@ -171,7 +171,8 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
   }
 
   if (!_executableUpToDateCache.contains(path)) {
-    ensureUpToDate(path, "pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
+    ensureUpToDate(
+        path, "pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
         dependencies: ['bin/$executable.dart']);
 
     // Only add this after ensuring that the executable is up-to-date, so that
