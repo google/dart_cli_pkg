@@ -1,3 +1,7 @@
+# 1.0.0-beta.4
+
+* Run `pub publish --force` so it doesn't hang forever.
+
 # 1.0.0-beta.3
 
 * Add a `cli_pkg/testing.dart` library to make it easier for users to
