@@ -72,7 +72,8 @@ String _parseGit(String url) {
 ///
 /// Returns `null` if it couldn't be parsed.
 String _parseHttp(String url) {
-  var match = RegExp(r"^https?://github\.com/([^/]+/[^/]+)").firstMatch(url);
+  var match = RegExp(r"^https?://github\.com/([^/]+/[^/]+?)(\.git)?($|/)")
+      .firstMatch(url);
   return match == null ? null : match[1];
 }
 

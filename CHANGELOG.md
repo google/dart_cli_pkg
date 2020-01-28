@@ -2,6 +2,8 @@
 
 * Run `pub publish --force` so it doesn't hang forever.
 
+* Properly parse GitHub repositories from HTTP URLs ending in `.git`.
+
 # 1.0.0-beta.3
 
 * Add a `cli_pkg/testing.dart` library to make it easier for users to
