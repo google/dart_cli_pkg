@@ -99,6 +99,117 @@ void main() {
     expect(await _lastCommitMessage(), equals("Update my_app to 1.2.3"));
   });
 
+  test("updates a Homebrew formula for a prerelease", () async {
+    await d.package(
+        {...pubspec, "version": "1.2.3-beta.1"},
+        _enableHomebrew(
+            config: "pkg.homebrewCreateVersionedFormula = false;")).create();
+    await _makeRepo("my_app");
+    await git(["tag", "1.2.3-beta.1"]);
+
+    await _createHomebrewRepo();
+    await (await _homebrewUpdate()).shouldExit(0);
+
+    await _assertFormula(allOf([
+      contains('url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
+      matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
+    ]));
+
+    await d
+        .nothing(p.join("me/homebrew.git", "my_app@1.2.3-beta.1.rb"))
+        .validate();
+
+    expect(await _lastCommitMessage(), equals("Update my_app to 1.2.3-beta.1"));
+  });
+
+  group("creates a new Homebrew formula", () {
+    test("for a pre-release version by default", () async {
+      await d.package(
+          {...pubspec, "version": "1.2.3-beta.1"}, _enableHomebrew()).create();
+      await _makeRepo("my_app");
+      await git(["tag", "1.2.3-beta.1"]);
+
+      await _createHomebrewRepo();
+      await (await _homebrewUpdate()).shouldExit(0);
+
+      await _assertFormula(allOf([
+        contains('url "original url"'),
+        contains(r'sha256 "original sha"')
+      ]));
+
+      await _assertFormula(
+          allOf([
+            contains('class MyAppAT123Beta1 < Formula'),
+            contains(
+                'url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
+            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
+          ]),
+          path: "my_app@1.2.3-beta.1.rb");
+
+      expect(await _lastCommitMessage(),
+          equals("Add a formula for my_app 1.2.3-beta.1"));
+    });
+
+    test("for a release version", () async {
+      await d
+          .package(
+              pubspec,
+              _enableHomebrew(
+                  config: "pkg.homebrewCreateVersionedFormula = true;"))
+          .create();
+      await _makeRepo("my_app");
+      await git(["tag", "1.2.3"]);
+
+      await _createHomebrewRepo();
+      await (await _homebrewUpdate()).shouldExit(0);
+
+      await _assertFormula(allOf([
+        contains('url "original url"'),
+        contains(r'sha256 "original sha"')
+      ]));
+
+      await _assertFormula(
+          allOf([
+            contains('class MyAppAT123 < Formula'),
+            contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
+          ]),
+          path: "my_app@1.2.3.rb");
+
+      expect(
+          await _lastCommitMessage(), equals("Add a formula for my_app 1.2.3"));
+    });
+
+    test("for a release version with a build identifier", () async {
+      await d.package(
+          {...pubspec, "version": "1.2.3+foo.1"},
+          _enableHomebrew(
+              config: "pkg.homebrewCreateVersionedFormula = true;")).create();
+      await _makeRepo("my_app");
+      await git(["tag", "1.2.3+foo.1"]);
+
+      await _createHomebrewRepo();
+      await (await _homebrewUpdate()).shouldExit(0);
+
+      await _assertFormula(allOf([
+        contains('url "original url"'),
+        contains(r'sha256 "original sha"')
+      ]));
+
+      await _assertFormula(
+          allOf([
+            contains('class MyAppAT123xfoo1 < Formula'),
+            contains(
+                'url "https://github.com/me/app/archive/1.2.3+foo.1.tar.gz"'),
+            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
+          ]),
+          path: "my_app@1.2.3+foo.1.rb");
+
+      expect(await _lastCommitMessage(),
+          equals("Add a formula for my_app 1.2.3+foo.1"));
+    });
+  });
+
   test("uses the human name in the commit message", () async {
     await d
         .package(pubspec, _enableHomebrew(config: 'pkg.humanName = "My App";'))
@@ -317,9 +428,14 @@ Future<TestProcess> _homebrewUpdate() => grind([
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
 /// reset to the new `master` branch.
-Future<void> _assertFormula(Object matcher) async {
+///
+/// The [path] is the basename of the formula file to verify. If it isn't
+/// passed, it defaults to `my_app.rb`.
+Future<void> _assertFormula(Object matcher, {String path}) async {
   await git(["reset", "--hard", "master"], workingDirectory: "me/homebrew.git");
-  await d.file("me/homebrew.git/my_app.rb", matcher).validate();
+  await d
+      .file(p.join("me/homebrew.git", path ?? "my_app.rb"), matcher)
+      .validate();
 }
 
 /// Returns the last commit message in `me/homebrew.git`.

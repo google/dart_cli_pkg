@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 
 import 'github.dart';
 import 'info.dart';
@@ -32,6 +33,19 @@ String _homebrewRepo;
 /// at the root of the repo without an `@` in its filename and modifying that.
 /// If there isn't exactly one such file, the task will fail.
 String homebrewFormula;
+
+/// Whether to update [homebrewFormula] in-place or copy it to a new
+/// `@`-versioned formula file for the current version number.
+///
+/// By default, this is `true` if and only if [version] is a prerelease version.
+bool get homebrewCreateVersionedFormula {
+  _homebrewCreateVersionedFormula ??= version.isPreRelease;
+  return _homebrewCreateVersionedFormula;
+}
+
+set homebrewCreateVersionedFormula(bool value) =>
+    _homebrewCreateVersionedFormula = value;
+bool _homebrewCreateVersionedFormula;
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -86,14 +100,32 @@ Future<void> _update() async {
       (match) => '\n${match[1]}sha256 "$digest"',
       "Couldn't find a sha256 field in $formulaPath.");
 
-  writeString(formulaPath, formula);
+  if (homebrewCreateVersionedFormula) {
+    formula = _replaceFirstMappedMandatory(
+        formula,
+        RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
+        (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
+        "Couldn't find a Formula subclass in $formulaPath.");
+
+    var newFormulaPath = p.join(p.dirname(formulaPath),
+        "${p.basenameWithoutExtension(formulaPath)}@$version.rb");
+    writeString(newFormulaPath, formula);
+    run("git",
+        arguments: ["add", p.relative(newFormulaPath, from: repo)],
+        workingDirectory: repo,
+        runOptions: botEnvironment);
+  } else {
+    writeString(formulaPath, formula);
+  }
 
   run("git",
       arguments: [
         "commit",
         "--all",
         "--message",
-        "Update $humanName to $version"
+        homebrewCreateVersionedFormula
+            ? "Add a formula for $humanName $version"
+            : "Update $humanName to $version"
       ],
       workingDirectory: repo,
       runOptions: botEnvironment);
@@ -142,3 +174,11 @@ String _formulaFile(String repo) {
     return entries.single;
   }
 }
+
+/// Converts [version] into the format Homebrew expects in an `@`-versioned
+/// formula name, not including the leading `AT`.
+String _classify(Version version) => version
+    .toString()
+    .replaceAllMapped(
+        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1].toUpperCase())
+    .replaceAll('+', 'x');

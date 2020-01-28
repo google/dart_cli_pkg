@@ -3,6 +3,9 @@
 * Add a `pkg.npmDistTag` getter that controls the distribution tag for an npm
   release.
 
+* Add a `pkg.homebrewCreateVersionedFormula` getter that controls whether the
+  Homebrew release creates a new formula or updates an existing one.
+
 # 1.0.0-beta.3
 
 * Add a `cli_pkg/testing.dart` library to make it easier for users to
