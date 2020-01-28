@@ -77,9 +77,10 @@ Depends on: [`pkg-js-dev`][]
 
 [`pkg-js-dev`]: #pkg-js-dev
 
-Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][], [`pkg.npmDistTag`][]
 
 [`pkg.npmReadme`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmReadme.html
+[`pkg.npmDistTag`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmDistTag.html
 
 Output: `build/npm/*`
 

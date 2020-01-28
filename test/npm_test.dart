@@ -391,6 +391,57 @@ void main() {
     });
   });
 
+  group("npmDistTag", () {
+    test('defaults to "latest" for a non-prerelease', () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          print(pkg.npmDistTag);
+        }
+      """, [_packageJson]).create();
+
+      var grinder = await grind(["pkg-npm-dev"]);
+      await expect(grinder.stdout, emits("latest"));
+      await grinder.shouldExit();
+    });
+
+    test("defaults to a prerelease identifier", () async {
+      await d.package({...pubspec, "version": "1.2.3-foo.4.bar"}, """
+        void main(List<String> args) {
+          print(pkg.npmDistTag);
+        }
+      """, [_packageJson]).create();
+
+      var grinder = await grind(["pkg-npm-dev"]);
+      await expect(grinder.stdout, emits("foo"));
+      await grinder.shouldExit();
+    });
+
+    test('defaults to "pre" for a prerelease without an identifier', () async {
+      await d.package({...pubspec, "version": "1.2.3-4.foo"}, """
+        void main(List<String> args) {
+          print(pkg.npmDistTag);
+        }
+      """, [_packageJson]).create();
+
+      var grinder = await grind(["pkg-npm-dev"]);
+      await expect(grinder.stdout, emits("pre"));
+      await grinder.shouldExit();
+    });
+
+    test("can be overridden", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.npmDistTag = "qux";
+          print(pkg.npmDistTag);
+        }
+      """, [_packageJson]).create();
+
+      var grinder = await grind(["pkg-npm-dev"]);
+      await expect(grinder.stdout, emits("qux"));
+      await grinder.shouldExit();
+    });
+  });
+
   group("README.md", () {
     test("isn't added if it doesn't exist on disk", () async {
       await d.package(pubspec, _enableNpm, [_packageJson]).create();
