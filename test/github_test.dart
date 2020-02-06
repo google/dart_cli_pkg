@@ -482,8 +482,8 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
       completion(containsAll([
         // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
         if (os != "macos")
-          contains("x64"),
-        contains("ia32")
+          contains("ia32"),
+        contains("x64")
       ])));
 
   return server;
