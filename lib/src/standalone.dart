@@ -124,7 +124,8 @@ void addStandaloneTasks() {
       description: 'Build all standalone packages.',
       depends: [
         for (var os in ["linux", "macos", "windows"])
-          for (var arch in ["ia32", "x64"]) "pkg-standalone-$os-$arch"
+          for (var arch in ["ia32", "x64"])
+            if (!(os == "macos" && arch == "ia32")) "pkg-standalone-$os-$arch"
       ]));
 }
 
