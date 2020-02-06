@@ -477,8 +477,14 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
     }));
   }
   urls.close();
-  expect(urls.future,
-      completion(containsAll([contains("x64"), contains("ia32")])));
+  expect(
+      urls.future,
+      completion(containsAll([
+        // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
+        if (os != "macos")
+          contains("x64"),
+        contains("ia32")
+      ])));
 
   return server;
 }

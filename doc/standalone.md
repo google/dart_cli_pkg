@@ -103,10 +103,10 @@ This produces a ZIP file in Windows, and a gzipped TAR file on Linux and Mac OS.
 ## `pkg-standalone-all`
 
 Depends on: [`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`,
-`pkg-standalone-macos-ia32`, `pkg-standalone-macos-x64`,
-`pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`][]
+`pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`,
+`pkg-standalone-windows-x64`][]
 
-[`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-macos-ia32`, `pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`]: #pkg-standalone-os-arch
+[`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`]: #pkg-standalone-os-arch
 
 A utility task for creating a packages for all operating systems in the same
 step.
