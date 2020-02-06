@@ -448,7 +448,7 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
   // order-independent assertions for each architecture once
   // dart-lang/shelf_test_handler#9 is fixed.
   var urls = FutureGroup<String>();
-  for (var i = 0; i < os == 'macos' ? 1 : 2; i++) {
+  for (var i = 0; i < (os == 'macos' ? 1 : 2); i++) {
     var completer = Completer<String>();
     urls.add(completer.future);
 
