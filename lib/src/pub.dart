@@ -65,8 +65,8 @@ Future<void> _deploy() async {
     ..closeSync();
 
   log("pub publish");
-  var process =
-      await Process.start(p.join(sdkDir.path, "bin/pub$dotBat"), ["publish"]);
+  var process = await Process.start(
+      p.join(sdkDir.path, "bin/pub$dotBat"), ["publish", "--force"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("pub publish failed");
