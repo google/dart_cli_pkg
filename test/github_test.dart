@@ -125,9 +125,19 @@ void main() {
             "https://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
       });
 
+      test("with an https URL ending in .git", () async {
+        await assertParses("https://github.com/google/dart_cli_pkg.git",
+            "google/dart_cli_pkg");
+      });
+
       test("with an http URL", () async {
         await assertParses(
             "http://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+      });
+
+      test("with an http URL ending in .git", () async {
+        await assertParses(
+            "http://github.com/google/dart_cli_pkg.git", "google/dart_cli_pkg");
       });
 
       test("with a git URL", () async {

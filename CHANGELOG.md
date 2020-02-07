@@ -1,5 +1,9 @@
 # 1.0.0-beta.4
 
+* Run `pub publish --force` so it doesn't hang forever.
+
+* Properly parse GitHub repositories from HTTP URLs ending in `.git`.
+
 * Drop support for Mac OS ia32 packages, since Dart 2.7 doesn't support them
   anymore.
 
