@@ -300,11 +300,6 @@ void main() {
         ]);
 
     group("Mac OS", () {
-      test("32-bit", () async {
-        await (await grind(["pkg-standalone-macos-ia32"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-macos-ia32.tar.gz").validate();
-      });
-
       test("64-bit", () async {
         await (await grind(["pkg-standalone-macos-x64"])).shouldExit(0);
         await archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate();
@@ -345,7 +340,6 @@ void main() {
       await (await grind(["pkg-standalone-all"])).shouldExit(0);
 
       await Future.wait([
-        archive("my_app/build/my_app-1.2.3-macos-ia32.tar.gz").validate(),
         archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate(),
         archive("my_app/build/my_app-1.2.3-linux-ia32.tar.gz").validate(),
         archive("my_app/build/my_app-1.2.3-linux-x64.tar.gz").validate(),

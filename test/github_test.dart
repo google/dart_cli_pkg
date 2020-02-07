@@ -458,7 +458,7 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
   // order-independent assertions for each architecture once
   // dart-lang/shelf_test_handler#9 is fixed.
   var urls = FutureGroup<String>();
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < (os == 'macos' ? 1 : 2); i++) {
     var completer = Completer<String>();
     urls.add(completer.future);
 
@@ -487,8 +487,14 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
     }));
   }
   urls.close();
-  expect(urls.future,
-      completion(containsAll([contains("x64"), contains("ia32")])));
+  expect(
+      urls.future,
+      completion(containsAll([
+        // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
+        if (os != "macos")
+          contains("ia32"),
+        contains("x64")
+      ])));
 
   return server;
 }
