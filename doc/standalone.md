@@ -100,13 +100,17 @@ faster and smaller than the kernel snapshots that are generated otherwise.
 
 This produces a ZIP file in Windows, and a gzipped TAR file on Linux and Mac OS.
 
+Note that `pkg-standalone-macos-ia32` doesn't exist. The Dart SDK no longer has
+a 32-bit distribution for Mac OS (as of Dart 2.7), because Mac OS Catalina and
+later are 64-bit-only.
+
 ## `pkg-standalone-all`
 
 Depends on: [`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`,
-`pkg-standalone-macos-ia32`, `pkg-standalone-macos-x64`,
-`pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`][]
+`pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`,
+`pkg-standalone-windows-x64`][]
 
-[`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-macos-ia32`, `pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`]: #pkg-standalone-os-arch
+[`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-macos-x64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`]: #pkg-standalone-os-arch
 
 A utility task for creating a packages for all operating systems in the same
 step.

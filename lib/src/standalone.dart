@@ -102,11 +102,14 @@ void addStandaloneTasks() {
       depends: ['pkg-compile-snapshot-dev']));
 
   for (var os in ["linux", "macos", "windows"]) {
-    addTask(GrinderTask('pkg-standalone-$os-ia32',
-        taskFunction: () => _buildPackage(os, x64: false),
-        description:
-            'Build a standalone 32-bit package for ${humanOSName(os)}.',
-        depends: ['pkg-compile-snapshot']));
+    // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
+    if (os != "macos") {
+      addTask(GrinderTask('pkg-standalone-$os-ia32',
+          taskFunction: () => _buildPackage(os, x64: false),
+          description:
+              'Build a standalone 32-bit package for ${humanOSName(os)}.',
+          depends: ['pkg-compile-snapshot']));
+    }
 
     addTask(GrinderTask('pkg-standalone-$os-x64',
         taskFunction: () => _buildPackage(os, x64: true),
@@ -121,7 +124,8 @@ void addStandaloneTasks() {
       description: 'Build all standalone packages.',
       depends: [
         for (var os in ["linux", "macos", "windows"])
-          for (var arch in ["ia32", "x64"]) "pkg-standalone-$os-$arch"
+          for (var arch in ["ia32", "x64"])
+            if (!(os == "macos" && arch == "ia32")) "pkg-standalone-$os-$arch"
       ]));
 }
 

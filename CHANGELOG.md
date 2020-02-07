@@ -6,6 +6,9 @@
 * Add a `pkg.homebrewCreateVersionedFormula` getter that controls whether the
   Homebrew release creates a new formula or updates an existing one.
 
+* Drop support for Mac OS ia32 packages, since Dart 2.7 doesn't support them
+  anymore.
+
 # 1.0.0-beta.3
 
 * Add a `cli_pkg/testing.dart` library to make it easier for users to

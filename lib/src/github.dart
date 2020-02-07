@@ -227,7 +227,12 @@ void addGithubTasks() {
     addTask(GrinderTask('pkg-github-$os',
         taskFunction: () => _uploadExecutables(os),
         description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: ['pkg-standalone-$os-ia32', 'pkg-standalone-$os-x64']));
+        depends: [
+          // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
+          if (os != "macos")
+            'pkg-standalone-$os-ia32',
+          'pkg-standalone-$os-x64'
+        ]));
   }
 
   addTask(GrinderTask('pkg-github-all',
@@ -251,7 +256,12 @@ Future<void> _uploadExecutables(String os) async {
       // Remove the URL template.
       .replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
-  await Future.wait(["ia32", "x64"].map((architecture) async {
+  await Future.wait([
+    // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
+    if (os != "macos")
+      "ia32",
+    "x64"
+  ].map((architecture) async {
     var format = os == "windows" ? "zip" : "tar.gz";
     var package = "$standaloneName-$version-$os-$architecture.$format";
     var response = await client.post("$uploadUrl?name=$package",
