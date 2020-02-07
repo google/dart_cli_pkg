@@ -1,5 +1,11 @@
 # 1.0.0-beta.4
 
+* Add a `pkg.npmDistTag` getter that controls the distribution tag for an npm
+  release.
+
+* Add a `pkg.homebrewCreateVersionedFormula` getter that controls whether the
+  Homebrew release creates a new formula or updates an existing one.
+
 * Run `pub publish --force` so it doesn't hang forever.
 
 * Properly parse GitHub repositories from HTTP URLs ending in `.git`.

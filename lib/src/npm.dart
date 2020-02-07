@@ -150,6 +150,30 @@ String get npmToken {
 set npmToken(String value) => _npmToken = value;
 String _npmToken;
 
+/// The [distribution tag][] to use when publishing the current `npm` package.
+///
+/// [distribution tag]: https://docs.npmjs.com/cli/dist-tag
+///
+/// By default this returns:
+///
+/// * For non-prerelease versions, `"latest"`.
+///
+/// * For prerelease versions with initial identifiers, that identifier. For
+///   example, for `1.0.0-beta.1` this will return `"beta"`.
+///
+/// * For other prerelease versions, `"pre"`.
+String get npmDistTag {
+  _npmDistTag ??= () {
+    if (version.preRelease.isEmpty) return "latest";
+    var firstComponent = version.preRelease[0];
+    return firstComponent is String ? firstComponent : "pre";
+  }();
+  return _npmDistTag;
+}
+
+set npmDistTag(String value) => _npmDistTag = value;
+String _npmDistTag;
+
 /// Whether [addNpmTasks] has been called yet.
 var _addedNpmTasks = false;
 
@@ -362,8 +386,9 @@ Future<void> _deploy() async {
   file.writeStringSync("\n//registry.npmjs.org/:_authToken=$npmToken");
   file.closeSync();
 
-  log("npm publish build/npm");
-  var process = await Process.start("npm", ["publish", "build/npm"]);
+  log("npm publish --tag $npmDistTag build/npm");
+  var process =
+      await Process.start("npm", ["publish", "--tag", npmDistTag, "build/npm"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("npm publish failed");

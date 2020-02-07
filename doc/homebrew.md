@@ -22,7 +22,7 @@ repo.
 Uses configuration: [`pkg.version`][], [`pkg.humanName`][], [`pkg.botName`][],
 [`pkg.botEmail`][], [`pkg.githubRepo`][], [`pkg.githubUser`][],
 [`pkg.githubPassword`][], [`pkg.homebrewRepo`][], [`pkg.homebrewFormula`][],
-[`pkg.homebrewTag`][]
+[`pkg.homebrewTag`][], [`pkg.homebrewCreateVersionedFormula`][]
 
 [`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 [`pkg.humanName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/humanName.html
@@ -33,6 +33,7 @@ Uses configuration: [`pkg.version`][], [`pkg.humanName`][], [`pkg.botName`][],
 [`pkg.homebrewRepo`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewRepo.html
 [`pkg.homebrewFormula`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewFormula.html
 [`pkg.homebrewTag`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewTag.html
+[`pkg.homebrewCreateVersionedFormula`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/homebrewCreateVersionedFormula.html
 
 Checks out [`pkg.homebrewRepo`][] and pushes a commit updating
 [`pkg.homebrewFormula`][]'s `url` and `sha256` fields to point to the
