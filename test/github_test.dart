@@ -442,7 +442,7 @@ Future<void> _release(String repo,
 /// requests corresponding to uploading a package for the given [os].
 Future<ShelfTestServer> _assertUploadsPackage(String os) async {
   var server = await ShelfTestServer.create();
-  server.handler.expect("GET", "/repos/my_org/my_app/tags/1.2.3",
+  server.handler.expect("GET", "/repos/my_org/my_app/releases/tags/1.2.3",
       (request) async {
     var authorization = _getAuthorization(request);
     expect(authorization.item1, equals("usr"));

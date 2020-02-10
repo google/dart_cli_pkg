@@ -1,3 +1,7 @@
+# 1.0.0-beta.5
+
+* Use the correct URL when fetching GitHub release metadata.
+
 # 1.0.0-beta.4
 
 * Add a `pkg.npmDistTag` getter that controls the distribution tag for an npm

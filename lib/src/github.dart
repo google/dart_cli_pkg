@@ -249,13 +249,18 @@ void addGithubTasks() {
 /// Upload the 32- and 64-bit executables to the current GitHub release
 Future<void> _uploadExecutables(String os) async {
   var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/tags/$version"),
+      url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
-  var uploadUrl = json
-      .decode(response.body)["upload_url"]
-      // Remove the URL template.
-      .replaceFirst(RegExp(r"\{[^}]+\}$"), "");
+  var body = json.decode(response.body);
+  var uploadUrlTemplate = body["upload_url"];
+  if (uploadUrlTemplate == null) {
+    throw 'Unexpected GitHub response, expected "upload_url" field:\n' +
+        JsonEncoder.withIndent("  ").convert(body);
+  }
+
+  // Remove the URL template.
+  var uploadUrl = uploadUrlTemplate.replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
   await Future.wait([
     // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
