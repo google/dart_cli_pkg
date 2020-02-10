@@ -249,7 +249,7 @@ void addGithubTasks() {
 /// Upload the 32- and 64-bit executables to the current GitHub release
 Future<void> _uploadExecutables(String os) async {
   var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/tags/$version"),
+      url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
   var body = json.decode(response.body);
