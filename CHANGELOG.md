@@ -1,3 +1,11 @@
+# 1.0.0-beta.6
+
+* Rather than releasing binary snapshots on Chocolatey, compile the source code
+  to compile native executables on users' machines.
+
+* Add a `chocolateyFiles` getter that returns the files that should be included
+  in the Chocolatey package.
+
 # 1.0.0-beta.5
 
 * Use the correct URL when fetching GitHub release metadata.

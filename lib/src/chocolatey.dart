@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -64,6 +65,28 @@ String get _chocolateyVersion {
   });
   return "${components.first}-$prerelease";
 }
+
+/// The set of files to include directly in the Chocolatey package.
+///
+/// This should be at least enough files to compile the package's executables.
+/// It defaults to all files in `lib/` and `bin/`, as well as `pubspec.lock`.
+///
+/// The `pubspec.yaml` file is always included regardless of the contents of
+/// this field.
+List<String> get chocolateyFiles {
+  _chocolateyFiles ??= [
+    ...['lib', 'bin']
+        .where((dir) => Directory(dir).existsSync())
+        .expand((dir) => Directory(dir).listSync(recursive: true))
+        .whereType<File>()
+        .map((entry) => entry.path),
+    'pubspec.lock'
+  ];
+  return _chocolateyFiles;
+}
+
+set chocolateyFiles(List<String> value) => _chocolateyFiles = value;
+List<String> _chocolateyFiles;
 
 /// The text contents of the Chocolatey package's [`.nuspec` file][].
 ///
@@ -176,14 +199,9 @@ void addChocolateyTasks() {
 
   addStandaloneTasks();
 
-  // TODO(nweiz): Rather than publishing a snapshot, publish a script that
-  // downloads the tagged source and builds an executable at install-time. This
-  // will ensure that 64-bit Chocolatey users get native executable performance
-  // even if the package isn't built on Windows.
   addTask(GrinderTask('pkg-chocolatey-build',
       taskFunction: () => _build(),
-      description: 'Build a package to upload to Chocolatey.',
-      depends: ['pkg-compile-snapshot']));
+      description: 'Build a package to upload to Chocolatey.'));
 
   addTask(GrinderTask('pkg-chocolatey-deploy',
       taskFunction: () => _deploy(),
@@ -206,25 +224,44 @@ Future<void> _build() async {
         _nupkgProperties))
     ..addFile(fileFromString("tools/LICENSE", await license));
 
-  for (var entrypoint in entrypoints) {
-    var snapshot = "${p.basename(entrypoint)}.snapshot";
-    archive.addFile(file("tools/$snapshot", "build/$snapshot"));
+  var sourceFiles = Archive()
+    ..addFile(fileFromString(
+        "source/pubspec.yaml",
+        // Don't download useless dev dependencies to users' computers.
+        json.encode(Map.of(rawPubspec)
+          ..remove('dev_dependencies')
+          ..remove('dependency_overrides'))));
+  for (var path in chocolateyFiles) {
+    var relative = p.relative(path);
+    if (relative == 'pubspec.yaml') continue;
+    sourceFiles.addFile(file(p.join('source', relative), path));
   }
+  archive.addFile(
+      fileFromBytes("tools/source.zip", ZipEncoder().encode(sourceFiles)));
 
-  var install = StringBuffer();
+  var install = StringBuffer("""
+\$ToolsDir = (Split-Path -parent \$MyInvocation.MyCommand.Definition)
+Get-ChocolateyUnzip -PackageName '$_chocolateyName' `
+   -File "\$ToolsDir\\source.zip" -Destination \$PackageFolder
+
+Write-Host "Fetching Dart dependencies..."
+\$SourceDir = "\$PackageFolder\\source"
+Push-Location -Path \$SourceDir
+pub get --no-precompile | Out-Null
+Pop-Location
+
+New-Item -Path \$PackageFolder -Name "bin" -ItemType "directory" | Out-Null
+Write-Host "Building executable${executables.length == 1 ? '' : 's'}..."
+""");
   var uninstall = StringBuffer();
   executables.forEach((name, path) {
-    // Write PoewrShell code to install/uninstall each batch script. Note that
-    // `$packageFolder` here is a PowerShell variable, not a Dart variable.
-    var args = '"$name" "\$packageFolder\\tools\\$name.bat"';
-    install.writeln("Generate-BinFile $args");
-    uninstall.writeln("Remove-BinFile $args");
-
-    archive.addFile(fileFromString(
-        "tools/$name.bat",
-        renderTemplate("chocolatey/executable.bat",
-            {"name": _chocolateyName, "executable": p.basename(path)}),
-        executable: true));
+    install.write("""
+\$ExePath = "\$PackageFolder\\bin\\$name.exe"
+dart2native "-Dversion=$version" "\$SourceDir\\$path" -o \$ExePath
+Generate-BinFile "$name" \$ExePath
+""");
+    uninstall
+        .writeln('Remove-BinFile "$name" "\$PackageFolder\\bin\\$name.exe"');
   });
 
   archive.addFile(

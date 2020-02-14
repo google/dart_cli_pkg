@@ -327,9 +327,8 @@ void main() {
         d.file(
             "tools/chocolateyInstall.ps1",
             allOf([
-              contains(
-                  r'Generate-BinFile "foo" "$packageFolder\tools\foo.bat"'),
-              contains(r'Generate-BinFile "bar" "$packageFolder\tools\bar.bat"')
+              contains(r'Generate-BinFile "foo" "$packageFolder\bin\foo.exe"'),
+              contains(r'Generate-BinFile "bar" "$packageFolder\bin\bar.exe"')
             ]))
       ]).validate();
     });
@@ -343,23 +342,11 @@ void main() {
         d.file(
             "tools/chocolateyUninstall.ps1",
             allOf([
-              contains(r'Remove-BinFile "foo" "$packageFolder\tools\foo.bat"'),
-              contains(r'Remove-BinFile "bar" "$packageFolder\tools\bar.bat"')
+              contains(r'Remove-BinFile "foo" "$packageFolder\bin\foo.exe"'),
+              contains(r'Remove-BinFile "bar" "$packageFolder\bin\bar.exe"')
             ]))
       ]).validate();
     });
-
-    test("includes executables that can be invoked", () async {
-      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-      await extract("my_app/build/my_app_choco.1.2.3.nupkg", "out");
-
-      var executable = await TestProcess.start(d.path("out/tools/foo.bat"), [],
-          workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo 1.2.3"));
-      await executable.shouldExit(0);
-    }, testOn: "windows");
   });
 
   group("token", () {

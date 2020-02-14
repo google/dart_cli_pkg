@@ -16,14 +16,11 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:pubspec_parse/pubspec_parse.dart';
-import 'package:yaml/yaml.dart';
+
+import 'utils.dart';
 
 /// The parsed pubspec for the CLI package.
 final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: 'pubspec.yaml');
-
-/// The raw YAML of the pubspec.
-final _rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: 'pubspec.yaml');
 
 /// The name of the package, as specified in the pubspec.
@@ -71,7 +68,7 @@ String _botEmail;
 /// may be modified, but the values must be paths to executable files in the
 /// package.
 Map<String, String> executables = () {
-  var executables = _rawPubspec['executables'] as Map<Object, Object>;
+  var executables = rawPubspec['executables'] as Map<Object, Object>;
 
   return {
     for (var entry in (executables ?? {}).entries)

@@ -8,21 +8,17 @@ be run on Windows.
 [`pkg.addChocolateyTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addChocolateyTasks.html
 [`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
-
 ## `pkg-chocolatey-build`
 
-Depends on: [`pkg-compile-snapshot`][]
-
-[`pkg-compile-snapshot`]: standalone.md#pkg-compile-snapshot
-
 Uses configuration: [`pkg.version`][], [`pkg.executables`][],
-[`pkg.chocolateyNuspec`][]
+[`pkg.chocolateyNuspec`][], [`pkg.chocolateyFiles`][]
 
 [`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 [`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
 [`pkg.chocolateyNuspec`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyNuspec.html
+[`pkg.chocolateyFiles`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyFiles.html
 
-Ouput: `build/${name}.${version}.nupkg`
+Output: `build/${name}.${version}.nupkg`
 
 Builds a package zip file in the format Chocolatey expects.
 
