@@ -14,11 +14,7 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:path/path.dart' as p;
-import 'package:shelf/shelf.dart' as shelf;
-import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 import 'package:xml/xml.dart' as xml;
@@ -42,19 +38,13 @@ void main() {
               [_nuspec()])
           .create();
 
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-      var path = [
-        for (var entry in Directory(d.path("my_app/build/")).listSync())
-          if (entry.path.endsWith(".nupkg")) entry.path
-      ].single;
-
-      expect(p.basename(path), equals("my_app_choco.$expected.nupkg"));
+      await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
       // `d.archive` requires a file with a known extension.
-      await _nupkg(path, [
-        d.file("my_app_choco.nuspec", contains("<version>$expected</version>"))
-      ]).validate();
+      await d
+          .file("my_app/build/chocolatey/my_app_choco.nuspec",
+              contains("<version>$expected</version>"))
+          .validate();
     }
 
     test("is unchanged for release versions",
@@ -70,7 +60,7 @@ void main() {
         () => assertVersion("1.2.3-beta.5.six.7", "1.2.3-beta5-six-7"));
   });
 
-  group("in the nupkg", () {
+  group("in the package", () {
     group("nuspec", () {
       group("throws an error if", () {
         Future<void> assertNuspecError(
@@ -78,7 +68,7 @@ void main() {
           await d.package(pubspec, _enableChocolatey(),
               [d.file("my_app_choco.nuspec", nuspec)]).create();
 
-          var grinder = await grind(["pkg-chocolatey-build"]);
+          var grinder = await grind(["pkg-chocolatey"]);
           expect(grinder.stdout, emitsThrough(contains(errorFragment)));
           await grinder.shouldExit(1);
         }
@@ -124,10 +114,10 @@ void main() {
       test("adds <version> and a dependency on the Dart SDK", () async {
         await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+        await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("my_app_choco.nuspec", _equalsXml("""
+        await d
+            .file("my_app/build/chocolatey/my_app_choco.nuspec", _equalsXml("""
             <?xml version="1.0" encoding="utf-8"?>
             <package
                 xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
@@ -142,7 +132,7 @@ void main() {
               </metadata>
             </package>
           """))
-        ]).validate();
+            .validate();
       });
 
       test("adds a dependency on the Dart SDK to existing dependencies",
@@ -155,10 +145,10 @@ void main() {
           """)
         ]).create();
 
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+        await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("my_app_choco.nuspec", _equalsXml("""
+        await d
+            .file("my_app/build/chocolatey/my_app_choco.nuspec", _equalsXml("""
           <?xml version="1.0" encoding="utf-8"?>
           <package
               xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
@@ -174,79 +164,7 @@ void main() {
             </metadata>
           </package>
         """))
-        ]).validate();
-      });
-    });
-
-    test("[Content_Types] is copied in", () async {
-      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-      await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-        // No reason to duplicate the entire asset here, so we just test for a
-        // distinctive substring.
-        d.file(
-            "[Content_Types].xml",
-            contains(
-                "http://schemas.openxmlformats.org/package/2006/content-types"))
-      ]);
-    });
-
-    test(".rels.xml is copied in", () async {
-      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-      await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-        d.file("_rels/.rels.xml", contains('Target="/my_app_choco.nuspec"'))
-      ]);
-    });
-
-    group("properties.psmdcp", () {
-      test("is created from required nuspec entries", () async {
-        await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("package/services/metadata/core-properties/properties.psmdcp",
-              _equalsXml("""
-                <?xml version="1.0">
-                <coreProperties
-                    xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
-                    dc="http://purl.org/dc/elements/1.1/">
-                  <dc:creator>Natalie Weizenbaum</dc:creator>
-                  <dc:description>A good app</dc:description>
-                  <dc:identifier>my_app_choco</dc:identifier>
-                  <version>1.2.3</version>
-                </coreProperties>
-              """))
-        ]);
-      });
-
-      test("gets extra information from <tags>", () async {
-        await d.package(pubspec, _enableChocolatey(),
-            [_nuspec("<tags>foo, bar, baz</tags>")]).create();
-
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("package/services/metadata/core-properties/properties.psmdcp",
-              contains("<keywords>foo, bar, baz</keywords>"))
-        ]);
-      });
-
-      test("gets extra information from <title>", () async {
-        await d.package(pubspec, _enableChocolatey(),
-            [_nuspec("<title>My App</title>")]).create();
-
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
-
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("package/services/metadata/core-properties/properties.psmdcp",
-              contains("<dc:title>My App</title>"))
-        ]);
+            .validate();
       });
     });
 
@@ -292,101 +210,85 @@ void main() {
                 _enableChocolatey(),
                 [_nuspec(), d.file("LICENSE", "Please use my code")])
             .create();
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+        await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file(
-              "tools/LICENSE",
-              allOf([
-                contains("Please use my code"),
-                contains("Copyright 2012, the Dart project authors."),
-                contains("Direct dependency license"),
-                contains("Indirect dependency license")
-              ]))
-        ]).validate();
+        await d
+            .file(
+                "my_app/build/chocolatey/tools/LICENSE",
+                allOf([
+                  contains("Please use my code"),
+                  contains("Copyright 2012, the Dart project authors."),
+                  contains("Direct dependency license"),
+                  contains("Indirect dependency license")
+                ]))
+            .validate();
       });
 
       test("is still generated if the package doesn't have a license",
           () async {
         await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-        await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+        await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-        await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-          d.file("tools/LICENSE",
-              contains("Copyright 2012, the Dart project authors."))
-        ]).validate();
+        await d
+            .file("my_app/build/chocolatey/tools/LICENSE",
+                contains("Copyright 2012, the Dart project authors."))
+            .validate();
       });
     });
 
     test("includes an installation script", () async {
       await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+      await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-      await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-        d.file(
-            "tools/chocolateyInstall.ps1",
-            allOf([
-              contains(r'Generate-BinFile "foo" "$packageFolder\bin\foo.exe"'),
-              contains(r'Generate-BinFile "bar" "$packageFolder\bin\bar.exe"')
-            ]))
-      ]).validate();
+      await d
+          .file(
+              "my_app/build/chocolatey/tools/chocolateyInstall.ps1",
+              allOf([
+                contains(r'Generate-BinFile "foo" $ExePath'),
+                contains(r'Generate-BinFile "bar" $ExePath')
+              ]))
+          .validate();
     });
 
     test("includes an uninstallation script", () async {
       await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
-      await (await grind(["pkg-chocolatey-build"])).shouldExit(0);
+      await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-      await _nupkg("my_app/build/my_app_choco.1.2.3.nupkg", [
-        d.file(
-            "tools/chocolateyUninstall.ps1",
-            allOf([
-              contains(r'Remove-BinFile "foo" "$packageFolder\bin\foo.exe"'),
-              contains(r'Remove-BinFile "bar" "$packageFolder\bin\bar.exe"')
-            ]))
-      ]).validate();
+      await d
+          .file(
+              "my_app/build/chocolatey/tools/chocolateyUninstall.ps1",
+              allOf([
+                contains(r'Remove-BinFile "foo" "$PackageFolder\bin\foo.exe"'),
+                contains(r'Remove-BinFile "bar" "$PackageFolder\bin\bar.exe"')
+              ]))
+          .validate();
     });
   });
 
-  group("token", () {
-    Future<void> assertToken(String expected,
-        {Map<String, String> environment}) async {
-      await _deploy(
-          verify: (request) {
-            expect(request.headers, containsPair("X-NuGet-ApiKey", expected));
-          },
-          environment: environment);
-    }
+  // Note: this test requires an administrative shell to run.
+  test("can be installed and run", () async {
+    await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
 
-    test("throws an error if it's not set anywhere", () async {
-      await d.package(
-          pubspec, _enableChocolatey(token: false), [_nuspec()]).create();
+    await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
-      var process = await grind(["pkg-chocolatey-deploy"]);
-      expect(
-          process.stdout,
-          emitsThrough(contains(
-              "pkg.chocolateyToken must be set to deploy to Chocolatey.")));
-      await process.shouldExit(1);
-    });
+    await (await TestProcess.start("choco", [
+      "install",
+      // We already have Dart installed, and sometimes this fails to find it.
+      "--ignore-dependencies",
+      d.path("my_app/build/my_app_choco.1.2.3.nupkg")
+    ]))
+        .shouldExit(0);
 
-    test("parses from the CHOCOLATEY_TOKEN environment variable", () async {
-      await d.package(
-          pubspec, _enableChocolatey(token: false), [_nuspec()]).create();
-      await assertToken("secret", environment: {"CHOCOLATEY_TOKEN": "secret"});
-    });
+    var foo = await TestProcess.start("foo", []);
+    expect(foo.stdout, emits("in foo 1.2.3"));
+    await foo.shouldExit(0);
 
-    test(
-        "prefers an explicit username to the CHOCOLATEY_TOKEN environment variable",
-        () async {
-      await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
-      await assertToken("tkn", environment: {"CHOCOLATEY_TOKEN": "wrong"});
-    });
-  });
-
-  // TODO(nweiz): Test the contents of package uploads when dart-lang/shelf#119
-  // is fixed.
+    var bar = await TestProcess.start("bar", []);
+    expect(bar.stdout, emits("in baz 1.2.3"));
+    await bar.shouldExit(0);
+  }, testOn: "windows");
 }
 
 /// The contents of a `grind.dart` file that just enables Chocolatey tasks.
@@ -411,27 +313,16 @@ String _enableChocolatey({bool token = true}) {
 
 d.FileDescriptor _nuspec([String extraMetadata]) {
   return d.file("my_app_choco.nuspec", """
-    <?xml version="1.0" encoding="utf-8"?>
-    <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-      <metadata>
-        <id>my_app_choco</id>
-        <description>A good app</description>
-        <authors>Natalie Weizenbaum</authors>
-        ${extraMetadata ?? ""}
-      </metadata>
-    </package>
-  """);
-}
-
-/// Like [d.archiveDescriptor], but works even though [name] has the extension
-/// `.nupkg`.
-///
-/// Can only be used to validate a file.
-d.ArchiveDescriptor _nupkg(String name, Iterable<d.Descriptor> contents) {
-  var fullPath = d.path(name);
-  var zipName = p.withoutExtension(fullPath) + ".zip";
-  File(fullPath).copySync(zipName);
-  return d.archive(zipName, contents);
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>my_app_choco</id>
+    <description>A good app</description>
+    <authors>Natalie Weizenbaum</authors>
+    ${extraMetadata ?? ""}
+  </metadata>
+</package>
+""");
 }
 
 /// A [Matcher] that asserts that a string has the same XML structure as
@@ -442,20 +333,3 @@ Matcher _equalsXml(String expected) => predicate((actual) {
           equals(xml.parse(expected).toXmlString(pretty: true)));
       return true;
     });
-
-/// Runs the deployment process, asserts that a PUT is made to the correct URL,
-/// passes that PUT request to [verify], and returns a 201 CREATED response.
-Future<void> _deploy(
-    {FutureOr<void> verify(shelf.Request request),
-    Map<String, String> environment}) async {
-  var server = await ShelfTestServer.create();
-  server.handler.expect("PUT", "/api/v2/package", expectAsync1((request) async {
-    if (verify != null) await verify(request);
-    return shelf.Response(201);
-  }));
-
-  var grinder = await grind(["pkg-chocolatey-deploy"],
-      server: server, environment: environment);
-  await grinder.shouldExit(0);
-  await server.close();
-}

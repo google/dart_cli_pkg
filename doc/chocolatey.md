@@ -1,14 +1,19 @@
 These tasks build and upload packages to the [Chocolatey][] package manager for
 Windows. They're enabled by calling [`pkg.addChocolateyTasks()`][], which
-automatically calls [`pkg.addStandaloneTasks()`][]. These tasks can be run
-anywhere: they don't require Chocolatey to be installed, and they don't need to
-be run on Windows.
+automatically calls [`pkg.addStandaloneTasks()`][].
 
 [Chocolatey]: https://chocolatey.org
 [`pkg.addChocolateyTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addChocolateyTasks.html
 [`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
-## `pkg-chocolatey-build`
+**Most of these tasks require the `choco` command line application to run.**
+It's easiest to run Chocolatey on Windows (it comes pre-installed on Travis CI's
+Windows VMs), but it's also possible to [run it on other platforms][] using
+Mono.
+
+[run on other platforms]: https://github.com/chocolatey/choco#other-platforms
+
+## `pkg-chocolatey`
 
 Uses configuration: [`pkg.version`][], [`pkg.executables`][],
 [`pkg.chocolateyNuspec`][], [`pkg.chocolateyFiles`][]
@@ -18,9 +23,24 @@ Uses configuration: [`pkg.version`][], [`pkg.executables`][],
 [`pkg.chocolateyNuspec`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyNuspec.html
 [`pkg.chocolateyFiles`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyFiles.html
 
+Output: `build/choco`
+
+Creates an un-archived directory that contains the package in a format that
+matches Chocolatey's layout expectations.
+
+This does not require the `choco` command-line executable.
+
+## `pkg-chocolatey-pack`
+
+Depends on: [`pkg-chocolatey`][]
+
+[`pkg-chocolatey`]: standalone.md#pkg-chocolatey
+
+Uses configuration: [`pkg.chocolateyNuspec`][]
+
 Output: `build/${name}.${version}.nupkg`
 
-Builds a package zip file in the format Chocolatey expects.
+Builds a Chocolatey-formatted `.nupkg` file.
 
 ## `pkg-chocolatey-deploy`
 
@@ -28,7 +48,8 @@ Depends on: [`pkg-chocolatey-build`][]
 
 [`pkg-chocolatey-build`]: standalone.md#pkg-chocolatey-build
 
-Uses configuration: [`pkg.chocolateyToken`][]
+Uses configuration: [`pkg.version`][], [`pkg.chocolateyNuspec`][],
+[`pkg.chocolateyToken`][]
 
 [`pkg.chocolateyToken`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/chocolateyToken.html
 

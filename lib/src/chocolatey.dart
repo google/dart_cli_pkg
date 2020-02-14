@@ -17,14 +17,12 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
-import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart' hide parse;
 
 import 'info.dart';
 import 'standalone.dart';
-import 'template.dart';
 import 'utils.dart';
 
 /// The Chocolatey API key (available from [the Chocolatey website][] and the
@@ -163,32 +161,6 @@ XmlElement get _nuspecMetadata => _findElement(_nuspec.rootElement, "metadata");
 /// The name of the Chocolatey package.
 String get _chocolateyName => _findElement(_nuspecMetadata, "id").text;
 
-/// Returns the contents of the `properties.psmdcp` file, computed from the
-/// nuspec's XML.
-String get _nupkgProperties {
-  var metadata = _nuspecMetadata;
-
-  var builder = XmlBuilder();
-  builder.processing("xml", 'version="1.0"');
-  builder.element("coreProperties", nest: () {
-    builder.namespace(
-        "http://schemas.openxmlformats.org/package/2006/metadata/core-properties");
-    builder.namespace("http://purl.org/dc/elements/1.1/", "dc");
-    builder.element("dc:creator", nest: _findElement(metadata, "authors").text);
-    builder.element("dc:description",
-        nest: _findElement(metadata, "description").text);
-    builder.element("dc:identifier", nest: _chocolateyName);
-    builder.element("version", nest: _chocolateyVersion);
-
-    var tags = _findElement(metadata, "tags", allowNone: true);
-    if (tags != null) builder.element("keywords", nest: tags.text);
-
-    var title = _findElement(metadata, "title", allowNone: true);
-    if (title != null) builder.element("dc:title", nest: title.text);
-  });
-  return builder.build().toString();
-}
-
 /// Whether [addChocolateyTasks] has been called yet.
 var _addedChocolateyTasks = false;
 
@@ -199,30 +171,32 @@ void addChocolateyTasks() {
 
   addStandaloneTasks();
 
-  addTask(GrinderTask('pkg-chocolatey-build',
+  addTask(GrinderTask('pkg-chocolatey',
       taskFunction: () => _build(),
-      description: 'Build a package to upload to Chocolatey.'));
+      description: 'Build a Chocolatey package directory.'));
+
+  addTask(GrinderTask('pkg-chocolatey-pack',
+      taskFunction: () => _nupkg(),
+      description: 'Build a nupkg archive to upload to Chocolatey.',
+      depends: ['pkg-chocolatey']));
 
   addTask(GrinderTask('pkg-chocolatey-deploy',
       taskFunction: () => _deploy(),
       description: 'Deploy the Chocolatey package to Chocolatey.',
-      depends: ['pkg-chocolatey-build']));
+      depends: ['pkg-chocolatey-pack']));
 }
 
 /// Builds a package to upload to Chocolatey.
 Future<void> _build() async {
   ensureBuild();
 
-  var archive = Archive()
-    ..addFile(fileFromString("$_chocolateyName.nuspec", _nuspec.toString()))
-    ..addFile(file("[Content_Types].xml",
-        p.join(await cliPkgSrc, "assets/chocolatey/[Content_Types].xml")))
-    ..addFile(fileFromString("_rels/.rels",
-        renderTemplate("chocolatey/rels.xml", {"name": _chocolateyName})))
-    ..addFile(fileFromString(
-        "package/services/metadata/core-properties/properties.psmdcp",
-        _nupkgProperties))
-    ..addFile(fileFromString("tools/LICENSE", await license));
+  var dir = Directory('build/chocolatey');
+  if (dir.existsSync()) dir.deleteSync(recursive: true);
+  dir.createSync(recursive: true);
+
+  writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
+  Directory("build/chocolatey/tools").createSync();
+  writeString("build/chocolatey/tools/LICENSE", await license);
 
   var sourceFiles = Archive()
     ..addFile(fileFromString(
@@ -236,8 +210,8 @@ Future<void> _build() async {
     if (relative == 'pubspec.yaml') continue;
     sourceFiles.addFile(file(p.join('source', relative), path));
   }
-  archive.addFile(
-      fileFromBytes("tools/source.zip", ZipEncoder().encode(sourceFiles)));
+  writeBytes(
+      "build/chocolatey/tools/source.zip", ZipEncoder().encode(sourceFiles));
 
   var install = StringBuffer("""
 \$ToolsDir = (Split-Path -parent \$MyInvocation.MyCommand.Definition)
@@ -264,39 +238,33 @@ Generate-BinFile "$name" \$ExePath
         .writeln('Remove-BinFile "$name" "\$PackageFolder\\bin\\$name.exe"');
   });
 
-  archive.addFile(
-      fileFromString("tools/chocolateyInstall.ps1", install.toString()));
-  archive.addFile(
-      fileFromString("tools/chocolateyUninstall.ps1", uninstall.toString()));
-
-  writeBytes("build/$_chocolateyName.$_chocolateyVersion.nupkg",
-      ZipEncoder().encode(archive));
+  writeString(
+      "build/chocolatey/tools/chocolateyInstall.ps1", install.toString());
+  writeString(
+      "build/chocolatey/tools/chocolateyUninstall.ps1", uninstall.toString());
 }
 
-// Deploy the Chocolatey package to Chocolatey.
+/// Builds a nupkg file to deploy to chocolatey.
+Future<void> _nupkg() async {
+  await runAsync("choco",
+      arguments: [
+        "pack",
+        "--yes",
+        "build/chocolatey/$_chocolateyName.nuspec",
+        "--out=build"
+      ],
+      quiet: false);
+}
+
+/// Deploys the Chocolatey package to Chocolatey.
 Future<void> _deploy() async {
-  // For some reason, although Chrome is able to access it just fine,
-  // command-line tools don't seem to be able to verify the certificate for
-  // Chocolatey, so we need to manually add the intermediate GoDaddy certificate
-  // to the security context.
-  SecurityContext.defaultContext.setTrustedCertificates(
-      p.join(await cliPkgSrc, "assets/chocolatey/godaddy.pem"));
-
-  var request = http.MultipartRequest(
-      "PUT", url("https://chocolatey.org/api/v2/package"));
-  request.headers["X-NuGet-Protocol-Version"] = "4.1.0";
-  request.headers["X-NuGet-ApiKey"] = chocolateyToken;
-  request.files.add(await http.MultipartFile.fromPath(
-      "package", "build/$_chocolateyName.$_chocolateyVersion.nupkg"));
-
-  var response = await request.send();
-  if (response.statusCode ~/ 100 != 2) {
-    fail("${response.statusCode} error creating release:\n"
-        "${await response.stream.bytesToString()}");
-  } else {
-    log("Released $_chocolateyName $_chocolateyVersion to Chocolatey.");
-    await response.stream.listen(null).cancel();
-  }
+  var nupkgPath = "build/$_chocolateyName.$_chocolateyVersion.nupkg";
+  log("choco push --source https://chocolatey.org --key=... $nupkgPath");
+  var process = await Process.start("choco",
+      ["push", "--source", "https://chocolatey.org", "--key", nupkgPath]);
+  LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
+  LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
+  if (await process.exitCode != 0) fail("choco push failed");
 }
 
 /// Returns the single child of [parent] named [name], or throws an error.
