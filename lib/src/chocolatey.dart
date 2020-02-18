@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart' hide parse;
@@ -62,6 +63,26 @@ String get _chocolateyVersion {
     }
   });
   return "${components.first}-$prerelease";
+}
+
+/// The version of the Dart SDK, formatted for Chocolatey which doesn't allow
+/// dots in prerelease versions.
+///
+/// The Dart SDK doesn't use the same logic for Chocolatifying pre-release
+/// versions that Sass does. Instead it transforms `A.B.C-dev.X.Y` into
+/// `A.B.C.X-dev-Y`.
+@visibleForTesting
+String get chocolateyDartVersion {
+  if (!dartVersion.isPreRelease) return dartVersion.toString();
+
+  var result = StringBuffer(
+      "${dartVersion.major}.${dartVersion.minor}.${dartVersion.patch}");
+
+  var prerelease = List.of(dartVersion.preRelease);
+  var firstInt = prerelease.indexWhere((value) => value is int);
+  if (firstInt != -1) result.write(".${prerelease.removeAt(firstInt)}");
+  result.write("-${prerelease.join('-')}");
+  return result.toString();
 }
 
 /// The set of files to include directly in the Chocolatey package.
@@ -147,7 +168,7 @@ XmlDocument get _nuspec {
     // Unfortunately we need the exact same Dart version as we built with,
     // since we ship a snapshot which isn't cross-version compatible. Once
     // we switch to native compilation this won't be an issue.
-    XmlAttribute(XmlName("version"), "[$dartVersion]")
+    XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]")
   ]));
 
   return __nuspec;

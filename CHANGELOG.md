@@ -18,6 +18,9 @@
 * Add a `chocolateyFiles` getter that returns the files that should be included
   in the Chocolatey package.
 
+* Depend on the correct version of pre-release Dart SDKs from Chocolatey
+  packages.
+
 # 1.0.0-beta.5
 
 * Use the correct URL when fetching GitHub release metadata.

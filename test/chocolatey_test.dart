@@ -19,6 +19,7 @@ import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 import 'package:xml/xml.dart' as xml;
 
+import 'package:cli_pkg/src/chocolatey.dart';
 import 'package:cli_pkg/src/utils.dart';
 
 import 'descriptor.dart' as d;
@@ -127,7 +128,7 @@ void main() {
                 <authors>Natalie Weizenbaum</authors>
                 <version>1.2.3</version>
                 <dependencies>
-                  <dependency id="dart-sdk" version="[$dartVersion]"/>
+                  <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
                 </dependencies>
               </metadata>
             </package>
@@ -158,7 +159,7 @@ void main() {
               <authors>Natalie Weizenbaum</authors>
               <dependencies>
                 <dependency id="something" version="[1.2.3]"/>
-                <dependency id="dart-sdk" version="[$dartVersion]"/>
+                <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
               </dependencies>
               <version>1.2.3</version>
             </metadata>
@@ -269,7 +270,13 @@ void main() {
 
   // Note: this test requires an administrative shell to run.
   test("can be installed and run", () async {
-    await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
+    // Chocolatey doesn't allow release versions to depend on pre-release
+    // versions.
+    var version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
+    await d
+        .package(
+            {...pubspec, "version": version}, _enableChocolatey(), [_nuspec()])
+        .create();
 
     await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
@@ -277,16 +284,16 @@ void main() {
       "install",
       // We already have Dart installed, and sometimes this fails to find it.
       "--ignore-dependencies",
-      d.path("my_app/build/my_app_choco.1.2.3.nupkg")
+      d.path("my_app/build/my_app_choco.$version.nupkg")
     ]))
         .shouldExit(0);
 
     var foo = await TestProcess.start("foo", []);
-    expect(foo.stdout, emits("in foo 1.2.3"));
+    expect(foo.stdout, emits("in foo $version"));
     await foo.shouldExit(0);
 
     var bar = await TestProcess.start("bar", []);
-    expect(bar.stdout, emits("in baz 1.2.3"));
+    expect(bar.stdout, emits("in baz $version"));
     await bar.shouldExit(0);
   }, testOn: "windows");
 }
