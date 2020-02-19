@@ -24,8 +24,14 @@ import 'package:http/http.dart' as http;
 import 'package:package_config/packages_file.dart' as package_config;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
+import 'package:yaml/yaml.dart';
 
 import 'info.dart';
+
+/// The raw YAML of the pubspec.
+final rawPubspec =
+    loadYaml(File('pubspec.yaml').readAsStringSync(), sourceUrl: 'pubspec.yaml')
+        as Map<Object, Object>;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String> get entrypoints => p.PathSet.of(executables.values);

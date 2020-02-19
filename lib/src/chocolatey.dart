@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
-import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart' hide parse;
 
 import 'info.dart';
 import 'standalone.dart';
-import 'template.dart';
 import 'utils.dart';
 
 /// The Chocolatey API key (available from [the Chocolatey website][] and the
@@ -64,6 +64,48 @@ String get _chocolateyVersion {
   });
   return "${components.first}-$prerelease";
 }
+
+/// The version of the Dart SDK, formatted for Chocolatey which doesn't allow
+/// dots in prerelease versions.
+///
+/// The Dart SDK doesn't use the same logic for Chocolatifying pre-release
+/// versions that Sass does. Instead it transforms `A.B.C-dev.X.Y` into
+/// `A.B.C.X-dev-Y`.
+@visibleForTesting
+String get chocolateyDartVersion {
+  if (!dartVersion.isPreRelease) return dartVersion.toString();
+
+  var result = StringBuffer(
+      "${dartVersion.major}.${dartVersion.minor}.${dartVersion.patch}");
+
+  var prerelease = List.of(dartVersion.preRelease);
+  var firstInt = prerelease.indexWhere((value) => value is int);
+  if (firstInt != -1) result.write(".${prerelease.removeAt(firstInt)}");
+  result.write("-${prerelease.join('-')}");
+  return result.toString();
+}
+
+/// The set of files to include directly in the Chocolatey package.
+///
+/// This should be at least enough files to compile the package's executables.
+/// It defaults to all files in `lib/` and `bin/`, as well as `pubspec.lock`.
+///
+/// The `pubspec.yaml` file is always included regardless of the contents of
+/// this field.
+List<String> get chocolateyFiles {
+  _chocolateyFiles ??= [
+    ...['lib', 'bin']
+        .where((dir) => Directory(dir).existsSync())
+        .expand((dir) => Directory(dir).listSync(recursive: true))
+        .whereType<File>()
+        .map((entry) => entry.path),
+    'pubspec.lock'
+  ];
+  return _chocolateyFiles;
+}
+
+set chocolateyFiles(List<String> value) => _chocolateyFiles = value;
+List<String> _chocolateyFiles;
 
 /// The text contents of the Chocolatey package's [`.nuspec` file][].
 ///
@@ -126,7 +168,7 @@ XmlDocument get _nuspec {
     // Unfortunately we need the exact same Dart version as we built with,
     // since we ship a snapshot which isn't cross-version compatible. Once
     // we switch to native compilation this won't be an issue.
-    XmlAttribute(XmlName("version"), "[$dartVersion]")
+    XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]")
   ]));
 
   return __nuspec;
@@ -140,32 +182,6 @@ XmlElement get _nuspecMetadata => _findElement(_nuspec.rootElement, "metadata");
 /// The name of the Chocolatey package.
 String get _chocolateyName => _findElement(_nuspecMetadata, "id").text;
 
-/// Returns the contents of the `properties.psmdcp` file, computed from the
-/// nuspec's XML.
-String get _nupkgProperties {
-  var metadata = _nuspecMetadata;
-
-  var builder = XmlBuilder();
-  builder.processing("xml", 'version="1.0"');
-  builder.element("coreProperties", nest: () {
-    builder.namespace(
-        "http://schemas.openxmlformats.org/package/2006/metadata/core-properties");
-    builder.namespace("http://purl.org/dc/elements/1.1/", "dc");
-    builder.element("dc:creator", nest: _findElement(metadata, "authors").text);
-    builder.element("dc:description",
-        nest: _findElement(metadata, "description").text);
-    builder.element("dc:identifier", nest: _chocolateyName);
-    builder.element("version", nest: _chocolateyVersion);
-
-    var tags = _findElement(metadata, "tags", allowNone: true);
-    if (tags != null) builder.element("keywords", nest: tags.text);
-
-    var title = _findElement(metadata, "title", allowNone: true);
-    if (title != null) builder.element("dc:title", nest: title.text);
-  });
-  return builder.build().toString();
-}
-
 /// Whether [addChocolateyTasks] has been called yet.
 var _addedChocolateyTasks = false;
 
@@ -176,90 +192,100 @@ void addChocolateyTasks() {
 
   addStandaloneTasks();
 
-  // TODO(nweiz): Rather than publishing a snapshot, publish a script that
-  // downloads the tagged source and builds an executable at install-time. This
-  // will ensure that 64-bit Chocolatey users get native executable performance
-  // even if the package isn't built on Windows.
-  addTask(GrinderTask('pkg-chocolatey-build',
+  addTask(GrinderTask('pkg-chocolatey',
       taskFunction: () => _build(),
-      description: 'Build a package to upload to Chocolatey.',
-      depends: ['pkg-compile-snapshot']));
+      description: 'Build a Chocolatey package directory.'));
+
+  addTask(GrinderTask('pkg-chocolatey-pack',
+      taskFunction: () => _nupkg(),
+      description: 'Build a nupkg archive to upload to Chocolatey.',
+      depends: ['pkg-chocolatey']));
 
   addTask(GrinderTask('pkg-chocolatey-deploy',
       taskFunction: () => _deploy(),
       description: 'Deploy the Chocolatey package to Chocolatey.',
-      depends: ['pkg-chocolatey-build']));
+      depends: ['pkg-chocolatey-pack']));
 }
 
 /// Builds a package to upload to Chocolatey.
 Future<void> _build() async {
   ensureBuild();
 
-  var archive = Archive()
-    ..addFile(fileFromString("$_chocolateyName.nuspec", _nuspec.toString()))
-    ..addFile(file("[Content_Types].xml",
-        p.join(await cliPkgSrc, "assets/chocolatey/[Content_Types].xml")))
-    ..addFile(fileFromString("_rels/.rels",
-        renderTemplate("chocolatey/rels.xml", {"name": _chocolateyName})))
+  var dir = Directory('build/chocolatey');
+  if (dir.existsSync()) dir.deleteSync(recursive: true);
+  dir.createSync(recursive: true);
+
+  writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
+  Directory("build/chocolatey/tools").createSync();
+  writeString("build/chocolatey/tools/LICENSE", await license);
+
+  var sourceFiles = Archive()
     ..addFile(fileFromString(
-        "package/services/metadata/core-properties/properties.psmdcp",
-        _nupkgProperties))
-    ..addFile(fileFromString("tools/LICENSE", await license));
-
-  for (var entrypoint in entrypoints) {
-    var snapshot = "${p.basename(entrypoint)}.snapshot";
-    archive.addFile(file("tools/$snapshot", "build/$snapshot"));
+        "source/pubspec.yaml",
+        // Don't download useless dev dependencies to users' computers.
+        json.encode(Map.of(rawPubspec)
+          ..remove('dev_dependencies')
+          ..remove('dependency_overrides'))));
+  for (var path in chocolateyFiles) {
+    var relative = p.relative(path);
+    if (relative == 'pubspec.yaml') continue;
+    sourceFiles.addFile(file(p.join('source', relative), path));
   }
+  writeBytes(
+      "build/chocolatey/tools/source.zip", ZipEncoder().encode(sourceFiles));
 
-  var install = StringBuffer();
+  var install = StringBuffer("""
+\$ToolsDir = (Split-Path -parent \$MyInvocation.MyCommand.Definition)
+Get-ChocolateyUnzip -PackageName '$_chocolateyName' `
+   -File "\$ToolsDir\\source.zip" -Destination \$PackageFolder
+
+Write-Host "Fetching Dart dependencies..."
+\$SourceDir = "\$PackageFolder\\source"
+Push-Location -Path \$SourceDir
+pub get --no-precompile | Out-Null
+Pop-Location
+
+New-Item -Path \$PackageFolder -Name "bin" -ItemType "directory" | Out-Null
+Write-Host "Building executable${executables.length == 1 ? '' : 's'}..."
+""");
   var uninstall = StringBuffer();
   executables.forEach((name, path) {
-    // Write PoewrShell code to install/uninstall each batch script. Note that
-    // `$packageFolder` here is a PowerShell variable, not a Dart variable.
-    var args = '"$name" "\$packageFolder\\tools\\$name.bat"';
-    install.writeln("Generate-BinFile $args");
-    uninstall.writeln("Remove-BinFile $args");
-
-    archive.addFile(fileFromString(
-        "tools/$name.bat",
-        renderTemplate("chocolatey/executable.bat",
-            {"name": _chocolateyName, "executable": p.basename(path)}),
-        executable: true));
+    install.write("""
+\$ExePath = "\$PackageFolder\\bin\\$name.exe"
+dart2native "-Dversion=$version" "\$SourceDir\\$path" -o \$ExePath
+Generate-BinFile "$name" \$ExePath
+""");
+    uninstall
+        .writeln('Remove-BinFile "$name" "\$PackageFolder\\bin\\$name.exe"');
   });
 
-  archive.addFile(
-      fileFromString("tools/chocolateyInstall.ps1", install.toString()));
-  archive.addFile(
-      fileFromString("tools/chocolateyUninstall.ps1", uninstall.toString()));
-
-  writeBytes("build/$_chocolateyName.$_chocolateyVersion.nupkg",
-      ZipEncoder().encode(archive));
+  writeString(
+      "build/chocolatey/tools/chocolateyInstall.ps1", install.toString());
+  writeString(
+      "build/chocolatey/tools/chocolateyUninstall.ps1", uninstall.toString());
 }
 
-// Deploy the Chocolatey package to Chocolatey.
+/// Builds a nupkg file to deploy to chocolatey.
+Future<void> _nupkg() async {
+  await runAsync("choco",
+      arguments: [
+        "pack",
+        "--yes",
+        "build/chocolatey/$_chocolateyName.nuspec",
+        "--out=build"
+      ],
+      quiet: false);
+}
+
+/// Deploys the Chocolatey package to Chocolatey.
 Future<void> _deploy() async {
-  // For some reason, although Chrome is able to access it just fine,
-  // command-line tools don't seem to be able to verify the certificate for
-  // Chocolatey, so we need to manually add the intermediate GoDaddy certificate
-  // to the security context.
-  SecurityContext.defaultContext.setTrustedCertificates(
-      p.join(await cliPkgSrc, "assets/chocolatey/godaddy.pem"));
-
-  var request = http.MultipartRequest(
-      "PUT", url("https://chocolatey.org/api/v2/package"));
-  request.headers["X-NuGet-Protocol-Version"] = "4.1.0";
-  request.headers["X-NuGet-ApiKey"] = chocolateyToken;
-  request.files.add(await http.MultipartFile.fromPath(
-      "package", "build/$_chocolateyName.$_chocolateyVersion.nupkg"));
-
-  var response = await request.send();
-  if (response.statusCode ~/ 100 != 2) {
-    fail("${response.statusCode} error creating release:\n"
-        "${await response.stream.bytesToString()}");
-  } else {
-    log("Released $_chocolateyName $_chocolateyVersion to Chocolatey.");
-    await response.stream.listen(null).cancel();
-  }
+  var nupkgPath = "build/$_chocolateyName.$_chocolateyVersion.nupkg";
+  log("choco push --source https://chocolatey.org --key=... $nupkgPath");
+  var process = await Process.start("choco",
+      ["push", "--source", "https://chocolatey.org", "--key", nupkgPath]);
+  LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
+  LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
+  if (await process.exitCode != 0) fail("choco push failed");
 }
 
 /// Returns the single child of [parent] named [name], or throws an error.

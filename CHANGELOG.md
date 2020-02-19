@@ -1,3 +1,26 @@
+# 1.0.0-beta.6
+
+* **Breaking change:** Chocolatey now uses the `choco` CLI to build and deploy
+  packages, rather than re-implementing its logic in Dart. In particular:
+
+  * The `pkg-chocolatey-build` task has been renamed to `pkg-chocolatey-pack` to
+    match the CLI's naming scheme.
+
+  * The `pkg-chocolatey-pack` and `pkg-chocolatey-deploy` tasks must be run in
+    an environment with the `choco` command available.
+
+* Add a `pkg-chocolatey` command that builds an un-archived Chocolatey package
+  directory.
+
+* Rather than releasing binary snapshots on Chocolatey, compile the source code
+  to compile native executables on users' machines.
+
+* Add a `chocolateyFiles` getter that returns the files that should be included
+  in the Chocolatey package.
+
+* Depend on the correct version of pre-release Dart SDKs from Chocolatey
+  packages.
+
 # 1.0.0-beta.5
 
 * Use the correct URL when fetching GitHub release metadata.
