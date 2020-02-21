@@ -37,10 +37,10 @@ It's strongly recommended that this package be imported with the prefix `pkg`.
 
 ### Configuration
 
-This package is highly configurable, using properties defined [at the top level
-of the library][]. By default, it infers as much configuration as possible from
-the package's pubspec, but almost all properties can be overridden in the
-`main()` method:
+This package is highly configurable, using properties defined
+[at the top level of the library][]. By default, it infers as much configuration
+as possible from the package's pubspec, but almost all properties can be
+overridden in the `main()` method:
 
 [at the top level of the library]: https://pub.dev/documentation/sass/latest/sass/sass-library.html#properties
 
