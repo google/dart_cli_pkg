@@ -41,12 +41,20 @@ String _standaloneName;
 /// If [release] is `false`, this compiles with `--enable-asserts`.
 void _compileSnapshot({@required bool release}) {
   ensureBuild();
+  var existingSnapshots = <String, String>{};
   executables.forEach((name, path) {
-    Dart.run(path, vmArgs: [
-      if (!release) '--enable-asserts',
-      '-Dversion=$version',
-      '--snapshot=build/$name.snapshot'
-    ]);
+    if (existingSnapshots.containsKey(path)) {
+      var existingName = existingSnapshots[path];
+      log('copying build/$existingName.snapshot to build/$name.snapshot');
+      File('build/$existingName.snapshot').copySync('build/$name.snapshot');
+    } else {
+      existingSnapshots[path] = name;
+      Dart.run(path, vmArgs: [
+        if (!release) '--enable-asserts',
+        '-Dversion=$version',
+        '--snapshot=build/$name.snapshot'
+      ]);
+    }
   });
 }
 
@@ -62,14 +70,22 @@ void _compileNative() {
         "compilation.");
   }
 
+  var existingSnapshots = <String, String>{};
   executables.forEach((name, path) {
-    run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
-      path,
-      '-Dversion=$version',
-      if (useDart2Native) '--output-kind=aot',
-      if (useDart2Native) '--output',
-      'build/$name.native'
-    ]);
+    if (existingSnapshots.containsKey(path)) {
+      var existingName = existingSnapshots[path];
+      log('copying build/$existingName.native to build/$name.native');
+      File('build/$existingName.native').copySync('build/$name.native');
+    } else {
+      existingSnapshots[path] = name;
+      run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
+        path,
+        '-Dversion=$version',
+        if (useDart2Native) '--output-kind=aot',
+        if (useDart2Native) '--output',
+        'build/$name.native'
+      ]);
+    }
   });
 }
 

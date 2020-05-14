@@ -35,7 +35,8 @@ final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
     _dependenciesHasPath(pubspec.devDependencies) ||
     _dependenciesHasPath(pubspec.dependencyOverrides);
 
-/// Starts a [TestProcess] running [executable].
+/// Starts a [TestProcess] running [executable], which is the name of the
+/// executable as listed in the pubspec (or in `pkg.executables`).
 ///
 /// If [node] is `true`, this will run a NodeJS process using the executable
 /// compiled by `pkg-npm-dev`. Otherwise, it will run a Dart VM process using
@@ -71,7 +72,9 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
         forwardStdio: forwardStdio);
 
 /// Returns an executable that can be passed to [Process.start] and similar APIs
-/// along with the arguments returned by [executableArgs] to run [executable].
+/// along with the arguments returned by [executableArgs] to run [executable],
+/// which is the name of the executable as listed in the pubspec (or in
+/// `pkg.executables`).
 ///
 /// If [node] is `true`, this and [executableArgs] will run a NodeJS process
 /// using the executable compiled by `pkg-npm-dev`. Otherwise, they'll run a
@@ -149,7 +152,7 @@ List<String> executableArgs(String executable, {bool node = false}) {
   return [
     "-Dversion=$version",
     "--enable-asserts",
-    p.absolute(executables[executable])
+    p.absolute("bin/$executable.dart")
   ];
 }
 

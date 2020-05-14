@@ -132,10 +132,8 @@ void main() {
           d.nothing("foo$dotBat"),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-          d.dir("src", [
-            d.nothing("foo.snapshot"),
-            d.file("bar.snapshot", anything)
-          ])
+          d.dir("src",
+              [d.nothing("foo.snapshot"), d.file("bar.snapshot", anything)])
         ])
       ]).validate();
     });
