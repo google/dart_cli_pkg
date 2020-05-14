@@ -481,7 +481,7 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
 
       expect(archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
           isNotNull);
-      expect(archive.findFile("my_app/src/foo.dart.snapshot"), isNotNull);
+      expect(archive.findFile("my_app/src/foo.snapshot"), isNotNull);
 
       return shelf.Response(201);
     }));

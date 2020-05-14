@@ -108,9 +108,9 @@ void main() {
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
           d.dir("src", [
-            d.file("foo.dart.snapshot", anything),
-            d.file("bar.dart.snapshot", anything),
-            d.nothing("qux.dart.snapshot")
+            d.file("foo.snapshot", anything),
+            d.file("bar.snapshot", anything),
+            d.file("qux.snapshot", anything),
           ])
         ])
       ]).validate();
@@ -133,8 +133,8 @@ void main() {
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
           d.dir("src", [
-            d.nothing("foo.dart.snapshot"),
-            d.file("bar.dart.snapshot", anything)
+            d.nothing("foo.snapshot"),
+            d.file("bar.snapshot", anything)
           ])
         ])
       ]).validate();
@@ -158,9 +158,9 @@ void main() {
           d.file("qux$dotBat", anything),
           d.file("zip$dotBat", anything),
           d.dir("src", [
-            d.file("foo.dart.snapshot", anything),
-            d.file("bar.dart.snapshot", anything),
-            d.nothing("zip.dart.snapshot")
+            d.file("foo.snapshot", anything),
+            d.file("bar.snapshot", anything),
+            d.file("zip.snapshot", anything),
           ])
         ])
       ]).validate();
@@ -294,7 +294,7 @@ void main() {
             d.dir("src", [
               d.file("LICENSE", anything),
               d.file("dart${windows ? '.exe' : ''}", anything),
-              d.file("foo.dart.snapshot", anything)
+              d.file("foo.snapshot", anything)
             ])
           ])
         ]);

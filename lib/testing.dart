@@ -35,8 +35,7 @@ final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
     _dependenciesHasPath(pubspec.devDependencies) ||
     _dependenciesHasPath(pubspec.dependencyOverrides);
 
-/// Starts a [TestProcess] running [executable], which is the basename of an
-/// executable in `bin` (without ".dart").
+/// Starts a [TestProcess] running [executable].
 ///
 /// If [node] is `true`, this will run a NodeJS process using the executable
 /// compiled by `pkg-npm-dev`. Otherwise, it will run a Dart VM process using
@@ -72,8 +71,7 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
         forwardStdio: forwardStdio);
 
 /// Returns an executable that can be passed to [Process.start] and similar APIs
-/// along with the arguments returned by [executableArgs] to run [executable],
-/// which is the basename of an executable in `bin` (without ".dart").
+/// along with the arguments returned by [executableArgs] to run [executable].
 ///
 /// If [node] is `true`, this and [executableArgs] will run a NodeJS process
 /// using the executable compiled by `pkg-npm-dev`. Otherwise, they'll run a
@@ -145,13 +143,13 @@ List<String> executableArgs(String executable, {bool node = false}) {
 
   if (node) return [p.absolute("build/npm/$executable.js")];
 
-  var snapshot = p.absolute("build/$executable.dart.snapshot");
+  var snapshot = p.absolute("build/$executable.snapshot");
   if (File(snapshot).existsSync()) return [snapshot];
 
   return [
     "-Dversion=$version",
     "--enable-asserts",
-    p.absolute("bin/$executable.dart")
+    p.absolute(executables[executable])
   ];
 }
 
@@ -166,14 +164,14 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
   if (node) {
     path = p.absolute("build/npm/$executable.js");
   } else {
-    path = p.absolute("build/$executable.dart.snapshot");
+    path = p.absolute("build/$executable.snapshot");
     if (!File(path).existsSync()) return;
   }
 
   if (!_executableUpToDateCache.contains(path)) {
     ensureUpToDate(
         path, "pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
-        dependencies: ['bin/$executable.dart']);
+        dependencies: [executables[executable]]);
 
     // Only add this after ensuring that the executable is up-to-date, so that
     // running it multiple times for out-of-date inputs will cause multiple
