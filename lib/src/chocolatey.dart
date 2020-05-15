@@ -69,8 +69,8 @@ String get _chocolateyVersion {
 /// dots in prerelease versions.
 ///
 /// The Dart SDK doesn't use the same logic for Chocolatifying pre-release
-/// versions that Sass does. Instead it transforms `A.B.C-dev.X.Y` into
-/// `A.B.C.X-dev-Y`.
+/// versions that Sass does. Instead it transforms `A.B.C-X.Y-dev` into
+/// `A.B.C.X-c-Y.dev`.
 @visibleForTesting
 String get chocolateyDartVersion {
   if (!dartVersion.isPreRelease) return dartVersion.toString();
@@ -79,9 +79,18 @@ String get chocolateyDartVersion {
       "${dartVersion.major}.${dartVersion.minor}.${dartVersion.patch}");
 
   var prerelease = List.of(dartVersion.preRelease);
-  var firstInt = prerelease.indexWhere((value) => value is int);
-  if (firstInt != -1) result.write(".${prerelease.removeAt(firstInt)}");
-  result.write("-${prerelease.join('-')}");
+  if (prerelease.first is int) {
+    // New style of version for Dart prereleases >=2.9 (e.g. 2.9.0-9.0.dev)
+    var major = prerelease.first;
+    var minor = prerelease[1].toString();
+    var type = prerelease[2];
+    result.write('.$major-c-${"0" * (3 - minor.length)}$minor-$type');
+  } else {
+    // Old style of version for Dart prereleases <2.9 (e.g. 2.8.0-dev.20.0)
+    var firstInt = prerelease.indexWhere((value) => value is int);
+    if (firstInt != -1) result.write(".${prerelease.removeAt(firstInt)}");
+    result.write("-${prerelease.join('-')}");
+  }
   return result.toString();
 }
 
