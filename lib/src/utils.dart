@@ -21,7 +21,7 @@ import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:grinder/grinder.dart';
 import 'package:http/http.dart' as http;
-import 'package:package_config/packages_file.dart' as package_config;
+import 'package:package_config/package_config.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:yaml/yaml.dart';
@@ -99,24 +99,22 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       // are compiled into the distribution anyway (especially for stuff like
       // `node_preamble`).
       var packageConfigUrl = await Isolate.packageConfig;
-      var packageConfig = package_config.parse(
-          File(p.fromUri(packageConfigUrl)).readAsBytesSync(),
-          packageConfigUrl);
+      var packageConfig = await loadPackageConfigUri(packageConfigUrl);
 
       // Sort the dependencies alphabetically to guarantee a consistent
       // ordering.
-      var dependencies = packageConfig.keys.toList()..sort();
+      var dependencies = packageConfig.packages.toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
       for (var package in dependencies) {
         // Don't double-include this package's license.
-        if (package == pubspec.name) continue;
+        if (package.name == pubspec.name) continue;
 
-        var dependencyLicense =
-            _readLicense(p.dirname(p.fromUri(packageConfig[package])));
+        var dependencyLicense = _readLicense(p.fromUri(package.root));
         if (dependencyLicense == null) {
           log("WARNING: $package has no license and may not be legal to "
               "redistribute.");
         } else {
-          licenses.putIfAbsent(dependencyLicense, () => []).add(package);
+          licenses.putIfAbsent(dependencyLicense, () => []).add(package.name);
         }
       }
 
