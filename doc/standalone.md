@@ -19,7 +19,7 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 [`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
 
-Output: `build/$entrypoint.snapshot`
+Output: `build/$executable.snapshot`
 
 Compiles each executable in the package to a [kernel snapshot][snapshot] with
 asserts disabled.
@@ -30,7 +30,7 @@ asserts disabled.
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-Output: `build/$entrypoint.snapshot`
+Output: `build/$executable.snapshot`
 
 Compiles each executable in the package to a [kernel snapshot][snapshot] with
 asserts enabled.
@@ -39,7 +39,7 @@ asserts enabled.
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-Output: `build/$entrypoint.native`
+Output: `build/$executable.native`
 
 Compiles each executable in the package to a native code snapshot (what Dart
 calls an ["AOT Application snapshot"][snapshot]). This is unavailable on 32-bit

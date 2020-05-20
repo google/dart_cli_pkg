@@ -1,3 +1,9 @@
+# 1.0.0-beta.7
+
+* **Breaking change:** Dart snapshots are now named based on the executable name
+  (specified in the pubspec or in `pkg.executables`) instead of the name of the
+  Dart file in `bin`.
+
 # 1.0.0-beta.6
 
 * **Breaking change:** Chocolatey now uses the `choco` CLI to build and deploy
