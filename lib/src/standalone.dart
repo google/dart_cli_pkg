@@ -41,14 +41,21 @@ String _standaloneName;
 /// If [release] is `false`, this compiles with `--enable-asserts`.
 void _compileSnapshot({@required bool release}) {
   ensureBuild();
-
-  for (var entrypoint in entrypoints) {
-    Dart.run(entrypoint, vmArgs: [
-      if (!release) '--enable-asserts',
-      '-Dversion=$version',
-      '--snapshot=build/${p.basename(entrypoint)}.snapshot'
-    ]);
-  }
+  var existingSnapshots = <String, String>{};
+  executables.forEach((name, path) {
+    if (existingSnapshots.containsKey(path)) {
+      var existingName = existingSnapshots[path];
+      log('copying build/$existingName.snapshot to build/$name.snapshot');
+      File('build/$existingName.snapshot').copySync('build/$name.snapshot');
+    } else {
+      existingSnapshots[path] = name;
+      Dart.run(path, vmArgs: [
+        if (!release) '--enable-asserts',
+        '-Dversion=$version',
+        '--snapshot=build/$name.snapshot'
+      ]);
+    }
+  });
 }
 
 /// For each executable entrypoint in [executables], builds a native ("AOT")
@@ -63,15 +70,23 @@ void _compileNative() {
         "compilation.");
   }
 
-  for (var entrypoint in entrypoints) {
-    run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
-      entrypoint,
-      '-Dversion=$version',
-      if (useDart2Native) '--output-kind=aot',
-      if (useDart2Native) '--output',
-      'build/${p.basename(entrypoint)}.native'
-    ]);
-  }
+  var existingSnapshots = <String, String>{};
+  executables.forEach((name, path) {
+    if (existingSnapshots.containsKey(path)) {
+      var existingName = existingSnapshots[path];
+      log('copying build/$existingName.native to build/$name.native');
+      File('build/$existingName.native').copySync('build/$name.native');
+    } else {
+      existingSnapshots[path] = name;
+      run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
+        path,
+        '-Dversion=$version',
+        if (useDart2Native) '--output-kind=aot',
+        if (useDart2Native) '--output',
+        'build/$name.native'
+      ]);
+    }
+  });
 }
 
 /// Whether [addStandaloneTasks] has been called yet.
@@ -149,7 +164,7 @@ bool _useNative(String os, {@required bool x64}) {
 /// Builds scripts for testing each executable on the current OS and
 /// architecture.
 Future<void> _buildDev() async {
-  executables.forEach((name, path) {
+  for (var name in executables.keys) {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
         script,
@@ -157,11 +172,11 @@ Future<void> _buildDev() async {
             "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
           "dart": Platform.resolvedExecutable,
           "version": version.toString(),
-          "executable": "${p.basename(path)}.snapshot"
+          "executable": "$name.snapshot"
         }));
 
     if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
-  });
+  }
 }
 
 /// Builds a package for the given [os] and architecture.
@@ -172,25 +187,24 @@ Future<void> _buildPackage(String os, {@required bool x64}) async {
         executable: true))
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  for (var entrypoint in entrypoints) {
-    var basename = p.basename(entrypoint);
+  for (var name in executables.keys) {
     archive.addFile(file(
-        "$standaloneName/src/$basename.snapshot",
+        "$standaloneName/src/$name.snapshot",
         _useNative(os, x64: x64)
-            ? "build/$basename.native"
-            : "build/$basename.snapshot"));
+            ? "build/$name.native"
+            : "build/$name.snapshot"));
   }
 
   // Do this separately from adding entrypoints because multiple executables may
   // have the same entrypoint.
-  executables.forEach((name, path) {
+  for (var name in executables.keys) {
     archive.addFile(fileFromString(
         "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
         renderTemplate(
             "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
-            {"name": standaloneName, "executable": p.basename(path)}),
+            {"name": standaloneName, "executable": name}),
         executable: true));
-  });
+  }
 
   var prefix = 'build/$standaloneName-$version-$os-${_arch(x64)}';
   if (os == 'windows') {
