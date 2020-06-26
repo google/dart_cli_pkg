@@ -189,7 +189,7 @@ String _lastChangelogSection() {
     return buffer.toString();
   }
 
-  scanner.expect("## $version\n");
+  scanner.expect(RegExp("## $version\r?\n"));
 
   var buffer = StringBuffer();
   while (!scanner.isDone && !scanner.matches("## ")) {
