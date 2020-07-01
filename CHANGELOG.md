@@ -1,3 +1,7 @@
+# 1.0.0-beta.8
+
+* Fixes a bug when reading a `CHANGELOG.md` with Windows-style line endings.
+
 # 1.0.0-beta.7
 
 * **Breaking change:** Dart snapshots are now named based on the executable name

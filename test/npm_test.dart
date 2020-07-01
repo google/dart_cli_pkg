@@ -400,7 +400,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emits("latest"));
+      await expect(grinder.stdout, emitsThrough("latest"));
       await grinder.shouldExit();
     });
 
@@ -412,7 +412,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emits("foo"));
+      await expect(grinder.stdout, emitsThrough("foo"));
       await grinder.shouldExit();
     });
 
@@ -424,7 +424,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emits("pre"));
+      await expect(grinder.stdout, emitsThrough("pre"));
       await grinder.shouldExit();
     });
 
@@ -437,7 +437,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emits("qux"));
+      await expect(grinder.stdout, emitsThrough("qux"));
       await grinder.shouldExit();
     });
   });
