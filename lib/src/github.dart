@@ -189,7 +189,11 @@ String _lastChangelogSection() {
     return buffer.toString();
   }
 
-  scanner.expect(RegExp("## $version\r?\n"));
+  if (!scanner.scan(RegExp("## ${RegExp.escape(version.toString())}\r?\n"))) {
+    fail("Failed to extract GitHub release notes from CHANGELOG.md.\n"
+        'Expected it to start with "## $version".\n'
+        "Set pkg.githubReleaseNotes to explicitly declare release notes.");
+  }
 
   var buffer = StringBuffer();
   while (!scanner.isDone && !scanner.matches("## ")) {
