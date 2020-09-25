@@ -1,3 +1,8 @@
+# 1.0.0-beta.9
+
+* Improve error messages if release notes can't be extracted from
+  `CHANGELOG.md`.
+
 # 1.0.0-beta.8
 
 * Fixes a bug when reading a `CHANGELOG.md` with Windows-style line endings.

@@ -189,7 +189,11 @@ String _lastChangelogSection() {
     return buffer.toString();
   }
 
-  scanner.expect(RegExp("## $version\r?\n"));
+  if (!scanner.scan(RegExp("## ${RegExp.escape(version.toString())}\r?\n"))) {
+    fail("Failed to extract GitHub release notes from CHANGELOG.md.\n"
+        'Expected it to start with "## $version".\n'
+        "Set pkg.githubReleaseNotes to explicitly declare release notes.");
+  }
 
   var buffer = StringBuffer();
   while (!scanner.isDone && !scanner.matches("## ")) {
@@ -230,8 +234,7 @@ void addGithubTasks() {
         description: 'Release ${humanOSName(os)} executables to GitHub.',
         depends: [
           // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-          if (os != "macos")
-            'pkg-standalone-$os-ia32',
+          if (os != "macos") 'pkg-standalone-$os-ia32',
           'pkg-standalone-$os-x64'
         ]));
   }
@@ -264,8 +267,7 @@ Future<void> _uploadExecutables(String os) async {
 
   await Future.wait([
     // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-    if (os != "macos")
-      "ia32",
+    if (os != "macos") "ia32",
     "x64"
   ].map((architecture) async {
     var format = os == "windows" ? "zip" : "tar.gz";
