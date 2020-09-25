@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -230,8 +229,7 @@ void addGithubTasks() {
         description: 'Release ${humanOSName(os)} executables to GitHub.',
         depends: [
           // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-          if (os != "macos")
-            'pkg-standalone-$os-ia32',
+          if (os != "macos") 'pkg-standalone-$os-ia32',
           'pkg-standalone-$os-x64'
         ]));
   }
@@ -264,8 +262,7 @@ Future<void> _uploadExecutables(String os) async {
 
   await Future.wait([
     // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-    if (os != "macos")
-      "ia32",
+    if (os != "macos") "ia32",
     "x64"
   ].map((architecture) async {
     var format = os == "windows" ? "zip" : "tar.gz";
