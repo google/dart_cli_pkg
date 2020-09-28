@@ -126,13 +126,7 @@ List<String> _chocolateyFiles;
 /// `cli_pkg` will automatically add a `"version"` field and a dependency on the
 /// Dart SDK when building the Chocolatey package.
 String get chocolateyNuspec {
-  if (_chocolateyNuspec != null) {
-    if (Directory(_chocolateyNuspec).existsSync()) {
-      return _chocolateyNuspec;
-    } else {
-      fail("pkg.chocolateyNuspec: $_chocolateyNuspec does not exist.");
-    }
-  }
+  if (_chocolateyNuspec != null) return _chocolateyNuspec;
 
   var possibleNuspecs = [
     for (var entry in Directory(".").listSync())
@@ -140,7 +134,8 @@ String get chocolateyNuspec {
   ];
 
   if (possibleNuspecs.isEmpty) {
-    fail("pkg.chocolateyNuspec must be set to build a Chocolatey package.");
+    fail(
+        "Please add a .nuspec file to the root of the repository or pkg.chocolateyNuspec must be set to build a Chocolatey package.");
   } else if (possibleNuspecs.length > 1) {
     fail("pkg.chocolateyNuspec found multiple .nuspec files: " +
         possibleNuspecs.join(", "));
