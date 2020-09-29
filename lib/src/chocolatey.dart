@@ -290,8 +290,14 @@ Future<void> _nupkg() async {
 Future<void> _deploy() async {
   var nupkgPath = p.join("build", "$_chocolateyName.$_chocolateyVersion.nupkg");
   log("choco push --source https://chocolatey.org --key=... $nupkgPath");
-  var process = await Process.start("choco",
-      ["push", "--source", "https://chocolatey.org", "--key", nupkgPath]);
+  var process = await Process.start("choco", [
+    "push",
+    "--source",
+    "https://chocolatey.org",
+    "--key",
+    "$chocolateyToken",
+    nupkgPath
+  ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("choco push failed");
