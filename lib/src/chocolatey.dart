@@ -288,7 +288,7 @@ Future<void> _nupkg() async {
 
 /// Deploys the Chocolatey package to Chocolatey.
 Future<void> _deploy() async {
-  var nupkgPath = "build/$_chocolateyName.$_chocolateyVersion.nupkg";
+  var nupkgPath = p.join("build", "$_chocolateyName.$_chocolateyVersion.nupkg");
   log("choco push --source https://chocolatey.org --key=... $nupkgPath");
   var process = await Process.start("choco",
       ["push", "--source", "https://chocolatey.org", "--key", nupkgPath]);
