@@ -227,6 +227,7 @@ Future<void> _build() async {
   writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
   Directory("build/chocolatey/tools").createSync();
   writeString("build/chocolatey/tools/LICENSE", await license);
+  writeString("build/chocolatey/tools/VERIFICATION", '');
 
   var sourceFiles = Archive()
     ..addFile(fileFromString(
