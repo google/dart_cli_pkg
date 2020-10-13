@@ -19,7 +19,6 @@ import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
-import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart' hide parse;
 
 import 'config_variable.dart';
@@ -136,7 +135,7 @@ XmlDocument get _nuspec {
   if (__nuspec != null) return __nuspec;
 
   try {
-    __nuspec = xml.parse(chocolateyNuspec.value);
+    __nuspec = XmlDocument.parse(chocolateyNuspec.value);
   } on XmlParserException catch (error) {
     fail("Invalid nuspec: $error");
   }
@@ -290,7 +289,7 @@ Future<void> _deploy() async {
 ///
 /// If [allowNone] is `true`, this returns `null` if there are no children of
 /// [parent] named [name]. Otherwise, it throws an error.
-XmlElement _findElement(XmlParent parent, String name,
+XmlElement _findElement(XmlNode parent, String name,
     {bool allowNone = false}) {
   var elements = parent.findElements(name);
   if (elements.length == 1) return elements.single;
