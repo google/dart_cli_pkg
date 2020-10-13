@@ -22,6 +22,7 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart' hide parse;
 
+import 'config_variable.dart';
 import 'info.dart';
 import 'standalone.dart';
 import 'utils.dart';
@@ -36,15 +37,9 @@ import 'utils.dart';
 /// sources.
 ///
 /// By default this comes from the `CHOCOLATEY_TOKEN` environment variable.
-String get chocolateyToken {
-  _chocolateyToken ??= Platform.environment["CHOCOLATEY_TOKEN"];
-  if (_chocolateyToken != null) return _chocolateyToken;
-
-  fail("pkg.chocolateyToken must be set to deploy to Chocolatey.");
-}
-
-set chocolateyToken(String value) => _chocolateyToken = value;
-String _chocolateyToken;
+final chocolateyToken = InternalConfigVariable.fn<String>(() =>
+    Platform.environment["CHOCOLATEY_TOKEN"] ??
+    fail("pkg.chocolateyToken must be set to deploy to Chocolatey."));
 
 /// The package version, formatted for Chocolatey which doesn't allow dots in
 /// prerelease versions.
@@ -101,20 +96,14 @@ String get chocolateyDartVersion {
 ///
 /// The `pubspec.yaml` file is always included regardless of the contents of
 /// this field.
-List<String> get chocolateyFiles {
-  _chocolateyFiles ??= [
-    ...['lib', 'bin']
-        .where((dir) => Directory(dir).existsSync())
-        .expand((dir) => Directory(dir).listSync(recursive: true))
-        .whereType<File>()
-        .map((entry) => entry.path),
-    'pubspec.lock'
-  ];
-  return _chocolateyFiles;
-}
-
-set chocolateyFiles(List<String> value) => _chocolateyFiles = value;
-List<String> _chocolateyFiles;
+final chocolateyFiles = InternalConfigVariable.fn<List<String>>(() => [
+      ...['lib', 'bin']
+          .where((dir) => Directory(dir).existsSync())
+          .expand((dir) => Directory(dir).listSync(recursive: true))
+          .whereType<File>()
+          .map((entry) => entry.path),
+      'pubspec.lock'
+    ]);
 
 /// The text contents of the Chocolatey package's [`.nuspec` file][].
 ///
@@ -125,9 +114,7 @@ List<String> _chocolateyFiles;
 ///
 /// `cli_pkg` will automatically add a `"version"` field and a dependency on the
 /// Dart SDK when building the Chocolatey package.
-String get chocolateyNuspec {
-  if (_chocolateyNuspec != null) return _chocolateyNuspec;
-
+final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
   var possibleNuspecs = [
     for (var entry in Directory(".").listSync())
       if (entry is File && entry.path.endsWith(".nuspec")) entry.path
@@ -141,10 +128,7 @@ String get chocolateyNuspec {
   }
 
   return File(possibleNuspecs.single).readAsStringSync();
-}
-
-set chocolateyNuspec(String value) => _chocolateyNuspec = value;
-String _chocolateyNuspec;
+});
 
 /// Returns the XML-decoded contents of [chocolateyNuspecText], with a
 /// `"version"` field and a dependency on the Dart SDK automatically added.
@@ -152,7 +136,7 @@ XmlDocument get _nuspec {
   if (__nuspec != null) return __nuspec;
 
   try {
-    __nuspec = xml.parse(chocolateyNuspec);
+    __nuspec = xml.parse(chocolateyNuspec.value);
   } on XmlParserException catch (error) {
     fail("Invalid nuspec: $error");
   }
@@ -199,6 +183,11 @@ void addChocolateyTasks() {
   if (_addedChocolateyTasks) return;
   _addedChocolateyTasks = true;
 
+  freezeSharedVariables();
+  chocolateyToken.freeze();
+  chocolateyFiles.freeze();
+  chocolateyNuspec.freeze();
+
   addStandaloneTasks();
 
   addTask(GrinderTask('pkg-chocolatey',
@@ -235,7 +224,7 @@ Future<void> _build() async {
         json.encode(Map.of(rawPubspec)
           ..remove('dev_dependencies')
           ..remove('dependency_overrides'))));
-  for (var path in chocolateyFiles) {
+  for (var path in chocolateyFiles.value) {
     var relative = p.relative(path);
     if (relative == 'pubspec.yaml') continue;
     sourceFiles.addFile(file(p.join('source', relative), path));
@@ -255,10 +244,10 @@ pub get --no-precompile | Out-Null
 Pop-Location
 
 New-Item -Path \$PackageFolder -Name "bin" -ItemType "directory" | Out-Null
-Write-Host "Building executable${executables.length == 1 ? '' : 's'}..."
+Write-Host "Building executable${executables.value.length == 1 ? '' : 's'}..."
 """);
   var uninstall = StringBuffer();
-  executables.forEach((name, path) {
+  executables.value.forEach((name, path) {
     install.write("""
 \$ExePath = "\$PackageFolder\\bin\\$name.exe"
 dart2native "-Dversion=$version" "\$SourceDir\\$path" -o \$ExePath

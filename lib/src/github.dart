@@ -20,6 +20,7 @@ import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:string_scanner/string_scanner.dart';
 
+import 'config_variable.dart';
 import 'info.dart';
 import 'standalone.dart';
 import 'utils.dart';
@@ -30,15 +31,10 @@ import 'utils.dart';
 /// By default, this determines the repo from Git's `origin` remote, failing
 /// that, from the pubspec's `homepage` field. If neither of those is a valid
 /// Git URL, this must be set explicitly.
-String get githubRepo {
-  _githubRepo ??= _repoFromOrigin() ?? _repoFromPubspec();
-  if (_githubRepo != null) return _githubRepo;
-
-  fail("pkg.githubRepo must be set to deploy to GitHub.");
-}
-
-set githubRepo(String value) => _githubRepo = value;
-String _githubRepo;
+final githubRepo = InternalConfigVariable.fn<String>(() =>
+    _repoFromOrigin() ??
+    _repoFromPubspec() ??
+    fail("pkg.githubRepo must be set to deploy to GitHub."));
 
 /// Returns the GitHub repo name from the Git configuration's
 /// `remote.origin.url` field.
@@ -79,15 +75,9 @@ String _parseHttp(String url) {
 /// The GitHub username to use when creating releases and making other changes.
 ///
 /// By default, this comes from the `GITHUB_USER` environment variable.
-String get githubUser {
-  _githubUser ??= Platform.environment["GITHUB_USER"];
-  if (_githubUser != null) return _githubUser;
-
-  fail("pkg.githubUser must be set to deploy to GitHub.");
-}
-
-set githubUser(String value) => _githubUser = value;
-String _githubUser;
+final githubUser = InternalConfigVariable.fn<String>(() =>
+    Platform.environment["GITHUB_USER"] ??
+    fail("pkg.githubUser must be set to deploy to GitHub."));
 
 /// The GitHub password or authentication token to use when creating releases
 /// and making other changes.
@@ -102,16 +92,10 @@ String _githubUser;
 ///
 /// By default, this comes from the `GITHUB_PASSWORD` environment variable if it
 /// exists, or `GITHUB_TOKEN` otherwise.
-String get githubPassword {
-  _githubPassword ??= Platform.environment["GITHUB_PASSWORD"] ??
-      Platform.environment["GITHUB_TOKEN"];
-  if (_githubPassword != null) return _githubPassword;
-
-  fail("pkg.githubPassword must be set to deploy to GitHub.");
-}
-
-set githubPassword(String value) => _githubPassword = value;
-String _githubPassword;
+final githubPassword = InternalConfigVariable.fn<String>(() =>
+    Platform.environment["GITHUB_PASSWORD"] ??
+    Platform.environment["GITHUB_TOKEN"] ??
+    fail("pkg.githubPassword must be set to deploy to GitHub."));
 
 /// Returns the HTTP basic authentication Authorization header from the
 /// environment.
@@ -127,20 +111,15 @@ String get _authorization =>
 ///
 /// If this is set to `null`, or by default if no `CHANGELOG.md` exists, no
 /// release notes will be added to the GitHub release.
-String get githubReleaseNotes {
-  if (_githubReleaseNotes != null) return _githubReleaseNotes;
+final githubReleaseNotes = InternalConfigVariable.fn<String>(() {
   if (!File("CHANGELOG.md").existsSync()) return null;
 
-  _githubReleaseNotes = _lastChangelogSection() +
+  return _lastChangelogSection() +
       "\n\n"
           "See the [full changelog](https://github.com/$githubRepo/blob/"
           "master/CHANGELOG.md#${version.toString().replaceAll(".", "")}) "
           "for changes in earlier releases.";
-  return _githubReleaseNotes;
-}
-
-set githubReleaseNotes(String value) => _githubReleaseNotes = value;
-String _githubReleaseNotes;
+});
 
 /// Creates a GitHub release for [version] of this package.
 ///
@@ -158,7 +137,7 @@ Future<void> _release() async {
         "tag_name": version.toString(),
         "name": "$humanName $version",
         "prerelease": version.isPreRelease,
-        if (githubReleaseNotes != null) "body": githubReleaseNotes
+        if (githubReleaseNotes.value != null) "body": githubReleaseNotes.value
       }));
 
   if (response.statusCode != 201) {
@@ -221,6 +200,12 @@ void addGithubTasks() {
   if (_addedGithubTasks) return;
   _addedGithubTasks = true;
 
+  freezeSharedVariables();
+  githubRepo.freeze();
+  githubUser.freeze();
+  githubPassword.freeze();
+  githubReleaseNotes.freeze();
+
   addStandaloneTasks();
 
   addTask(GrinderTask('pkg-github-release',
@@ -251,7 +236,7 @@ void addGithubTasks() {
 /// Upload the 32- and 64-bit executables to the current GitHub release
 Future<void> _uploadExecutables(String os) async {
   var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
+      url("https://api.github.com/repos/$githubRepo/releases/tags/" "$version"),
       headers: {"authorization": _authorization});
 
   var body = json.decode(response.body);

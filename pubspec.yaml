@@ -1,10 +1,10 @@
 name: cli_pkg
-version: 1.0.0-beta.9
+version: 1.0.0-beta.10
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
 environment:
-  sdk: '>=2.3.0 <3.0.0'
+  sdk: '>=2.7.0 <3.0.0'
 
 dependencies:
   archive: ">=1.0.0 <3.0.0"
@@ -18,7 +18,7 @@ dependencies:
   meta: "^1.1.7"
   mustache: "^1.0.0"
   node_preamble: "^1.1.0"
-  package_config: '^1.1.0'
+  package_config: '^1.9.0'
   path: '^1.0.0'
   pub_semver: '^1.0.0'
   pubspec_parse: '^0.1.0'
@@ -36,3 +36,9 @@ dev_dependencies:
   shelf_test_handler: '^1.0.0'
   test_descriptor: '^1.2.0'
   tuple: '^1.0.0'
+
+dependency_overrides:
+  grinder:
+    git:
+      url: git://github.com/nex3/grinder.dart
+      ref: never
