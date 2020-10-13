@@ -406,7 +406,7 @@ Future<void> _createHomebrewRepo() async {
 /// Makes the directory at [path] (relative to `d.sandbox`) into a Git
 /// repository.
 Future<void> _makeRepo(String path) async {
-  await git(["init", "--initial-branch", "main"], workingDirectory: path);
+  await git(["init"], workingDirectory: path);
   await _commitAll(path, "Initial commit");
 
   // This is only necessary for the Homebrew repo, but it doesn't hurt to set

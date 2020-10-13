@@ -97,7 +97,7 @@ Map<String, Object> _ourDependency(String package) =>
 /// Returns the dependency override for `package` from `cli_pkg`'s own pubspec,
 /// as a map so it can be included in a map literal with `...?`.
 Map<String, Object> _ourDependencyOverride(String package) {
-  var overrides = _ourPubpsec["dependency_overrides"];
+  var overrides = (_ourPubpsec["dependency_overrides"] as YamlMap);
   return overrides != null && overrides.containsKey(package)
       ? {package: overrides[package]}
       : const {};
