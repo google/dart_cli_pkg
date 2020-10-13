@@ -5,6 +5,8 @@
   possible to configure variables with callback functions and to freeze those
   variables once execution has begun.
 
+* Properly handle git repositories that use branch names other than `master`.
+
 # 1.0.0-beta.9
 
 * Improve error messages if release notes can't be extracted from

@@ -302,7 +302,7 @@ Future<String> cloneOrPull(String url) async {
         workingDirectory: path);
   }
   await runAsync("git",
-      arguments: ["checkout", "origin/master"], workingDirectory: path);
+      arguments: ["checkout", "origin/HEAD"], workingDirectory: path);
   log("");
 
   return path;

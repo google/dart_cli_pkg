@@ -406,7 +406,7 @@ Future<void> _createHomebrewRepo() async {
 /// Makes the directory at [path] (relative to `d.sandbox`) into a Git
 /// repository.
 Future<void> _makeRepo(String path) async {
-  await git(["init"], workingDirectory: path);
+  await git(["init", "--initial-branch", "main"], workingDirectory: path);
   await _commitAll(path, "Initial commit");
 
   // This is only necessary for the Homebrew repo, but it doesn't hurt to set
@@ -432,12 +432,12 @@ Future<TestProcess> _homebrewUpdate() => grind([
     });
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
-/// reset to the new `master` branch.
+/// reset to the new `HEAD` state.
 ///
 /// The [path] is the basename of the formula file to verify. If it isn't
 /// passed, it defaults to `my_app.rb`.
 Future<void> _assertFormula(Object matcher, {String path}) async {
-  await git(["reset", "--hard", "master"], workingDirectory: "me/homebrew.git");
+  await git(["reset", "--hard", "HEAD"], workingDirectory: "me/homebrew.git");
   await d
       .file(p.join("me/homebrew.git", path ?? "my_app.rb"), matcher)
       .validate();
