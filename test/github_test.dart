@@ -164,9 +164,9 @@ void main() {
     test("prefers an explicit repo URL to Git origin", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.githubUser = "usr";
-          pkg.githubPassword = "pwd";
-          pkg.githubRepo = "google/right";
+          pkg.githubUser.value = "usr";
+          pkg.githubPassword.value = "pwd";
+          pkg.githubRepo.value = "google/right";
           pkg.addGithubTasks();
           grind(args);
         }
@@ -361,9 +361,9 @@ void main() {
     test("prefers explicit release notes to the CHANGELOG", () async {
       await d.package(pubspecWithHomepage, """
         void main(List<String> args) {
-          pkg.githubUser = "usr";
-          pkg.githubPassword = "pwd";
-          pkg.githubReleaseNotes = "right";
+          pkg.githubUser.value = "usr";
+          pkg.githubPassword.value = "pwd";
+          pkg.githubReleaseNotes.value = "right";
           pkg.addGithubTasks();
           grind(args);
         }
@@ -410,8 +410,8 @@ String _enableGithub({bool user = true, bool password = true}) {
     void main(List<String> args) {
   """);
 
-  if (user) buffer.writeln('pkg.githubUser = "usr";');
-  if (password) buffer.writeln('pkg.githubPassword = "pwd";');
+  if (user) buffer.writeln('pkg.githubUser.value = "usr";');
+  if (password) buffer.writeln('pkg.githubPassword.value = "pwd";');
   buffer.writeln("pkg.addGithubTasks();");
   buffer.writeln("grind(args);");
   buffer.writeln("}");

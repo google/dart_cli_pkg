@@ -306,7 +306,7 @@ String _enableChocolatey({bool token = true}) {
     void main(List<String> args) {
   """);
 
-  if (token) buffer.writeln('pkg.chocolateyToken = "tkn";');
+  if (token) buffer.writeln('pkg.chocolateyToken.value = "tkn";');
   buffer.writeln("pkg.addChocolateyTasks();");
   buffer.writeln("grind(args);");
   buffer.writeln("}");

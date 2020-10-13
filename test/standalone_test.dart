@@ -62,7 +62,7 @@ void main() {
     test("prefer pkg.name to pkg.dartName", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.name = "my-app";
+          pkg.name.value = "my-app";
           pkg.addStandaloneTasks();
           grind(args);
         }
@@ -77,8 +77,8 @@ void main() {
     test("prefer pkg.standaloneName to pkg.name", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.name = "my-app";
-          pkg.standaloneName = "my-sa-app";
+          pkg.name.value = "my-app";
+          pkg.standaloneName.value = "my-sa-app";
           pkg.addStandaloneTasks();
           grind(args);
         }
@@ -119,7 +119,7 @@ void main() {
     test("can be removed by the user", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.executables.remove("foo");
+          pkg.executables.value.remove("foo");
           pkg.addStandaloneTasks();
           grind(args);
         }
@@ -141,7 +141,7 @@ void main() {
     test("can be added by the user", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.executables["zip"] = "bin/foo.dart";
+          pkg.executables.value["zip"] = "bin/foo.dart";
           pkg.addStandaloneTasks();
           grind(args);
         }

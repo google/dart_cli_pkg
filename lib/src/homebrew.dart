@@ -10,6 +10,7 @@ import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 
+import 'config_variable.dart';
 import 'github.dart';
 import 'info.dart';
 import 'utils.dart';
@@ -18,13 +19,8 @@ import 'utils.dart';
 /// repository for this package.
 ///
 /// This must be set explicitly.
-String get homebrewRepo {
-  if (_homebrewRepo != null) return _homebrewRepo;
-  fail("pkg.homebrewRepo must be set to deploy to Homebrew.");
-}
-
-set homebrewRepo(String value) => _homebrewRepo = value;
-String _homebrewRepo;
+final homebrewRepo = InternalConfigVariable.fn<String>(
+    () => fail("pkg.homebrewRepo must be set to deploy to Homebrew."));
 
 /// The path to the formula file within the Homebrew repository to update with
 /// the new package version.
@@ -32,20 +28,14 @@ String _homebrewRepo;
 /// If this isn't set, the task will default to looking for a single `.rb` file
 /// at the root of the repo without an `@` in its filename and modifying that.
 /// If there isn't exactly one such file, the task will fail.
-String homebrewFormula;
+final homebrewFormula = InternalConfigVariable.value<String>(null);
 
 /// Whether to update [homebrewFormula] in-place or copy it to a new
 /// `@`-versioned formula file for the current version number.
 ///
 /// By default, this is `true` if and only if [version] is a prerelease version.
-bool get homebrewCreateVersionedFormula {
-  _homebrewCreateVersionedFormula ??= version.isPreRelease;
-  return _homebrewCreateVersionedFormula;
-}
-
-set homebrewCreateVersionedFormula(bool value) =>
-    _homebrewCreateVersionedFormula = value;
-bool _homebrewCreateVersionedFormula;
+final homebrewCreateVersionedFormula =
+    InternalConfigVariable.fn<bool>(() => version.isPreRelease);
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -54,14 +44,18 @@ var _addedHomebrewTasks = false;
 ///
 /// This tag must already exist in the local clone of the repo; it's not created
 /// by this task. It defaults to [version].
-String get homebrewTag => _homebrewTag ?? version.toString();
-set homebrewTag(String value) => _homebrewTag = value;
-String _homebrewTag;
+final homebrewTag = InternalConfigVariable.value(version.toString());
 
 /// Enables tasks for uploading the package to Homebrew.
 void addHomebrewTasks() {
   if (_addedHomebrewTasks) return;
   _addedHomebrewTasks = true;
+
+  freezeSharedVariables();
+  homebrewRepo.freeze();
+  homebrewFormula.freeze();
+  homebrewCreateVersionedFormula.freeze();
+  homebrewTag.freeze();
 
   addTask(GrinderTask('pkg-homebrew-update',
       taskFunction: () => _update(),
@@ -74,9 +68,9 @@ Future<void> _update() async {
 
   var process = await Process.start("git", [
     "archive",
-    "--prefix=${githubRepo.split("/").last}-$homebrewTag/",
+    "--prefix=${githubRepo.value.split("/").last}-$homebrewTag/",
     "--format=tar.gz",
-    homebrewTag
+    homebrewTag.value
   ]);
   var digest = await sha256.bind(process.stdout).first;
   var stderr = await utf8.decodeStream(process.stderr);
@@ -100,7 +94,7 @@ Future<void> _update() async {
       (match) => '\n${match[1]}sha256 "$digest"',
       "Couldn't find a sha256 field in $formulaPath.");
 
-  if (homebrewCreateVersionedFormula) {
+  if (homebrewCreateVersionedFormula.value) {
     formula = _replaceFirstMappedMandatory(
         formula,
         RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
@@ -123,7 +117,7 @@ Future<void> _update() async {
         "commit",
         "--all",
         "--message",
-        homebrewCreateVersionedFormula
+        homebrewCreateVersionedFormula.value
             ? "Add a formula for $humanName $version"
             : "Update $humanName to $version"
       ],
@@ -155,7 +149,7 @@ String _replaceFirstMappedMandatory(
 
 /// Returns the path to the formula file to update in [repo].
 String _formulaFile(String repo) {
-  if (homebrewFormula != null) return p.join(repo, homebrewFormula);
+  if (homebrewFormula.value != null) return p.join(repo, homebrewFormula.value);
 
   var entries = [
     for (var entry in Directory(repo).listSync())

@@ -107,7 +107,7 @@ void main() {
     test("exports from jsModuleMainLibrary can be imported", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.jsModuleMainLibrary = "lib/src/exports.dart";
+          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
 
           pkg.addNpmTasks();
           grind(args);
@@ -300,7 +300,7 @@ void main() {
     test("prefers an explicit package.json to one from disk", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.npmPackageJson = {
+          pkg.npmPackageJson.value = {
             "name": "my_app",
             "another": "attribute"
           };
@@ -373,7 +373,7 @@ void main() {
     test("automatically adds main if jsModuleMainLibrary is set", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.jsModuleMainLibrary = "lib/src/module_main.dart";
+          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
 
           pkg.addNpmTasks();
           grind(args);
@@ -431,7 +431,7 @@ void main() {
     test("can be overridden", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.npmDistTag = "qux";
+          pkg.npmDistTag.value = "qux";
           print(pkg.npmDistTag);
         }
       """, [_packageJson]).create();
@@ -462,7 +462,7 @@ void main() {
     test("prefers an explicit npmReadme to one from disk", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.npmReadme = "Other README text";
+          pkg.npmReadme.value = "Other README text";
 
           pkg.addNpmTasks();
           grind(args);

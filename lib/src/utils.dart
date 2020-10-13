@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -34,7 +35,7 @@ final rawPubspec =
         as Map<Object, Object>;
 
 /// The set of entrypoint paths for executables defined by this package.
-Set<String> get entrypoints => p.PathSet.of(executables.values);
+Set<String> get entrypoints => p.PathSet.of(executables.value.values);
 
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
@@ -86,7 +87,7 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       var licenses = <String, List<String>>{};
       var thisPackageLicense = _readLicense(".");
       if (thisPackageLicense != null) {
-        licenses[thisPackageLicense] = [humanName];
+        licenses[thisPackageLicense] = [humanName.value];
       }
 
       licenses
@@ -273,10 +274,10 @@ void safeCopy(String source, String destination) {
 
 /// Options for [run] that tell Git to commit using [botName] and [botemail.
 final botEnvironment = RunOptions(environment: {
-  "GIT_AUTHOR_NAME": botName,
-  "GIT_AUTHOR_EMAIL": botEmail,
-  "GIT_COMMITTER_NAME": botName,
-  "GIT_COMMITTER_EMAIL": botEmail
+  "GIT_AUTHOR_NAME": botName.value,
+  "GIT_AUTHOR_EMAIL": botEmail.value,
+  "GIT_COMMITTER_NAME": botName.value,
+  "GIT_COMMITTER_EMAIL": botEmail.value
 });
 
 /// Ensure that the repository at [url] is cloned into the build directory and
@@ -306,3 +307,16 @@ Future<String> cloneOrPull(String url) async {
 
   return path;
 }
+
+/// Returns an unmodifiable copy of the JSON-compatible [object] (that is, a
+/// structure of lists and arrays of immutable scalar objects).
+Object freezeJson(Object object) {
+  if (object is Map<String, Object>) return freezeJsonMap(object);
+  if (object is List) return List<Object>.unmodifiable(object.map(freezeJson));
+  return object;
+}
+
+/// Like [freezeJson], but typed specifically for a map argument.
+Map<String, Object> freezeJsonMap(Map<String, Object> map) =>
+    UnmodifiableMapView(
+        {for (var entry in map.entries) entry.key: freezeJson(entry.value)});

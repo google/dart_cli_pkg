@@ -20,7 +20,8 @@ import 'src/pub.dart';
 import 'src/standalone.dart';
 
 export 'src/chocolatey.dart';
-export 'src/info.dart';
+export 'src/config_variable.dart' hide InternalConfigVariable;
+export 'src/info.dart' hide freezeSharedVariables;
 export 'src/github.dart';
 export 'src/homebrew.dart';
 export 'src/npm.dart';
