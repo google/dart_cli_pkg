@@ -289,8 +289,7 @@ Future<void> _deploy() async {
 ///
 /// If [allowNone] is `true`, this returns `null` if there are no children of
 /// [parent] named [name]. Otherwise, it throws an error.
-XmlElement _findElement(XmlNode parent, String name,
-    {bool allowNone = false}) {
+XmlElement _findElement(XmlNode parent, String name, {bool allowNone = false}) {
   var elements = parent.findElements(name);
   if (elements.length == 1) return elements.single;
   if (allowNone && elements.isEmpty) return null;
