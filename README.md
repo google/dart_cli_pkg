@@ -37,11 +37,12 @@ It's strongly recommended that this package be imported with the prefix `pkg`.
 
 ### Configuration
 
-This package is highly configurable, using properties defined
+This package is highly configurable, using [`ConfigVariable`][] fields defined
 [at the top level of the library][]. By default, it infers as much configuration
 as possible from the package's pubspec, but almost all properties can be
 overridden in the `main()` method:
 
+[`ConfigVariable`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/ConfigVariable.html
 [at the top level of the library]: https://pub.dev/documentation/sass/latest/sass/sass-library.html#properties
 
 ```dart
@@ -49,8 +50,24 @@ import 'package:cli_pkg/cli_pkg.dart' as pkg;
 import 'package:grinder/grinder.dart';
 
 void main(List<String> args) {
-  pkg.name = "bot-name";
-  pkg.humanName = "My App";
+  pkg.name.value = "bot-name";
+  pkg.humanName.value = "My App";
+
+  pkg.addAllTasks();
+  grind(args);
+}
+```
+
+`ConfigVariable`s whose values are expensive to compute or that might fail under
+some circumstances can also be set to callback functions, which are called
+lazily when the variables are used by the Grinder tasks:
+
+```dart
+import 'package:cli_pkg/cli_pkg.dart' as pkg;
+import 'package:grinder/grinder.dart';
+
+void main(List<String> args) {
+  pkg.githubReleaseNotes.fn = () => File.read("RELNOTES.md");
 
   pkg.addAllTasks();
   grind(args);

@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 
+import 'config_variable.dart';
 import 'utils.dart';
 
 /// The entire contents of pub's `~/.pub-cache/credentials.json` file.
@@ -16,15 +17,9 @@ import 'utils.dart';
 /// sources.
 ///
 /// By default this comes from the `PUB_CREDENTIALS` environment variable.
-String get pubCredentials {
-  _pubCredentials ??= Platform.environment["PUB_CREDENTIALS"];
-  if (_pubCredentials != null) return _pubCredentials;
-
-  fail("pkg.pubCredentials must be set to deploy to pub.");
-}
-
-set pubCredentials(String value) => _pubCredentials = value;
-String _pubCredentials;
+final pubCredentials = InternalConfigVariable.fn<String>(() =>
+    Platform.environment["PUB_CREDENTIALS"] ??
+    fail("pkg.pubCredentials must be set to deploy to pub."));
 
 /// The path in which pub expects to find its credentials file.
 final String _credentialsPath = () {
@@ -51,6 +46,8 @@ void addPubTasks() {
   if (_addedPubTasks) return;
   _addedPubTasks = true;
 
+  pubCredentials.freeze();
+
   addTask(GrinderTask('pkg-pub-deploy',
       taskFunction: () => _deploy(),
       description: 'Deploy the package to Pub.'));
@@ -61,7 +58,7 @@ Future<void> _deploy() async {
   Directory(p.dirname(_credentialsPath)).createSync(recursive: true);
 
   File(_credentialsPath).openSync(mode: FileMode.writeOnlyAppend)
-    ..writeStringSync(pubCredentials)
+    ..writeStringSync(pubCredentials.value)
     ..closeSync();
 
   log("pub publish");

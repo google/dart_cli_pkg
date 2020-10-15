@@ -1,1 +1,3 @@
 include: package:sass_analysis/analysis_options.yaml
+enable-experiment:
+- extension-methods
