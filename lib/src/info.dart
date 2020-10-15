@@ -17,6 +17,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:pubspec_parse/pubspec_parse.dart';
 
+import 'config_variable.dart';
 import 'utils.dart';
 
 /// The parsed pubspec for the CLI package.
@@ -34,44 +35,44 @@ final version = pubspec.version;
 /// Pub requires that a package name be a valid Dart identifier, but other
 /// package managers do not and users may wish to choose a different name for
 /// them. This defaults to [dartName].
-String get name => _name ?? dartName;
-set name(String value) => _name = value;
-String _name;
+final name = InternalConfigVariable.fn<String>(() => dartName);
 
 /// The human-friendly name of the package.
 ///
 /// This is used in places where the package name is only meant to be read by
 /// humans, not used as a filename or identifier. It defaults to [name].
-String get humanName => _humanName ?? name;
-set humanName(String value) => _humanName = value;
-String _humanName;
+final humanName = InternalConfigVariable.fn<String>(() => name.value);
 
 /// The human-friendly name to use for non-authentication-related recordings by
 /// this automation tool, such as Git commit metadata.
 ///
 /// Defaults to `"cli_pkg"`.
-String get botName => _botName ?? "cli_pkg";
-set botName(String value) => _botName = value;
-String _botName;
+final botName = InternalConfigVariable.fn<String>(() => "cli_pkg");
 
 /// The email address to use for non-authentication-related recordings, such as
 /// Git commit metadata.
 ///
 /// Defaults to `"cli_pkg@none"`.
-String get botEmail => _botEmail ?? "cli_pkg@none";
-set botEmail(String value) => _botEmail = value;
-String _botEmail;
+final botEmail = InternalConfigVariable.fn<String>(() => "cli_pkg@none");
 
 /// A mutable map from executable names to those executables' paths in `bin/`.
 ///
 /// This defaults to a map derived from the pubspec's `executables` field. It
 /// may be modified, but the values must be paths to executable files in the
 /// package.
-Map<String, String> executables = () {
+final executables = InternalConfigVariable.fn<Map<String, String>>(() {
   var executables = rawPubspec['executables'] as Map<Object, Object>;
 
   return {
     for (var entry in (executables ?? {}).entries)
       entry.key as String: p.join('bin', '${entry.value}.dart')
   };
-}();
+}, freeze: (map) => Map.unmodifiable(map));
+
+/// Freezes all the [ConfigVariable]s defined in `info.dart`.
+void freezeSharedVariables() {
+  name.freeze();
+  humanName.freeze();
+  botName.freeze();
+  executables.freeze();
+}

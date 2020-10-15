@@ -20,16 +20,19 @@ import 'package:meta/meta.dart';
 import 'package:node_preamble/preamble.dart' as preamble;
 import 'package:path/path.dart' as p;
 
+import 'config_variable.dart';
 import 'info.dart';
 import 'utils.dart';
 
 /// A modifiable list of additional flags to pass to `dart2js` when compiling
 /// executables.
-var jsFlags = <String>[];
+final jsFlags = InternalConfigVariable.value<List<String>>([],
+    freeze: (list) => List.unmodifiable(list));
 
 /// A modifiable list of flags to pass to `dart2js` only when compiling
 /// executables in development mode.
-var jsDevFlags = <String>[];
+final jsDevFlags = InternalConfigVariable.value<List<String>>([],
+    freeze: (list) => List.unmodifiable(list));
 
 /// A modifiable list of flags to pass to `dart2js` only when compiling
 /// executables in release mode.
@@ -37,7 +40,9 @@ var jsDevFlags = <String>[];
 /// By default, this contains `-O4`, `--no-minify`, and `--fast-startup`. This
 /// doesn't minify by default because download size isn't especially important
 /// server-side and it's nice to get readable stack traces from bug reports.
-var jsReleaseFlags = ["-O4", "--no-minify", "--fast-startup"];
+final jsReleaseFlags = InternalConfigVariable.value<List<String>>(
+    ["-O4", "--no-minify", "--fast-startup"],
+    freeze: (list) => List.unmodifiable(list));
 
 /// A modifiable map of JavaScript packages to `require()` at the beginning of
 /// the generated JS file.
@@ -52,7 +57,8 @@ var jsReleaseFlags = ["-O4", "--no-minify", "--fast-startup"];
 /// If an executable passes a literal string to `require()` through Dart's JS
 /// interop, that's automatically converted to a `require()` at the beginning of
 /// the generated JS file.
-var jsRequires = <String, String>{};
+final jsRequires = InternalConfigVariable.value(<String, String>{},
+    freeze: (map) => Map.unmodifiable(map));
 
 /// The path to a Dart library whose `main()` method will be called when the
 /// compiled JavaScript module is loaded.
@@ -83,7 +89,7 @@ var jsRequires = <String, String>{};
 ///
 /// This path is relative to the root of the package. It defaults to `null`,
 /// which means no user-defined code will run when the module is loaded.
-String jsModuleMainLibrary;
+final jsModuleMainLibrary = InternalConfigVariable.value<String>(null);
 
 /// The decoded contents of the npm package's `package.json` file.
 ///
@@ -93,23 +99,16 @@ String jsModuleMainLibrary;
 /// `cli_pkg` will automatically add `"version"` and `"bin"` fields when
 /// building the npm package. If [jsModuleMainLibrary] is set, it will also add
 /// a `"main"` field.
-Map<String, Object> get npmPackageJson {
-  if (_npmPackageJson != null) return _npmPackageJson;
-  if (!File("package.json").existsSync()) {
-    fail("pkg.npmPackageJson must be set to build an npm package.");
-  }
-
-  _npmPackageJson = jsonDecode(File("package.json").readAsStringSync())
-      as Map<String, Object>;
-  return _npmPackageJson;
-}
-
-set npmPackageJson(Map<String, Object> value) => _npmPackageJson = value;
-Map<String, Object> _npmPackageJson;
+final npmPackageJson = InternalConfigVariable.fn<Map<String, Object>>(
+    () => File("package.json").existsSync()
+        ? jsonDecode(File("package.json").readAsStringSync())
+            as Map<String, Object>
+        : fail("pkg.npmPackageJson must be set to build an npm package."),
+    freeze: freezeJsonMap);
 
 /// The name of the npm package, from `package.json`.
 String get _npmName {
-  var name = npmPackageJson["name"];
+  var name = npmPackageJson.value["name"];
   if (name is String) return name;
 
   if (name == null) fail("package.json must have a name field.");
@@ -120,16 +119,10 @@ String get _npmName {
 ///
 /// By default, this loads the contents of the `README.md` file at the root of
 /// the repository.
-String get npmReadme {
-  if (_npmReadme != null) return _npmReadme;
-  if (!File("README.md").existsSync()) return null;
-
-  _npmReadme = File("README.md").readAsStringSync();
-  return _npmReadme;
-}
-
-set npmReadme(String value) => _npmReadme = value;
-String _npmReadme;
+final npmReadme = InternalConfigVariable.fn<String>(() =>
+    File("README.md").existsSync()
+        ? File("README.md").readAsStringSync()
+        : null);
 
 /// The npm [authentication token][] to use when creating releases and making
 /// other changes.
@@ -140,15 +133,9 @@ String _npmReadme;
 /// sources.
 ///
 /// By default this comes from the `NPM_TOKEN` environment variable.
-String get npmToken {
-  _npmToken ??= Platform.environment["NPM_TOKEN"];
-  if (_npmToken != null) return _npmToken;
-
-  fail("pkg.npmToken must be set to deploy to npm.");
-}
-
-set npmToken(String value) => _npmToken = value;
-String _npmToken;
+final npmToken = InternalConfigVariable.fn<String>(() =>
+    Platform.environment["NPM_TOKEN"] ??
+    fail("pkg.npmToken must be set to deploy to npm."));
 
 /// The [distribution tag][] to use when publishing the current `npm` package.
 ///
@@ -162,17 +149,11 @@ String _npmToken;
 ///   example, for `1.0.0-beta.1` this will return `"beta"`.
 ///
 /// * For other prerelease versions, `"pre"`.
-String get npmDistTag {
-  _npmDistTag ??= () {
-    if (version.preRelease.isEmpty) return "latest";
-    var firstComponent = version.preRelease[0];
-    return firstComponent is String ? firstComponent : "pre";
-  }();
-  return _npmDistTag;
-}
-
-set npmDistTag(String value) => _npmDistTag = value;
-String _npmDistTag;
+final npmDistTag = InternalConfigVariable.fn<String>(() {
+  if (version.preRelease.isEmpty) return "latest";
+  var firstComponent = version.preRelease[0];
+  return firstComponent is String ? firstComponent : "pre";
+});
 
 /// Whether [addNpmTasks] has been called yet.
 var _addedNpmTasks = false;
@@ -181,6 +162,17 @@ var _addedNpmTasks = false;
 void addNpmTasks() {
   if (_addedNpmTasks) return;
   _addedNpmTasks = true;
+
+  freezeSharedVariables();
+  jsFlags.freeze();
+  jsDevFlags.freeze();
+  jsReleaseFlags.freeze();
+  jsRequires.freeze();
+  jsModuleMainLibrary.freeze();
+  npmPackageJson.freeze();
+  npmReadme.freeze();
+  npmToken.freeze();
+  npmDistTag.freeze();
 
   addTask(GrinderTask('pkg-js-dev',
       taskFunction: () => _js(release: false),
@@ -223,13 +215,13 @@ void _js({@required bool release}) {
     '-Dnode=true',
     '-Dversion=$version',
     '-Ddart-version=$dartVersion',
-    ...jsFlags,
-    if (release) ...jsReleaseFlags else ...jsDevFlags
+    ...jsFlags.value,
+    if (release) ...jsReleaseFlags.value else ...jsDevFlags.value
   ]);
 
   // If the code invokes `require()`, convert that to a pre-load to avoid
   // Webpack complaining about dynamic `require()`.
-  var requires = Map.of(jsRequires);
+  var requires = Map.of(jsRequires.value);
   var text = destination.readAsStringSync()
       // Some dependencies dynamically invoke `require()`, which makes Webpack
       // complain. We replace those with direct references to the modules, which
@@ -278,7 +270,7 @@ Map<String, String> get _executableIdentifiers {
   __executableIdentifiers = {
     // Add a trailing underscore to indicate that the name is intended to be
     // private without making it Dart-private.
-    for (var name in executables.keys) name: "cli_pkg_main_${i++}_"
+    for (var name in executables.value.keys) name: "cli_pkg_main_${i++}_"
   };
   return __executableIdentifiers;
 }
@@ -294,13 +286,13 @@ String get _wrapperLibrary {
 
   // Dart-import each executable library so we can JS-export their `main()`
   // methods and call them from individual files in the npm package.
-  executables.forEach((name, path) {
+  executables.value.forEach((name, path) {
     var import = jsonEncode(p.toUri(p.join('..', path)).toString());
     wrapper.writeln("import $import as ${_executableIdentifiers[name]};");
   });
-  if (jsModuleMainLibrary != null) {
+  if (jsModuleMainLibrary.value != null) {
     var target =
-        jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary)).toString());
+        jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary.value)).toString());
     wrapper.writeln("import $target as module_main;");
   }
 
@@ -323,7 +315,7 @@ class _Exports {""");
   wrapper.writeln("Uint8List(0);");
 
   // JS-export all the Dart-imported main methods.
-  if (jsModuleMainLibrary != null) wrapper.writeln("module_main.main();");
+  if (jsModuleMainLibrary.value != null) wrapper.writeln("module_main.main();");
   for (var identifier in _executableIdentifiers.values) {
     wrapper.writeln("exports.$identifier = _wrapMain($identifier.main);");
   }
@@ -358,14 +350,14 @@ Future<void> _buildPackage() async {
   writeString(
       p.join('build', 'npm', 'package.json'),
       jsonEncode({
-        ...npmPackageJson,
+        ...npmPackageJson.value,
         "version": version.toString(),
-        "bin": {for (var name in executables.keys) name: "${name}.js"},
-        if (jsModuleMainLibrary != null) "main": "$_npmName.dart.js"
+        "bin": {for (var name in executables.value.keys) name: "${name}.js"},
+        if (jsModuleMainLibrary.value != null) "main": "$_npmName.dart.js"
       }));
 
   safeCopy('build/$_npmName.dart.js', dir.path);
-  for (var name in executables.keys) {
+  for (var name in executables.value.keys) {
     writeString(p.join('build', 'npm', '$name.js'), """
 #!/usr/bin/env node
 
@@ -374,8 +366,9 @@ module.${_executableIdentifiers[name]}(process.argv.slice(2));
 """);
   }
 
-  var readme = npmReadme;
-  if (readme != null) writeString('build/npm/README.md', readme);
+  if (npmReadme.value != null) {
+    writeString('build/npm/README.md', npmReadme.value);
+  }
 
   writeString(p.join(dir.path, "LICENSE"), await license);
 }
@@ -387,8 +380,8 @@ Future<void> _deploy() async {
   file.closeSync();
 
   log("npm publish --tag $npmDistTag build/npm");
-  var process =
-      await Process.start("npm", ["publish", "--tag", npmDistTag, "build/npm"]);
+  var process = await Process.start(
+      "npm", ["publish", "--tag", npmDistTag.value, "build/npm"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("npm publish failed");

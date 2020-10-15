@@ -174,7 +174,7 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
   if (!_executableUpToDateCache.contains(path)) {
     ensureUpToDate(
         path, "pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
-        dependencies: [executables[executable]]);
+        dependencies: [executables.value[executable]]);
 
     // Only add this after ensuring that the executable is up-to-date, so that
     // running it multiple times for out-of-date inputs will cause multiple
