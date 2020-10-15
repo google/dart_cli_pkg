@@ -17,7 +17,7 @@ import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
-import 'package:xml/xml.dart' as xml;
+import 'package:xml/xml.dart' hide parse;
 
 import 'package:cli_pkg/src/chocolatey.dart';
 import 'package:cli_pkg/src/utils.dart';
@@ -336,7 +336,7 @@ d.FileDescriptor _nuspec([String extraMetadata]) {
 /// [expected], ignoring whitespace.
 Matcher _equalsXml(String expected) => predicate((actual) {
       expect(actual, isA<String>());
-      expect(xml.parse(actual as String).toXmlString(pretty: true),
-          equals(xml.parse(expected).toXmlString(pretty: true)));
+      expect(XmlDocument.parse(actual as String).toXmlString(pretty: true),
+          equals(XmlDocument.parse(expected).toXmlString(pretty: true)));
       return true;
     });

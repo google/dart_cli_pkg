@@ -1,3 +1,7 @@
+# 1.0.0-beta.11
+
+* Use the latest version of the `xml` package.
+
 # 1.0.0-beta.10
 
 * **Breaking change:** All configurable variables are now defined as
