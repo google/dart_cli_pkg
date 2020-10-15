@@ -86,14 +86,12 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       // from Dart Team packages.
       var licenses = <String, List<String>>{};
       var thisPackageLicense = _readLicense(".");
+
       if (thisPackageLicense != null) {
         licenses[thisPackageLicense] = [humanName.value];
       }
 
-      licenses
-          .putIfAbsent(
-              File(p.join(sdkDir.path, 'LICENSE')).readAsStringSync(), () => [])
-          .add("Dart SDK");
+      licenses.putIfAbsent(_readSdkLicense(), () => []).add("Dart SDK");
 
       // Parse the package config rather than the pubspec so we include transitive
       // dependencies. This also includes dev dependencies, but it's possible those
@@ -131,6 +129,19 @@ final _licenseMemo = AsyncMemoizer<String>();
 /// licenses.
 final _licenseRegExp =
     RegExp(r"^(([a-zA-Z0-9]+[-_])?(LICENSE|COPYING)|UNLICENSE)(\..*)?$");
+
+/// Returns the contents of the `LICENSE` file in [sdkDir].
+String _readSdkLicense() {
+  final dartLicense = File(p.join(sdkDir.path, 'LICENSE'));
+
+  if (dartLicense.existsSync()) {
+    return dartLicense.readAsStringSync();
+  } else {
+    // Homebrew's Dart SDK installation puts the license in the directory above
+    // the SDK, so if it's not in the SDK itself check there.
+    return File(p.join(sdkDir.parent.path, 'LICENSE')).readAsStringSync();
+  }
+}
 
 /// Returns the contents of the `LICENSE` file in [dir], with various possible
 /// filenames and extensions, or `null`.
