@@ -129,15 +129,15 @@ final _licenseMemo = AsyncMemoizer<String>();
 final _licenseRegExp =
     RegExp(r"^(([a-zA-Z0-9]+[-_])?(LICENSE|COPYING)|UNLICENSE)(\..*)?$");
 
-/// Returns the contents of the `LICENSE` file in [sdkDir],
+/// Returns the contents of the `LICENSE` file in [sdkDir].
 String _readSdkLicense() {
   final dartLicense = File(p.join(sdkDir.path, 'LICENSE'));
 
   if (dartLicense.existsSync()) {
     return dartLicense.readAsStringSync();
   } else {
-    // Look up parent directory for license
-    // If not in the main directory
+    // Homebrew's Dart SDK installation puts the license in the directory above
+    // the SDK, so if it's not in the SDK itself check there.
     return File(p.join(sdkDir.parent.path, 'LICENSE')).readAsStringSync();
   }
 }
