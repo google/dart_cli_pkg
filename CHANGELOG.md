@@ -3,6 +3,8 @@
 * Properly load the Dart SDK license when it's in the directory above the SDK,
   as in a Homebrew installation.
 
+* Use the latest version of the `xml` package.
+
 # 1.0.0-beta.10
 
 * **Breaking change:** All configurable variables are now defined as
