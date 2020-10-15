@@ -103,7 +103,8 @@ void main() {
     await d.package(
         {...pubspec, "version": "1.2.3-beta.1"},
         _enableHomebrew(
-            config: "pkg.homebrewCreateVersionedFormula = false;")).create();
+            config:
+                "pkg.homebrewCreateVersionedFormula.value = false;")).create();
     await _makeRepo("my_app");
     await git(["tag", "1.2.3-beta.1"]);
 
@@ -155,7 +156,7 @@ void main() {
           .package(
               pubspec,
               _enableHomebrew(
-                  config: "pkg.homebrewCreateVersionedFormula = true;"))
+                  config: "pkg.homebrewCreateVersionedFormula.value = true;"))
           .create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3"]);
@@ -184,7 +185,8 @@ void main() {
       await d.package(
           {...pubspec, "version": "1.2.3+foo.1"},
           _enableHomebrew(
-              config: "pkg.homebrewCreateVersionedFormula = true;")).create();
+              config:
+                  "pkg.homebrewCreateVersionedFormula.value = true;")).create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3+foo.1"]);
 
@@ -212,7 +214,8 @@ void main() {
 
   test("uses the human name in the commit message", () async {
     await d
-        .package(pubspec, _enableHomebrew(config: 'pkg.humanName = "My App";'))
+        .package(
+            pubspec, _enableHomebrew(config: 'pkg.humanName.value = "My App";'))
         .create();
     await _makeRepo("my_app");
     await git(["tag", "1.2.3"]);
@@ -225,8 +228,8 @@ void main() {
 
   test("can use a custom tag name", () async {
     await d
-        .package(
-            pubspec, _enableHomebrew(config: 'pkg.homebrewTag = "v1.2.3";'))
+        .package(pubspec,
+            _enableHomebrew(config: 'pkg.homebrewTag.value = "v1.2.3";'))
         .create();
     await _makeRepo("my_app");
     await git(["tag", "v1.2.3"]);
@@ -289,8 +292,10 @@ void main() {
 
     test("uses the explicit formula", () async {
       await d
-          .package(pubspec,
-              _enableHomebrew(config: 'pkg.homebrewFormula = "my_app.rb";'))
+          .package(
+              pubspec,
+              _enableHomebrew(
+                  config: 'pkg.homebrewFormula.value = "my_app.rb";'))
           .create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3"]);
@@ -376,10 +381,10 @@ void main() {
 String _enableHomebrew({String config, bool repo = true}) => """
   void main(List<String> args) {
     ${config ?? ''}
-    ${repo ? 'pkg.homebrewRepo = "me/homebrew";' : ''}
-    pkg.githubRepo = "me/app";
-    pkg.githubUser = "usr";
-    pkg.githubPassword = "pwd";
+    ${repo ? 'pkg.homebrewRepo.value = "me/homebrew";' : ''}
+    pkg.githubRepo.value = "me/app";
+    pkg.githubUser.value = "usr";
+    pkg.githubPassword.value = "pwd";
     pkg.addHomebrewTasks();
     grind(args);
   }
@@ -427,12 +432,12 @@ Future<TestProcess> _homebrewUpdate() => grind([
     });
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
-/// reset to the new `master` branch.
+/// reset to the new `HEAD` state.
 ///
 /// The [path] is the basename of the formula file to verify. If it isn't
 /// passed, it defaults to `my_app.rb`.
 Future<void> _assertFormula(Object matcher, {String path}) async {
-  await git(["reset", "--hard", "master"], workingDirectory: "me/homebrew.git");
+  await git(["reset", "--hard", "HEAD"], workingDirectory: "me/homebrew.git");
   await d
       .file(p.join("me/homebrew.git", path ?? "my_app.rb"), matcher)
       .validate();

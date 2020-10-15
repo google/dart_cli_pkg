@@ -21,6 +21,7 @@ import 'package:grinder/grinder.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
+import 'config_variable.dart';
 import 'info.dart';
 import 'template.dart';
 import 'utils.dart';
@@ -31,9 +32,7 @@ final _is64Bit = Platform.version.contains("x64");
 /// The name of the standalone package.
 ///
 /// This defaults to [name].
-String get standaloneName => _standaloneName ?? name;
-set standaloneName(String value) => _standaloneName = value;
-String _standaloneName;
+final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
 /// For each executable entrypoint in [executables], builds a script snapshot
 /// to `build/${executable}.snapshot`.
@@ -42,7 +41,7 @@ String _standaloneName;
 void _compileSnapshot({@required bool release}) {
   ensureBuild();
   var existingSnapshots = <String, String>{};
-  executables.forEach((name, path) {
+  executables.value.forEach((name, path) {
     if (existingSnapshots.containsKey(path)) {
       var existingName = existingSnapshots[path];
       log('copying build/$existingName.snapshot to build/$name.snapshot');
@@ -71,7 +70,7 @@ void _compileNative() {
   }
 
   var existingSnapshots = <String, String>{};
-  executables.forEach((name, path) {
+  executables.value.forEach((name, path) {
     if (existingSnapshots.containsKey(path)) {
       var existingName = existingSnapshots[path];
       log('copying build/$existingName.native to build/$name.native');
@@ -96,6 +95,9 @@ var _addedStandaloneTasks = false;
 void addStandaloneTasks() {
   if (_addedStandaloneTasks) return;
   _addedStandaloneTasks = true;
+
+  freezeSharedVariables();
+  standaloneName.freeze();
 
   addTask(GrinderTask('pkg-compile-snapshot',
       taskFunction: () => _compileSnapshot(release: true),
@@ -164,7 +166,7 @@ bool _useNative(String os, {@required bool x64}) {
 /// Builds scripts for testing each executable on the current OS and
 /// architecture.
 Future<void> _buildDev() async {
-  for (var name in executables.keys) {
+  for (var name in executables.value.keys) {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
         script,
@@ -187,7 +189,7 @@ Future<void> _buildPackage(String os, {@required bool x64}) async {
         executable: true))
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  for (var name in executables.keys) {
+  for (var name in executables.value.keys) {
     archive.addFile(file(
         "$standaloneName/src/$name.snapshot",
         _useNative(os, x64: x64)
@@ -197,12 +199,12 @@ Future<void> _buildPackage(String os, {@required bool x64}) async {
 
   // Do this separately from adding entrypoints because multiple executables may
   // have the same entrypoint.
-  for (var name in executables.keys) {
+  for (var name in executables.value.keys) {
     archive.addFile(fileFromString(
         "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
         renderTemplate(
             "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
-            {"name": standaloneName, "executable": name}),
+            {"name": standaloneName.value, "executable": name}),
         executable: true));
   }
 
