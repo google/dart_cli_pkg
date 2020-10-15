@@ -225,7 +225,7 @@ Future<void> _build() async {
     ),
   );
 
-  for (var path in chocolateyFiles) {
+  for (var path in chocolateyFiles.value) {
     var relative = p.relative(path);
 
     if (relative == 'pubspec.yaml') continue;
