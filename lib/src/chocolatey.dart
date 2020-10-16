@@ -235,8 +235,9 @@ Future<void> _build() async {
   }
 
   var install = StringBuffer("""
+\$ToolsDir = (Split-Path -parent \$MyInvocation.MyCommand.Definition)
 Write-Host "Fetching Dart dependencies..."
-\$SourceDir = "\$PackageFolder\\source"
+\$SourceDir = "\$ToolsDir\\source"
 Push-Location -Path \$SourceDir
 pub get --no-precompile | Out-Null
 Pop-Location
