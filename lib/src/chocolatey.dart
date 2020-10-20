@@ -218,21 +218,17 @@ Future<void> _build() async {
   writeString("build/chocolatey/tools/LICENSE", await license);
 
   writeString(
-    'build/chocolatey/tools/source/pubspec.yaml',
-    json.encode(
-      Map.of(rawPubspec)
+      'build/chocolatey/tools/source/pubspec.yaml',
+      json.encode(Map.of(rawPubspec)
         ..remove('dev_dependencies')
-        ..remove('dependency_overrides'),
-    ),
-  );
+        ..remove('dependency_overrides')));
 
   for (var path in chocolateyFiles.value) {
     var relative = p.relative(path);
-
     if (relative == 'pubspec.yaml') continue;
 
-    copy(File(relative),
-        Directory(p.join('build/chocolatey/tools/source', p.dirname(path))));
+    safeCopy(
+        relative, p.join('build/chocolatey/tools/source', p.dirname(path)));
   }
 
   var install = StringBuffer("""
@@ -285,7 +281,7 @@ Future<void> _deploy() async {
     "--source",
     "https://chocolatey.org",
     "--key",
-    "$chocolateyToken",
+    "$chocolateyToken"
   ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
