@@ -269,7 +269,7 @@ void writeBytes(String path, List<int> contents) {
 /// Like Grinder's [copy], but without Windows bugs (google/grinder.dart#345).
 void safeCopy(String source, String destination) {
   log("copying $source to $destination");
-  new Directory(destination).createSync(recursive: true);
+  Directory(destination).createSync(recursive: true);
   File(source).copySync(p.join(destination, p.basename(source)));
 }
 
