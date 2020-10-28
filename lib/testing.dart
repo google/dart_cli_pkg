@@ -217,7 +217,7 @@ void ensureUpToDate(String path, String commandToRun,
         throw TestFailure(
             "${entry.path} was modified after ${p.prettyUri(p.toUri(path))} "
             "was generated.\n"
-            "Run pub run grinder $commandToRun.");
+            "Run $commandToRun.");
       }
     }
   }
