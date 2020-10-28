@@ -1,3 +1,8 @@
+# 1.0.0-beta.12
+
+* Deploy Chocolatey packages as source files rather than a zip file, to avoid
+  validation errors around the need for a `VERIFICATION` file.
+
 # 1.0.0-beta.11
 
 * Properly load the Dart SDK license when it's in the directory above the SDK,
