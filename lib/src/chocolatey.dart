@@ -15,7 +15,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
@@ -213,31 +212,28 @@ Future<void> _build() async {
   dir.createSync(recursive: true);
 
   writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
-  Directory("build/chocolatey/tools").createSync();
+  Directory("build/chocolatey/tools/source").createSync(recursive: true);
+
   writeString("build/chocolatey/tools/LICENSE", await license);
 
-  var sourceFiles = Archive()
-    ..addFile(fileFromString(
-        "source/pubspec.yaml",
-        // Don't download useless dev dependencies to users' computers.
-        json.encode(Map.of(rawPubspec)
-          ..remove('dev_dependencies')
-          ..remove('dependency_overrides'))));
+  writeString(
+      'build/chocolatey/tools/source/pubspec.yaml',
+      json.encode(Map.of(rawPubspec)
+        ..remove('dev_dependencies')
+        ..remove('dependency_overrides')));
+
   for (var path in chocolateyFiles.value) {
     var relative = p.relative(path);
     if (relative == 'pubspec.yaml') continue;
-    sourceFiles.addFile(file(p.join('source', relative), path));
+
+    safeCopy(
+        relative, p.join('build/chocolatey/tools/source', p.dirname(path)));
   }
-  writeBytes(
-      "build/chocolatey/tools/source.zip", ZipEncoder().encode(sourceFiles));
 
   var install = StringBuffer("""
 \$ToolsDir = (Split-Path -parent \$MyInvocation.MyCommand.Definition)
-Get-ChocolateyUnzip -PackageName '$_chocolateyName' `
-   -File "\$ToolsDir\\source.zip" -Destination \$PackageFolder
-
 Write-Host "Fetching Dart dependencies..."
-\$SourceDir = "\$PackageFolder\\source"
+\$SourceDir = "\$ToolsDir\\source"
 Push-Location -Path \$SourceDir
 pub get --no-precompile | Out-Null
 Pop-Location
@@ -276,10 +272,16 @@ Future<void> _nupkg() async {
 
 /// Deploys the Chocolatey package to Chocolatey.
 Future<void> _deploy() async {
-  var nupkgPath = "build/$_chocolateyName.$_chocolateyVersion.nupkg";
+  var nupkgPath = p.join("build", "$_chocolateyName.$_chocolateyVersion.nupkg");
   log("choco push --source https://chocolatey.org --key=... $nupkgPath");
-  var process = await Process.start("choco",
-      ["push", "--source", "https://chocolatey.org", "--key", nupkgPath]);
+  var process = await Process.start("choco", [
+    "push",
+    nupkgPath,
+    "--source",
+    "https://chocolatey.org",
+    "--key",
+    "$chocolateyToken"
+  ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("choco push failed");
