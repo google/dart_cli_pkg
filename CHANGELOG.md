@@ -1,5 +1,8 @@
 # 1.0.0-beta.13
 
+* Add a `ConfigVariable.defaultValue` property to get the default value for
+  variables that are overridden by functions.
+
 * Fix a typo in error messages when files need to be regenerated for tests.
 
 # 1.0.0-beta.12
