@@ -296,6 +296,29 @@ String get _wrapperLibrary {
     wrapper.writeln("import $target as module_main;");
   }
 
+  // Define a JS-interop Future to Promise translator so that we can export
+  // a Promise-based API
+  wrapper.writeln("""
+@JS()
+class Promise<T> {
+  external Promise(void executor(void resolve(T result), Function reject));
+}
+
+Promise<T> _futureToPromise<T>(Future<T> future) {
+  return new Promise<T>(allowInterop((resolve, reject) {
+    future.then(resolve, onError: reject);
+  }));
+}
+
+Object _translateReturnValue(Object val) {
+  if (val is Future) {
+    return _futureToPromise(val);
+  } else {
+    return val;
+  }
+}
+""");
+
   // Define a JS-interop "exports" field that we can use to export the various
   // main methods.
   wrapper.writeln("""
@@ -326,10 +349,11 @@ class _Exports {""");
   wrapper.writeln("""
 Function _wrapMain(Function main) {
   if (main is Object Function()) {
-    return allowInterop((_) => main());
+    return allowInterop((_) => _translateReturnValue(main()));
   } else {
     return allowInterop(
-        (args) => main(List<String>.from(args as List<Object>)));
+        (args) => _translateReturnValue(
+            main(List<String>.from(args as List<Object>))));
   }
 }""");
 
