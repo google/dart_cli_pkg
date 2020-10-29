@@ -34,6 +34,20 @@ void main() {
       variable.fn = () => 12;
       expect(variable.value, equals(12));
     });
+
+    group("is still available as defaultValue when it's", () {
+      test("overridden by a new value", () {
+        var variable = InternalConfigVariable.value(1);
+        variable.value = 12;
+        expect(variable.defaultValue, equals(1));
+      });
+
+      test("overridden by a new function", () {
+        var variable = InternalConfigVariable.value(1);
+        variable.fn = () => 12;
+        expect(variable.defaultValue, equals(1));
+      });
+    });
   });
 
   group("the function constructor", () {
@@ -65,6 +79,20 @@ void main() {
           InternalConfigVariable.fn<int>(expectAsync0(() => 12, count: 1));
       expect(variable.value, equals(12));
       expect(variable.value, equals(12));
+    });
+
+    group("is still available as defaultValue when it's", () {
+      test("overridden by a new value", () {
+        var variable = InternalConfigVariable.fn(() => 1);
+        variable.value = 12;
+        expect(variable.defaultValue, equals(1));
+      });
+
+      test("overridden by a new function", () {
+        var variable = InternalConfigVariable.fn(() => 1);
+        variable.fn = () => 12;
+        expect(variable.defaultValue, equals(1));
+      });
     });
   });
 

@@ -1,5 +1,5 @@
 name: cli_pkg
-version: 1.0.0-dev
+version: 1.0.0-beta.13
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
