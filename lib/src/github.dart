@@ -150,6 +150,9 @@ Future<void> _release() async {
 /// A regular expression that matches a Markdown code block.
 final _codeBlock = RegExp(" *```");
 
+/// A regular expression that matches a Markdown link reference definition..
+final _linkReferenceDefinition = RegExp(r" *\[([^\]\\]|\\[\]\\])+\]:");
+
 /// Returns the most recent section in the CHANGELOG, reformatted to remove line
 /// breaks that will show up on GitHub.
 String _lastChangelogSection() {
@@ -174,18 +177,24 @@ String _lastChangelogSection() {
   }
 
   var buffer = StringBuffer();
+  var inParagraph = false;
   while (!scanner.isDone && !scanner.matches("## ")) {
     if (scanner.matches(_codeBlock)) {
       do {
         buffer.writeln(scanLine());
       } while (!scanner.matches(_codeBlock));
       buffer.writeln(scanLine());
-    } else if (scanner.matches(RegExp(" *\n"))) {
-      buffer.writeln();
+      inParagraph = false;
+    } else if (!inParagraph && scanner.matches(_linkReferenceDefinition)) {
       buffer.writeln(scanLine());
+    } else if (scanner.matches(RegExp(" *\n"))) {
+      if (inParagraph) buffer.writeln();
+      buffer.writeln(scanLine());
+      inParagraph = false;
     } else {
+      if (inParagraph) buffer.writeCharCode($space);
       buffer.write(scanLine());
-      buffer.writeCharCode($space);
+      inParagraph = true;
     }
   }
 
