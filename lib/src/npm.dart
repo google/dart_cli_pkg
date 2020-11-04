@@ -284,6 +284,7 @@ String get _wrapperLibrary {
   wrapper.writeln("import 'dart:typed_data';");
   wrapper.writeln("import 'package:js/js.dart';");
   wrapper.writeln("import 'package:node_interop/node_interop.dart';");
+  wrapper.writeln("import 'package:node_interop/util.dart';");
 
   // Dart-import each executable library so we can JS-export their `main()`
   // methods and call them from individual files in the npm package.
@@ -300,15 +301,9 @@ String get _wrapperLibrary {
   // Define a JS-interop Future to Promise translator so that we can export
   // a Promise-based API
   wrapper.writeln("""
-Promise _futureToPromise(Future future) {
-  return new Promise(allowInterop((resolve, reject) {
-    future.then(resolve, onError: reject);
-  }));
-}
-
 Object _translateReturnValue(Object val) {
   if (val is Future) {
-    return _futureToPromise(val);
+    return futureToPromise(val);
   } else {
     return val;
   }
