@@ -323,17 +323,7 @@ void main() {
             "\n"
             "This is a great release!\n\n"
             "Give it a try!",
-            startsWith("This is a great release! \n\n"
-                "Give it a try!"));
-      });
-
-      test("leaves separate paragraphs separate", () async {
-        await assertReleaseNotesFromChangelog(
-            "## 1.2.3\n"
-            "\n"
-            "This is a great release!\n\n"
-            "Give it a try!",
-            startsWith("This is a great release! \n\n"
+            startsWith("This is a great release!\n\n"
                 "Give it a try!"));
       });
 
@@ -355,6 +345,33 @@ void main() {
                 "  d: e;\n"
                 "}\n"
                 "```"));
+      });
+
+      test("leaves groups of link reference definitions as-is", () async {
+        await assertReleaseNotesFromChangelog(
+            "## 1.2.3\n"
+            "\n"
+            "[a], [b], [c]\n"
+            "\n"
+            "[a]: http://a.com\n"
+            "[b]: http://b.org\n"
+            "[c]: http://c.net\n",
+            startsWith("[a], [b], [c]\n"
+                "\n"
+                "[a]: http://a.com\n"
+                "[b]: http://b.org\n"
+                "[c]: http://c.net\n"));
+      });
+
+      test(
+          "folds a line that looks like a link reference definition in a paragraph",
+          () async {
+        await assertReleaseNotesFromChangelog(
+            "## 1.2.3\n"
+            "\n"
+            "[a]\n"
+            "[a]: http://a.com\n",
+            startsWith("[a] [a]: http://a.com\n"));
       });
     });
 
