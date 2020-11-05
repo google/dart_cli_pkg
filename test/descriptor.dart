@@ -41,6 +41,7 @@ final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
     [List<Descriptor> files]) {
   pubspec = {
+    "environment": _ourPubpsec["environment"],
     "executables": <String, Object>{},
     ...pubspec,
     "dev_dependencies": {

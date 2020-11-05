@@ -2,8 +2,7 @@ language: dart
 
 dart:
 - stable
-# Testing on Dart dev is temporarily disabled due to dart-lang/sdk#44064.
-# - dev
+- dev
 
 os:
 - linux
