@@ -29,6 +29,17 @@ import 'utils.dart';
 /// Whether we're using a 64-bit Dart SDK.
 final _is64Bit = Platform.version.contains("x64");
 
+/// Whether to generate a fully standalone executable that doesn't need a
+/// separate `dartaotruntime` executable to run.
+///
+/// Note that even if this is `true`, fully standalone executables can only be
+/// generated for the current operating system in 64-bit mode, so [_useNative]
+/// should be checked as well.
+///
+/// This is currently only enabled on Linux because Windows and OS X generate
+/// annoying warnings when running unsigned executables. See #67 for details.
+final _useExe = Platform.operatingSystem == "linux";
+
 /// The name of the standalone package.
 ///
 /// This defaults to [name].
@@ -80,7 +91,7 @@ void _compileNative() {
       run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
         path,
         '-Dversion=$version',
-        if (useDart2Native) '--output-kind=aot',
+        if (useDart2Native && !_useExe) '--output-kind=aot',
         if (useDart2Native) '--output',
         'build/$name.native'
       ]);
@@ -184,28 +195,40 @@ Future<void> _buildDev() async {
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, {@required bool x64}) async {
   var archive = Archive()
-    ..addFile(fileFromBytes("$standaloneName/src/dart${_binaryExtension(os)}",
-        await _dartExecutable(os, x64: x64),
-        executable: true))
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  for (var name in executables.value.keys) {
-    archive.addFile(file(
-        "$standaloneName/src/$name.snapshot",
-        _useNative(os, x64: x64)
-            ? "build/$name.native"
-            : "build/$name.snapshot"));
+  var useNative = _useNative(os, x64: x64);
+  var useExe = useNative && _useExe;
+  if (!useExe) {
+    archive.addFile(fileFromBytes(
+        "$standaloneName/src/dart${_binaryExtension(os)}",
+        await _dartExecutable(os, x64: x64),
+        executable: true));
   }
 
-  // Do this separately from adding entrypoints because multiple executables may
-  // have the same entrypoint.
   for (var name in executables.value.keys) {
-    archive.addFile(fileFromString(
-        "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
-        renderTemplate(
-            "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
-            {"name": standaloneName.value, "executable": name}),
-        executable: true));
+    if (useExe) {
+      archive.addFile(file(
+          "$standaloneName/$name${os == 'windows' ? '.exe' : ''}",
+          "build/$name.native",
+          executable: true));
+    } else {
+      archive.addFile(file("$standaloneName/src/$name.snapshot",
+          useNative ? "build/$name.native" : "build/$name.snapshot"));
+    }
+  }
+
+  if (!useExe) {
+    // Do this separately from adding entrypoints because multiple executables
+    // may have the same entrypoint.
+    for (var name in executables.value.keys) {
+      archive.addFile(fileFromString(
+          "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
+          renderTemplate(
+              "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
+              {"name": standaloneName.value, "executable": name}),
+          executable: true));
+    }
   }
 
   var prefix = 'build/$standaloneName-$version-$os-${_arch(x64)}';

@@ -15,6 +15,7 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
@@ -23,13 +24,19 @@ import 'package:cli_pkg/src/utils.dart';
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
+/// Whether we're using a 64-bit Dart SDK.
+final _is64Bit = Platform.version.contains("x64");
+
 /// The operating system/architecture combination for the current machine.
 ///
 /// We build this for most tests so we can avoid downloading SDKs from the Dart
 /// server.
-final _target = Platform.operatingSystem +
-    "-" +
-    (Platform.version.contains("x64") ? "x64" : "ia32");
+final _target = Platform.operatingSystem + "-" + (_is64Bit ? "x64" : "ia32");
+
+/// Whether `pkg-compile-native` will generate fully standalone executable that
+/// doesn't need a separate `dartaotruntime` executable to run.
+final _useExe =
+    Platform.operatingSystem == "linux" && Platform.version.contains("x64");
 
 /// The archive suffix for the current platform.
 final _archiveSuffix = _target + (Platform.isWindows ? ".zip" : ".tar.gz");
@@ -107,11 +114,12 @@ void main() {
           d.file("foo$dotBat", anything),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-          d.dir("src", [
-            d.file("foo.snapshot", anything),
-            d.file("bar.snapshot", anything),
-            d.file("qux.snapshot", anything),
-          ])
+          if (!_useExe)
+            d.dir("src", [
+              d.file("foo.snapshot", anything),
+              d.file("bar.snapshot", anything),
+              d.file("qux.snapshot", anything),
+            ])
         ])
       ]).validate();
     });
@@ -132,8 +140,9 @@ void main() {
           d.nothing("foo$dotBat"),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-          d.dir("src",
-              [d.nothing("foo.snapshot"), d.file("bar.snapshot", anything)])
+          if (!_useExe)
+            d.dir("src",
+                [d.nothing("foo.snapshot"), d.file("bar.snapshot", anything)])
         ])
       ]).validate();
     });
@@ -155,11 +164,12 @@ void main() {
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
           d.file("zip$dotBat", anything),
-          d.dir("src", [
-            d.file("foo.snapshot", anything),
-            d.file("bar.snapshot", anything),
-            d.file("zip.snapshot", anything),
-          ])
+          if (!_useExe)
+            d.dir("src", [
+              d.file("foo.snapshot", anything),
+              d.file("bar.snapshot", anything),
+              d.file("zip.snapshot", anything),
+            ])
         ])
       ]).validate();
     });
@@ -285,50 +295,53 @@ void main() {
           "executables": {"foo": "foo"}
         }, _enableStandalone).create());
 
-    d.Descriptor archive(String name, {bool windows = false}) =>
-        d.archive(name, [
-          d.dir("my_app", [
-            d.file("foo${windows ? '.bat' : ''}", anything),
+    d.Descriptor archive(String os, {@required bool x64}) {
+      var name = "my_app/build/my_app-1.2.3-$os-${x64 ? 'x64' : 'ia32'}."
+          "${os == 'windows' ? 'zip' : 'tar.gz'}";
+
+      var useExe = Platform.operatingSystem == os && x64 == _is64Bit && _useExe;
+      return d.archive(name, [
+        d.dir("my_app", [
+          d.file("foo${os == 'windows' ? (useExe ? '.exe' : '.bat') : ''}",
+              anything),
+          if (!useExe)
             d.dir("src", [
               d.file("LICENSE", anything),
-              d.file("dart${windows ? '.exe' : ''}", anything),
+              d.file("dart${os == 'windows' ? '.exe' : ''}", anything),
               d.file("foo.snapshot", anything)
             ])
-          ])
-        ]);
+        ])
+      ]);
+    }
 
     group("Mac OS", () {
       test("64-bit", () async {
         await (await grind(["pkg-standalone-macos-x64"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate();
+        await archive("macos", x64: true).validate();
       });
     });
 
     group("Linux", () {
       test("32-bit", () async {
         await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-linux-ia32.tar.gz").validate();
+        await archive("linux", x64: false).validate();
       });
 
       test("64-bit", () async {
         await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-linux-x64.tar.gz").validate();
+        await archive("linux", x64: true).validate();
       });
     });
 
     group("Windows", () {
       test("32-bit", () async {
         await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-windows-ia32.zip",
-                windows: true)
-            .validate();
+        await archive("windows", x64: false).validate();
       });
 
       test("64-bit", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
-        await archive("my_app/build/my_app-1.2.3-windows-x64.zip",
-                windows: true)
-            .validate();
+        await archive("windows", x64: true).validate();
       }, onPlatform: {
         if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
       });
@@ -338,13 +351,11 @@ void main() {
       await (await grind(["pkg-standalone-all"])).shouldExit(0);
 
       await Future.wait([
-        archive("my_app/build/my_app-1.2.3-macos-x64.tar.gz").validate(),
-        archive("my_app/build/my_app-1.2.3-linux-ia32.tar.gz").validate(),
-        archive("my_app/build/my_app-1.2.3-linux-x64.tar.gz").validate(),
-        archive("my_app/build/my_app-1.2.3-windows-ia32.zip", windows: true)
-            .validate(),
-        archive("my_app/build/my_app-1.2.3-windows-x64.zip", windows: true)
-            .validate()
+        archive("macos", x64: true).validate(),
+        archive("linux", x64: false).validate(),
+        archive("linux", x64: true).validate(),
+        archive("windows", x64: false).validate(),
+        archive("windows", x64: true).validate()
       ]);
     }, onPlatform: {
       if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
