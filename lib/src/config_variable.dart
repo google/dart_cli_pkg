@@ -21,6 +21,9 @@ class ConfigVariable<T> {
   /// The cached value.
   T _value;
 
+  /// The variable's original value,
+  T _defaultValue;
+
   /// Whether [_value] has been cached yet or not.
   ///
   /// This is used to distinguish a cached `null` value from a value that hasn't
@@ -29,6 +32,9 @@ class ConfigVariable<T> {
 
   /// A function that generates [_value].
   T Function() _callback;
+
+  /// The original callback for generating [_value].
+  T Function() _defaultCallback;
 
   /// Whether this variable has been frozen and can no longer be modified by the
   /// user.
@@ -58,6 +64,11 @@ class ConfigVariable<T> {
     _cached = true;
   }
 
+  /// Returns the default value for this variable, even if its value has since
+  /// been overridden.
+  T get defaultValue =>
+      _defaultCallback == null ? _defaultValue : _defaultCallback();
+
   /// Sets the variable's value to the result of calling [callback].
   ///
   /// This callback will be called lazily, if and when the variable's value is
@@ -74,10 +85,13 @@ class ConfigVariable<T> {
     _cached = false;
   }
 
-  ConfigVariable._fn(this._callback, {T Function(T) freeze}) : _freeze = freeze;
+  ConfigVariable._fn(this._callback, {T Function(T) freeze})
+      : _defaultCallback = _callback,
+        _freeze = freeze;
 
   ConfigVariable._value(this._value, {T Function(T) freeze})
-      : _cached = true,
+      : _defaultValue = _value,
+        _cached = true,
         _freeze = freeze;
 
   String toString() => value.toString();

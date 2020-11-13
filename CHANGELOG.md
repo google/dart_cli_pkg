@@ -1,3 +1,19 @@
+# 1.0.0
+
+* Initial stable release.
+
+### Changes since 1.0.0-beta.13
+
+* Don't fold link reference declarations like paragraphs when generating GitHub
+  release notes.
+
+# 1.0.0-beta.13
+
+* Add a `ConfigVariable.defaultValue` property to get the default value for
+  variables that are overridden by functions.
+
+* Fix a typo in error messages when files need to be regenerated for tests.
+
 # 1.0.0-beta.12
 
 * Deploy Chocolatey packages as source files rather than a zip file, to avoid
