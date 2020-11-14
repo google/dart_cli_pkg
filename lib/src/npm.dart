@@ -283,6 +283,8 @@ String get _wrapperLibrary {
   var wrapper = StringBuffer();
   wrapper.writeln("import 'dart:typed_data';");
   wrapper.writeln("import 'package:js/js.dart';");
+  wrapper.writeln("import 'package:node_interop/node_interop.dart';");
+  wrapper.writeln("import 'package:node_interop/util.dart';");
 
   // Dart-import each executable library so we can JS-export their `main()`
   // methods and call them from individual files in the npm package.
@@ -295,6 +297,18 @@ String get _wrapperLibrary {
         jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary.value)).toString());
     wrapper.writeln("import $target as module_main;");
   }
+
+  // Define a JS-interop Future to Promise translator so that we can export
+  // a Promise-based API
+  wrapper.writeln("""
+Object _translateReturnValue(Object val) {
+  if (val is Future) {
+    return futureToPromise(val);
+  } else {
+    return val;
+  }
+}
+""");
 
   // Define a JS-interop "exports" field that we can use to export the various
   // main methods.
@@ -326,10 +340,11 @@ class _Exports {""");
   wrapper.writeln("""
 Function _wrapMain(Function main) {
   if (main is Object Function()) {
-    return allowInterop((_) => main());
+    return allowInterop((_) => _translateReturnValue(main()));
   } else {
     return allowInterop(
-        (args) => main(List<String>.from(args as List<Object>)));
+        (args) => _translateReturnValue(
+            main(List<String>.from(args as List<Object>))));
   }
 }""");
 

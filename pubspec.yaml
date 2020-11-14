@@ -1,5 +1,5 @@
 name: cli_pkg
-version: 1.0.0
+version: 1.1.0
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
@@ -17,6 +17,7 @@ dependencies:
   js: "^0.6.0"
   meta: "^1.1.7"
   mustache: "^1.0.0"
+  node_interop: "^1.1.0"
   node_preamble: "^1.1.0"
   package_config: '^1.9.0'
   path: '^1.0.0'
