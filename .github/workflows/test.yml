@@ -42,3 +42,14 @@ jobs:
 
     - run: pub get
     - run: pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
+
+  format:
+    name: "Code formatting"
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cedx/setup-dart@v2
+    - run: dart --version
+    - run: dart format --fix .
+    - run: git diff --exit-code
