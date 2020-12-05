@@ -1,4 +1,4 @@
 on_platform:
-  # Windows and Mac OS are both very slow on Travis, and individual tests can
-  # take over 30s to complete.
-  windows || mac-os: {timeout: 2x}
+  # Windows and Mac OS are both very slow on GitHub actions, and individual
+  # tests can take a long time to complete.
+  windows || mac-os: {timeout: 3x}
