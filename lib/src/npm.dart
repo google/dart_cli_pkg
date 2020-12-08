@@ -102,7 +102,7 @@ final jsModuleMainLibrary = InternalConfigVariable.value<String>(null);
 final npmPackageJson = InternalConfigVariable.fn<Map<String, Object>>(
     () => File("package.json").existsSync()
         ? jsonDecode(File("package.json").readAsStringSync())
-            as Map<String, Object>
+            as Map<String, Object>/*!*/
         : fail("pkg.npmPackageJson must be set to build an npm package."),
     freeze: freezeJsonMap);
 
@@ -227,7 +227,7 @@ void _js({@required bool release}) {
       // complain. We replace those with direct references to the modules, which
       // we load explicitly after the preamble.
       .replaceAllMapped(RegExp(r'self\.require\(("[^"]+")\)'), (match) {
-    var package = jsonDecode(match[1]) as String;
+    var package = jsonDecode(match[1]) as String/*!*/;
     var identifier = requires.entries
         .firstWhere((entry) => entry.value == package, orElse: () => null)
         ?.key;
@@ -261,6 +261,7 @@ void _js({@required bool release}) {
   destination.writeAsStringSync(buffer.toString());
 }
 
+// TODO: late
 /// A map from executable names in [executables] to JS- and Dart-safe
 /// identifiers to use to identify those modules.
 Map<String, String> get _executableIdentifiers {
@@ -381,9 +382,8 @@ module.${_executableIdentifiers[name]}(process.argv.slice(2));
 """);
   }
 
-  if (npmReadme.value != null) {
-    writeString('build/npm/README.md', npmReadme.value);
-  }
+  var readme = npmReadme.value;
+  if (readme != null) writeString('build/npm/README.md', readme);
 
   writeString(p.join(dir.path, "LICENSE"), await license);
 }

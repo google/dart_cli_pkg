@@ -145,9 +145,9 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
 
   /// Returns the function to use to encode this file to binary, based on its
   /// [name].
-  List<int> Function(Archive) _encodeFunction() {
+  List<int>/*!*/ Function(Archive) _encodeFunction() {
     if (name.endsWith('.zip')) {
-      return ZipEncoder().encode;
+      return (archive) => ZipEncoder().encode(archive)/*!*/;
     } else if (name.endsWith('.tar')) {
       return TarEncoder().encode;
     } else if (name.endsWith('.tar.gz') ||

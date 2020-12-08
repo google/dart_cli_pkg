@@ -158,6 +158,7 @@ void main() {
     group("the freeze function", () {
       test("isn't called if ConfigVariable.freeze() isn't", () {
         var variable = InternalConfigVariable.value(1,
+            // TODO: no dynamic
             freeze: expectAsync1((n) => 0, count: 0));
         expect(variable.value, equals(1));
       });

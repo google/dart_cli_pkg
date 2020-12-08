@@ -20,6 +20,7 @@ import 'utils.dart';
 ///
 /// This must be set explicitly.
 final homebrewRepo = InternalConfigVariable.fn<String>(
+    // TODO: delete as
     () => fail("pkg.homebrewRepo must be set to deploy to Homebrew."));
 
 /// The path to the formula file within the Homebrew repository to update with

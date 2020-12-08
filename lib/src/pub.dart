@@ -26,8 +26,9 @@ final String _credentialsPath = () {
   // This follows the same logic as pub:
   // https://github.com/dart-lang/pub/blob/d99b0d58f4059d7bb4ac4616fd3d54ec00a2b5d4/lib/src/system_cache.dart#L34-L43
   String cacheDir;
-  if (Platform.environment.containsKey('PUB_CACHE')) {
-    cacheDir = Platform.environment['PUB_CACHE'];
+  var pubCache = Platform.environment['PUB_CACHE'];
+  if (pubCache != null) {
+    cacheDir = pubCache;
   } else if (Platform.isWindows) {
     var appData = Platform.environment['APPDATA'];
     cacheDir = p.join(appData, 'Pub', 'Cache');

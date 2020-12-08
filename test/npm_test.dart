@@ -75,6 +75,7 @@ void main() {
               "my_app/build/my_app.dart.js",
               allOf([
                 contains('self.fs = require("fs");'),
+                // TODO: no dynamic
                 predicate((string) =>
                     RegExp(r'require\("fs"\);')
                         .allMatches(string as String)

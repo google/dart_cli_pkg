@@ -128,6 +128,7 @@ final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
   return File(possibleNuspecs.single).readAsStringSync();
 });
 
+// TODO: late
 /// Returns the XML-decoded contents of [chocolateyNuspecText], with a
 /// `"version"` field and a dependency on the Dart SDK automatically added.
 XmlDocument get _nuspec {
@@ -148,7 +149,7 @@ XmlDocument get _nuspec {
   metadata.children
       .add(XmlElement(XmlName("version"), [], [XmlText(_chocolateyVersion)]));
 
-  var dependencies = _findElement(metadata, "dependencies", allowNone: true);
+  var dependencies = _findElementAllowNone(metadata, "dependencies");
   if (dependencies == null) {
     dependencies = XmlElement(XmlName("dependencies"));
     metadata.children.add(dependencies);
@@ -288,22 +289,35 @@ Future<void> _deploy() async {
 }
 
 /// Returns the single child of [parent] named [name], or throws an error.
-///
-/// If [allowNone] is `true`, this returns `null` if there are no children of
-/// [parent] named [name]. Otherwise, it throws an error.
-XmlElement _findElement(XmlNode parent, String name, {bool allowNone = false}) {
+XmlElement _findElement(XmlNode parent, String name) {
   var elements = parent.findElements(name);
   if (elements.length == 1) return elements.single;
-  if (allowNone && elements.isEmpty) return null;
 
+  var path = _pathToElement(parent, name);
+  fail(elements.isEmpty
+      ? "The nuspec must have a $path element."
+      : "The nuspec may not have multiple $path elements.");
+}
+
+/// Like [findElement], but returns `null` if there are no children of [parent]
+/// named [name].
+XmlElement _findElementAllowNone(XmlNode parent, String name) {
+  var elements = parent.findElements(name);
+  if (elements.length == 1) return elements.single;
+  if (elements.isEmpty) return null;
+
+  var path = _pathToElement(parent, name);
+  fail("The nuspec may not have multiple $path elements.");
+}
+
+/// Returns a human-readable CSS-formatted path to the element named [name]
+/// within [parent].
+String _pathToElement(XmlNode/*!*/ parent, String name) {
   var nesting = [name];
   while (parent is XmlElement) {
     nesting.add((parent as XmlElement).name.qualified);
     parent = parent.parent;
   }
 
-  var path = nesting.reversed.join(" > ");
-  fail(elements.isEmpty
-      ? "The nuspec must have a $path element."
-      : "The nuspec may not have multiple $path elements.");
+  return nesting.reversed.join(" > ");
 }

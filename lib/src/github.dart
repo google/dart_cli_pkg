@@ -33,7 +33,7 @@ import 'utils.dart';
 /// Git URL, this must be set explicitly.
 final githubRepo = InternalConfigVariable.fn<String>(() =>
     _repoFromOrigin() ??
-    _repoFromPubspec() ??
+    _parseHttp(pubspec.homepage) ??
     fail("pkg.githubRepo must be set to deploy to GitHub."));
 
 /// Returns the GitHub repo name from the Git configuration's
@@ -48,10 +48,6 @@ String _repoFromOrigin() {
     return null;
   }
 }
-
-/// Returns the GitHub repo name from the pubspec's `homepage` field.
-String _repoFromPubspec() =>
-    pubspec.homepage == null ? null : _parseHttp(pubspec.homepage);
 
 /// Parses a GitHub repo name from an SSH reference or a `git://` URL.
 ///

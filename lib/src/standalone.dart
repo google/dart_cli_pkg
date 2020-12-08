@@ -275,7 +275,7 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
   return ZipDecoder()
       .decodeBytes(response.bodyBytes)
       .firstWhere((file) => file.name.endsWith(filename))
-      .content as List<int>;
+      .content as List<int>/*!*/;
 }
 
 /// Returns the architecture name for the given boolean.

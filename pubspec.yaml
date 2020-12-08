@@ -7,33 +7,62 @@ environment:
   sdk: '>=2.7.0 <3.0.0'
 
 dependencies:
-  archive: ">=1.0.0 <3.0.0"
-  async: '>=1.13.0 <3.0.0'
-  charcode: "^1.1.0"
-  collection: ">=1.8.0 <2.0.0"
-  crypto: "^2.0.0"
-  grinder: '^0.8.6'
-  http: ">=0.11.0 <0.13.0"
-  js: "^0.6.0"
-  meta: "^1.1.7"
-  mustache: "^1.0.0"
+  archive: ^3.0.0-nullsafety
+  async: ^2.5.0-nullsafety
+  charcode: ^1.2.0-nullsafety
+  collection: ^1.15.0-nullsafety
+  crypto: ^2.2.0-nullsafety
+  grinder: ^0.8.7-nullsafety
+  http: ^0.13.0-nullsafety
+  js: ^0.6.3-nullsafety
+  meta: ^1.3.0-nullsafety
+  mustache: ^1.2.0-nullsafety
   node_interop: "^1.1.0"
-  node_preamble: "^1.1.0"
-  package_config: '^1.9.0'
-  path: '^1.0.0'
-  pub_semver: '^1.0.0'
+  node_preamble: ^1.14.13-nullsafety
+  package_config: ^2.0.0
+  path: ^1.8.0-nullsafety
+  pub_semver: ^2.0.0-nullsafety
   pubspec_parse: '^0.1.0'
   string_scanner: '^1.0.0'
-  test: '^1.0.0'
-  test_process: '^1.0.0'
-  xml: '^4.2.0'
-  yaml: '^2.0.0'
+  test: ^1.16.0-nullsafety
+  test_process: ^1.1.0-nullsafety
+  xml: ^5.0.0-nullsafety
+  yaml: ^3.0.0-nullsafety
 
 dev_dependencies:
-  pedantic: '^1.6.0'
+  pedantic: ^1.10.0-nullsafety
   sass_analysis:
     git: {url: git://github.com/sass/dart-sass, path: analysis}
-  shelf: '^0.7.0'
+  shelf: ^1.0.0-nullsafety
   shelf_test_handler: '^1.0.0'
-  test_descriptor: '^1.2.0'
-  tuple: '^1.0.0'
+  test_descriptor: ^2.0.0-nullsafety
+  tuple: ^2.0.0-nullsafety
+
+dependency_overrides:
+  archive:
+    git: {url: git://github.com/brendan-duncan/archive}
+  crypto:
+    git: {url: git://github.com/dart-lang/crypto}
+  grinder:
+    git: {url: git://github.com/nex3/grinder.dart, ref: nnbd}
+  http:
+    git: {url: git://github.com/dart-lang/http}
+  mustache:
+    git: {url: git://github.com/nex3/mustache, ref: nnbd}
+  node_preamble:
+    git: {url: git://github.com/mbullington/node_preamble.dart}
+  package_config:
+    git: {url: git://github.com/dart-lang/package_config}
+  path:
+    git: {url: git://github.com/dart-lang/path, ref: path-set-null}
+  shelf:
+    git: {url: git://github.com/dart-lang/shelf}
+  tuple:
+    git: {url: git://github.com/google/tuple.dart}
+  test_process:
+    git: {url: git://github.com/jathak/test_process, ref: null-safety}
+  convert: ^3.0.0-nullsafety
+  glob: ^2.0.0-nullsafety
+  http_parser: ^4.0.0-nullsafety
+  pub_semver: ^2.0.0-nullsafety
+  yaml: ^3.0.0-nullsafety

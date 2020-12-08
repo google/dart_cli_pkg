@@ -31,8 +31,8 @@ import 'info.dart';
 
 /// The raw YAML of the pubspec.
 final rawPubspec =
-    loadYaml(File('pubspec.yaml').readAsStringSync(), sourceUrl: 'pubspec.yaml')
-        as Map<Object, Object>;
+    loadYaml(File('pubspec.yaml').readAsStringSync(), sourceUrl: Uri(path: 'pubspec.yaml'))
+        as Map<Object, Object>/*!*/;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String> get entrypoints => p.PathSet.of(executables.value.values);
@@ -97,6 +97,7 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       // dependencies. This also includes dev dependencies, but it's possible those
       // are compiled into the distribution anyway (especially for stuff like
       // `node_preamble`).
+      // TODO: remove as
       var packageConfigUrl = await Isolate.packageConfig;
       var packageConfig = await loadPackageConfigUri(packageConfigUrl);
 
@@ -324,6 +325,7 @@ Future<String> cloneOrPull(String url) async {
 /// structure of lists and arrays of immutable scalar objects).
 Object freezeJson(Object object) {
   if (object is Map<String, Object>) return freezeJsonMap(object);
+  // TODO: remove as
   if (object is List) return List<Object>.unmodifiable(object.map(freezeJson));
   return object;
 }

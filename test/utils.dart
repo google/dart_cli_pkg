@@ -95,6 +95,7 @@ Future<void> extract(String path, String destination) async {
 ///
 /// If [description] is passed
 Matcher after<T>(Object Function(T) transformation, Object matcher) =>
+  // TODO: no dynamic
     predicate((value) {
       expect(value, isA<T>());
       expect(transformation(value as T), matcher);
