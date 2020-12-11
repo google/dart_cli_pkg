@@ -100,3 +100,21 @@ Matcher after<T>(Object Function(T) transformation, Object matcher) =>
       expect(transformation(value as T), matcher);
       return true;
     });
+
+/// Like [Future.wait] with `eagerError: true`, but reports errors after the
+/// first using [registerException] rather than silently ignoring them.
+Future<List<T>> waitAndReportErrors<T>(Iterable<Future<T>> futures) {
+  var errored = false;
+  return Future.wait(futures.map((future) {
+    // Avoid async/await so that we synchronously add error handlers for the
+    // futures to keep them from top-leveling.
+    return future.catchError((Object error, StackTrace stackTrace) {
+      if (!errored) {
+        errored = true;
+        throw error; // ignore: only_throw_errors
+      } else {
+        registerException(error, stackTrace);
+      }
+    });
+  }));
+}

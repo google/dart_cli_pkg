@@ -16,12 +16,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:test_descriptor/test_descriptor.dart';
+import 'package:test_descriptor/test_descriptor.dart' hide ArchiveDescriptor;
 import 'package:yaml/yaml.dart';
 
+import 'descriptor/archive.dart';
 import 'utils.dart';
 
-export 'package:test_descriptor/test_descriptor.dart';
+export 'package:test_descriptor/test_descriptor.dart'
+    hide archive, ArchiveDescriptor;
+
+export 'descriptor/archive.dart';
 
 /// The `cli_pkg` package's pubpsec.
 final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
@@ -103,3 +107,16 @@ Map<String, Object> _ourDependencyOverride(String package) {
       ? {package: overrides[package]}
       : const {};
 }
+
+/// Creates a new [ArchiveDescriptor] with [name] and [contents].
+///
+/// [Descriptor.create] creates an archive with the given files and directories
+/// within it, and [Descriptor.validate] validates that the archive contains the
+/// given contents. It *doesn't* require that no other children exist. To ensure
+/// that a particular child doesn't exist, use [nothing].
+///
+/// The type of the archive is determined by [name]'s file extension. It
+/// supports `.zip`, `.tar`, and `.tar.gz`/`.tar.gzip`/`.tgz`, and
+/// `.tar.bz2`/`.tar.bzip2` files.
+ArchiveDescriptor archive(String name, Iterable<Descriptor> contents) =>
+    ArchiveDescriptor(name, contents);
