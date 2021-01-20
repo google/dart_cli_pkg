@@ -1,7 +1,7 @@
-name: Tests
+name: CI
 on:
   push: {branches: [master]}
-  pull_request: {branches: [master]}
+  pull_request:
 
 jobs:
   analyze:
@@ -16,7 +16,7 @@ jobs:
     - run: dartanalyzer --fatal-infos --fatal-warnings .
 
   test:
-    name: "${{ matrix.os }}, Dart ${{ matrix.dart-channel }}, shard ${{ matrix.shard }}"
+    name: "Tests | Dart ${{ matrix.dart-channel }} | ${{ matrix.os }} | shard ${{ matrix.shard }}"
 
     strategy:
       matrix:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v2
 
     - uses: cedx/setup-dart@v2
       with:
@@ -37,8 +37,8 @@ jobs:
 
     - name: Configure Git
       run: |
-        git config --global user.email "travis@local"
-        git config --global user.name "Travis CI"
+        git config --global user.email "ci@local"
+        git config --global user.name CI
 
     - run: pub get
     - run: pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
