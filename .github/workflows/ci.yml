@@ -1,0 +1,55 @@
+name: CI
+on:
+  push: {branches: [master]}
+  pull_request:
+
+jobs:
+  analyze:
+    name: "Static analysis"
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cedx/setup-dart@v2
+    - run: dart --version
+    - run: pub get
+    - run: dartanalyzer --fatal-infos --fatal-warnings .
+
+  test:
+    name: "Tests | Dart ${{ matrix.dart-channel }} | ${{ matrix.os }} | shard ${{ matrix.shard }}"
+
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+        dart-channel: [stable, dev]
+        shard: [0, 1, 2]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+
+    - uses: cedx/setup-dart@v2
+      with:
+        release-channel: ${{ matrix.dart-channel }}
+    - run: dart --version
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "ci@local"
+        git config --global user.name CI
+
+    - run: pub get
+    - run: pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
+
+  format:
+    name: "Code formatting"
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cedx/setup-dart@v2
+    - run: dart --version
+    - run: dart format --fix .
+    - run: git diff --exit-code
