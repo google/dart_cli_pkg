@@ -74,10 +74,16 @@ String _parseHttp(String url) {
 
 /// The GitHub username to use when creating releases and making other changes.
 ///
+/// If you're using [GitHub Actions' `GITHUB_TOKEN` secret], you should use
+/// [githubBearerToken] instead.
+///
+/// [GitHub Actions' `GITHUB_TOKEN` secret]: https://docs.github.com/en/actions/reference/authentication-in-a-workflow
+///
 /// By default, this comes from the `GITHUB_USER` environment variable.
 final githubUser = InternalConfigVariable.fn<String>(() =>
     Platform.environment["GITHUB_USER"] ??
-    fail("pkg.githubUser must be set to deploy to GitHub."));
+    fail("pkg.githubUser or pkg.githubBearerToken must be set to deploy to "
+        "GitHub."));
 
 /// The GitHub password or authentication token to use when creating releases
 /// and making other changes.
@@ -86,21 +92,51 @@ final githubUser = InternalConfigVariable.fn<String>(() =>
 /// sources.
 ///
 /// This can be either the password itself, a [personal access token][], or an
-/// OAuth token.
+/// OAuth token. If you're using [GitHub Actions' `GITHUB_TOKEN` secret], you
+/// should use [githubBearerToken] instead.
 ///
 /// [personal access token]: https://github.com/settings/tokens
+/// [GitHub Actions' `GITHUB_TOKEN` secret]: https://docs.github.com/en/actions/reference/authentication-in-a-workflow
 ///
 /// By default, this comes from the `GITHUB_PASSWORD` environment variable if it
 /// exists, or `GITHUB_TOKEN` otherwise.
 final githubPassword = InternalConfigVariable.fn<String>(() =>
     Platform.environment["GITHUB_PASSWORD"] ??
     Platform.environment["GITHUB_TOKEN"] ??
-    fail("pkg.githubPassword must be set to deploy to GitHub."));
+    fail("pkg.githubPassword or pkg.githubBearerToken must be set to deploy to "
+        "GitHub."));
+
+/// The GitHub token to use for [bearer authorization].
+///
+/// [bearer authorization]: https://tools.ietf.org/html/rfc6750
+///
+/// **Do not check this in directly.** This should only come from secure
+/// sources.
+///
+/// This is an alternate way of authenticating a GitHub account, rather than
+/// using [githubUser] and [githubPassword]. It's only documented to work with
+/// [GitHub Actions' `GITHUB_TOKEN` secret], so if you aren't specifically using
+/// that it's better to use [githubUser] and [githubPassword].
+///
+/// [GitHub Actions' `GITHUB_TOKEN` secret]: https://docs.github.com/en/actions/reference/authentication-in-a-workflow
+///
+/// Note that this can only be used for GitHub actions directly, not for
+/// Homebrew actions.
+///
+/// By default, this comes from the `GITHUB_BEARER_TOKEN` environment variable.
+/// If it's set, it's used in preference to [githubUser] and [githubPassword].
+/// To override this behavior, set its value to `null`.
+final githubBearerToken = InternalConfigVariable.value<String>(
+    Platform.environment["GITHUB_BEARER_TOKEN"]);
 
 /// Returns the HTTP basic authentication Authorization header from the
 /// environment.
-String get _authorization =>
-    "Basic ${base64.encode(utf8.encode("$githubUser:$githubPassword"))}";
+String get _authorization {
+  var bearerToken = githubBearerToken.value;
+  return bearerToken != null
+      ? "Bearer $bearerToken"
+      : "Basic ${base64.encode(utf8.encode("$githubUser:$githubPassword"))}";
+}
 
 /// The Markdown-formatted release notes to use for the GitHub release.
 ///
@@ -213,6 +249,7 @@ void addGithubTasks() {
   githubRepo.freeze();
   githubUser.freeze();
   githubPassword.freeze();
+  githubBearerToken.freeze();
   githubReleaseNotes.freeze();
 
   addStandaloneTasks();

@@ -10,13 +10,14 @@ by calling [`pkg.addGithubTasks()`][], which automatically calls
 
 Uses configuration: [`pkg.humanName`][], [`pkg.version`][],
 [`pkg.githubRepo`][], [`pkg.githubUser`][], [`pkg.githubPassword`][],
-[`pkg.githubReleaseNotes`][]
+[`pkg.githubBearerToken`][], [`pkg.githubReleaseNotes`][]
 
 [`pkg.humanName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/humanName.html
 [`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 [`pkg.githubRepo`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubRepo.html
 [`pkg.githubUser`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubUser.html
 [`pkg.githubPassword`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubPassword.html
+[`pkg.githubBearerToken`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubBearerToken.html
 [`pkg.githubReleaseNotes`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/githubReleaseNotes.html
 
 Creates a GitHub release for the current version of this package, without any
@@ -29,7 +30,8 @@ Depends on: [`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`][]
 [`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`]: standalone.md#pkg-standalone-os-arch
 
 Uses configuration: [`pkg.version`][], [`pkg.githubRepo`][],
-[`pkg.githubUser`][], [`pkg.githubPassword`][], [`pkg.standaloneName`][]
+[`pkg.githubUser`][], [`pkg.githubPassword`][], [`pkg.githubBearerToken`][],
+[`pkg.standaloneName`][]
 
 [`pkg.standaloneName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/standaloneName.html
 

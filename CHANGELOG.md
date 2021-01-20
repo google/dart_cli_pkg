@@ -1,5 +1,8 @@
 # 1.2.0
 
+* Add a `pkg.githubBearerToken` to make it easier to integrate with GitHub
+  actions.
+
 * Generate a fully standalone executable on Linux rather than a native snapshot.
 
 # 1.1.0
