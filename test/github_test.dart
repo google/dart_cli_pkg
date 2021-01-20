@@ -193,7 +193,8 @@ void main() {
       expect(
           process.stdout,
           emitsThrough(
-              contains("pkg.githubUser must be set to deploy to GitHub.")));
+              contains("pkg.githubUser or pkg.githubBearerToken must be set to "
+                  "deploy to GitHub.")));
       await process.shouldExit(1);
     });
 
@@ -226,7 +227,8 @@ void main() {
       expect(
           process.stdout,
           emitsThrough(
-              contains("pkg.githubPassword must be set to deploy to GitHub.")));
+              contains("pkg.githubPassword or pkg.githubBearerToken must be "
+                  "set to deploy to GitHub.")));
       await process.shouldExit(1);
     });
 
@@ -251,6 +253,49 @@ void main() {
         () async {
       await d.package(pubspecWithHomepage, _enableGithub()).create();
       await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
+    });
+  });
+
+  group("bearer token", () {
+    Future<void> assertToken(String expected,
+        {Map<String, String> environment}) async {
+      await _release("my_org/my_app", verify: (request) {
+        expect(request.headers, contains("authorization"));
+        var authorization = request.headers["authorization"];
+        expect(authorization, startsWith("Bearer "));
+
+        expect(authorization.substring("Bearer ".length), equals(expected));
+      }, environment: environment);
+    }
+
+    test("parses from the GITHUB_BEARER_TOKEN environment variable", () async {
+      await d
+          .package(pubspecWithHomepage, _enableGithub(password: false))
+          .create();
+      await assertToken("secret",
+          environment: {"GITHUB_BEARER_TOKEN": "secret"});
+    });
+
+    test("prefers the GITHUB_BEARER_TOKEN environment variable to GITHUB_TOKEN",
+        () async {
+      await d
+          .package(pubspecWithHomepage, _enableGithub(password: false))
+          .create();
+      await assertToken("right", environment: {
+        "GITHUB_BEARER_TOKEN": "right",
+        "GITHUB_TOKEN": "wrong"
+      });
+    });
+
+    test(
+        "prefers an explicit username to the GITHUB_PASSWORD environment variable",
+        () async {
+      await d
+          .package(
+              pubspecWithHomepage, _enableGithub(password: false, bearer: true))
+          .create();
+      await assertToken("secret",
+          environment: {"GITHUB_BEARER_TOKEN": "wrong"});
     });
   });
 
@@ -420,15 +465,18 @@ void main() {
 
 /// The contents of a `grind.dart` file that just enables GitHub tasks.
 ///
-/// If [user] and [password] are `true`, this sets default values for
-/// `pkg.githubUser` and `pkg.githubPassword`, respectively.
-String _enableGithub({bool user = true, bool password = true}) {
+/// If [user], [password], or [bearer] are `true`, this sets default values for
+/// `pkg.githubUser`, `pkg.githubPassword`, and `pkg.githubBearerToken`,
+/// respectively.
+String _enableGithub(
+    {bool user = true, bool password = true, bool bearer = false}) {
   var buffer = StringBuffer("""
     void main(List<String> args) {
   """);
 
   if (user) buffer.writeln('pkg.githubUser.value = "usr";');
   if (password) buffer.writeln('pkg.githubPassword.value = "pwd";');
+  if (bearer) buffer.writeln('pkg.githubBearerToken.value = "secret";');
   buffer.writeln("pkg.addGithubTasks();");
   buffer.writeln("grind(args);");
   buffer.writeln("}");
