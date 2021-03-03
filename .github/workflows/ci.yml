@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: cedx/setup-dart@v2
+    - uses: dart-lang/setup-dart@v1
     - run: dart --version
     - run: pub get
     - run: dartanalyzer --fatal-infos --fatal-warnings .
@@ -31,9 +31,9 @@ jobs:
     - uses: actions/setup-node@v2
     - run: node --version
 
-    - uses: cedx/setup-dart@v2
+    - uses: dart-lang/setup-dart@v1
       with:
-        release-channel: ${{ matrix.dart-channel }}
+        sdk: ${{ matrix.dart-channel }}
     - run: dart --version
 
     - name: Configure Git
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: cedx/setup-dart@v2
+    - uses: dart-lang/setup-dart@v1
     - run: dart --version
     - run: dart format --fix .
     - run: git diff --exit-code
