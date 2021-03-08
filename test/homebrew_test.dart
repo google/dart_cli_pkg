@@ -378,7 +378,7 @@ void main() {
 /// If [config] is passed, it's injected as code in `main()`.
 ///
 /// If [repo] is `false`, this won't set `pkg.homebrewRepo`.
-String _enableHomebrew({String config, bool repo = true}) => """
+String _enableHomebrew({String? config, bool repo = true}) => """
   void main(List<String> args) {
     ${config ?? ''}
     ${repo ? 'pkg.homebrewRepo.value = "me/homebrew";' : ''}
@@ -436,7 +436,7 @@ Future<TestProcess> _homebrewUpdate() => grind([
 ///
 /// The [path] is the basename of the formula file to verify. If it isn't
 /// passed, it defaults to `my_app.rb`.
-Future<void> _assertFormula(Object matcher, {String path}) async {
+Future<void> _assertFormula(Object matcher, {String? path}) async {
   await git(["reset", "--hard", "HEAD"], workingDirectory: "me/homebrew.git");
   await d
       .file(p.join("me/homebrew.git", path ?? "my_app.rb"), matcher)

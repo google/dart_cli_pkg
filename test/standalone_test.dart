@@ -295,7 +295,7 @@ void main() {
           "executables": {"foo": "foo"}
         }, _enableStandalone).create());
 
-    d.Descriptor archive(String os, {@required bool x64}) {
+    d.Descriptor archive(String os, {required bool x64}) {
       var name = "my_app/build/my_app-1.2.3-$os-${x64 ? 'x64' : 'ia32'}."
           "${os == 'windows' ? 'zip' : 'tar.gz'}";
 

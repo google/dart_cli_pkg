@@ -76,7 +76,7 @@ void main() {
               allOf([
                 contains('self.fs = require("fs");'),
                 // TODO: no dynamic
-                predicate((string) =>
+                predicate((dynamic string) =>
                     RegExp(r'require\("fs"\);')
                         .allMatches(string as String)
                         .length ==

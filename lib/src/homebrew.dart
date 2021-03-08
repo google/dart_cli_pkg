@@ -21,7 +21,7 @@ import 'utils.dart';
 /// This must be set explicitly.
 final homebrewRepo = InternalConfigVariable.fn<String>(
     // TODO: delete as
-    () => fail("pkg.homebrewRepo must be set to deploy to Homebrew."));
+    (() => fail("pkg.homebrewRepo must be set to deploy to Homebrew.")) as String Function());
 
 /// The path to the formula file within the Homebrew repository to update with
 /// the new package version.
@@ -29,14 +29,16 @@ final homebrewRepo = InternalConfigVariable.fn<String>(
 /// If this isn't set, the task will default to looking for a single `.rb` file
 /// at the root of the repo without an `@` in its filename and modifying that.
 /// If there isn't exactly one such file, the task will fail.
-final homebrewFormula = InternalConfigVariable.value<String>(null);
+final homebrewFormula = InternalConfigVariable.value<String?>(null);
 
 /// Whether to update [homebrewFormula] in-place or copy it to a new
 /// `@`-versioned formula file for the current version number.
 ///
 /// By default, this is `true` if and only if [version] is a prerelease version.
-final homebrewCreateVersionedFormula =
-    InternalConfigVariable.fn<bool>(() => version.isPreRelease);
+final homebrewCreateVersionedFormula = InternalConfigVariable.fn<bool>(() =>
+    version?.isPreRelease ??
+    fail("pkg.homebrewCreateVersionedFormula must be explicitly set if no "
+        "pubspec version exists."));
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -99,7 +101,7 @@ Future<void> _update() async {
     formula = _replaceFirstMappedMandatory(
         formula,
         RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
-        (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
+        (match) => 'class ${match[1]}AT${_classify(version!)} < Formula',
         "Couldn't find a Formula subclass in $formulaPath.");
 
     var newFormulaPath = p.join(p.dirname(formulaPath),
@@ -197,5 +199,5 @@ Future<String> _originHead(String repo) async {
 String _classify(Version version) => version
     .toString()
     .replaceAllMapped(
-        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1].toUpperCase())
+        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1]!.toUpperCase())
     .replaceAll('+', 'x');

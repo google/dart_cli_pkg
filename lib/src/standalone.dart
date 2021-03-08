@@ -49,7 +49,7 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 /// to `build/${executable}.snapshot`.
 ///
 /// If [release] is `false`, this compiles with `--enable-asserts`.
-void _compileSnapshot({@required bool release}) {
+void _compileSnapshot({required bool release}) {
   ensureBuild();
   var existingSnapshots = <String, String>{};
   executables.value.forEach((name, path) {
@@ -163,7 +163,7 @@ void addStandaloneTasks() {
 /// We can only use the native executable on the current operating system *and*
 /// on 64-bit machines, because currently Dart doesn't support cross-compilation
 /// (dart-lang/sdk#28617) and only 64-bit Dart SDKs ship with `dart2aot`.
-bool _useNative(String os, {@required bool x64}) {
+bool _useNative(String os, {required bool x64}) {
   if (os != Platform.operatingSystem) return false;
   if (x64 != _is64Bit) return false;
 
@@ -193,7 +193,7 @@ Future<void> _buildDev() async {
 }
 
 /// Builds a package for the given [os] and architecture.
-Future<void> _buildPackage(String os, {@required bool x64}) async {
+Future<void> _buildPackage(String os, {required bool x64}) async {
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
@@ -235,18 +235,18 @@ Future<void> _buildPackage(String os, {@required bool x64}) async {
   if (os == 'windows') {
     var output = "$prefix.zip";
     log("Creating $output...");
-    File(output).writeAsBytesSync(ZipEncoder().encode(archive));
+    File(output).writeAsBytesSync(ZipEncoder().encode(archive)!);
   } else {
     var output = "$prefix.tar.gz";
     log("Creating $output...");
     File(output)
-        .writeAsBytesSync(GZipEncoder().encode(TarEncoder().encode(archive)));
+        .writeAsBytesSync(GZipEncoder().encode(TarEncoder().encode(archive))!);
   }
 }
 
 /// Returns the binary contents of the `dart` or `dartaotruntime` exectuable for
 /// the given [os] and architecture.
-Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
+Future<List<int>> _dartExecutable(String os, {required bool x64}) async {
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (_useNative(os, x64: x64)) {
@@ -275,7 +275,7 @@ Future<List<int>> _dartExecutable(String os, {@required bool x64}) async {
   return ZipDecoder()
       .decodeBytes(response.bodyBytes)
       .firstWhere((file) => file.name.endsWith(filename))
-      .content as List<int>/*!*/;
+      .content as List<int>;
 }
 
 /// Returns the architecture name for the given boolean.

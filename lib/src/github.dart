@@ -33,12 +33,12 @@ import 'utils.dart';
 /// Git URL, this must be set explicitly.
 final githubRepo = InternalConfigVariable.fn<String>(() =>
     _repoFromOrigin() ??
-    _parseHttp(pubspec.homepage) ??
+    _parseHttp(pubspec.homepage ?? '') ??
     fail("pkg.githubRepo must be set to deploy to GitHub."));
 
 /// Returns the GitHub repo name from the Git configuration's
 /// `remote.origin.url` field.
-String _repoFromOrigin() {
+String? _repoFromOrigin() {
   try {
     var result = Process.runSync("git", ["config", "remote.origin.url"]);
     if (result.exitCode != 0) return null;
@@ -52,7 +52,7 @@ String _repoFromOrigin() {
 /// Parses a GitHub repo name from an SSH reference or a `git://` URL.
 ///
 /// Returns `null` if it couldn't be parsed.
-String _parseGit(String url) {
+String? _parseGit(String url) {
   var match = RegExp(r"^(git@github\.com:|git://github\.com/)"
           r"(?<repo>[^/]+/[^/]+?)(\.git)?$")
       .firstMatch(url);
@@ -62,7 +62,7 @@ String _parseGit(String url) {
 /// Parses a GitHub repo name from an HTTP or HTTPS URL.
 ///
 /// Returns `null` if it couldn't be parsed.
-String _parseHttp(String url) {
+String? _parseHttp(String url) {
   var match = RegExp(r"^https?://github\.com/([^/]+/[^/]+?)(\.git)?($|/)")
       .firstMatch(url);
   return match == null ? null : match[1];
@@ -122,7 +122,7 @@ final githubPassword = InternalConfigVariable.fn<String>(() =>
 /// By default, this comes from the `GITHUB_BEARER_TOKEN` environment variable.
 /// If it's set, it's used in preference to [githubUser] and [githubPassword].
 /// To override this behavior, set its value to `null`.
-final githubBearerToken = InternalConfigVariable.value<String>(
+final githubBearerToken = InternalConfigVariable.value<String?>(
     Platform.environment["GITHUB_BEARER_TOKEN"]);
 
 /// Returns the HTTP basic authentication Authorization header from the
@@ -143,7 +143,7 @@ String get _authorization {
 ///
 /// If this is set to `null`, or by default if no `CHANGELOG.md` exists, no
 /// release notes will be added to the GitHub release.
-final githubReleaseNotes = InternalConfigVariable.fn<String>(() {
+final githubReleaseNotes = InternalConfigVariable.fn<String?>(() {
   if (!File("CHANGELOG.md").existsSync()) return null;
 
   return _lastChangelogSection() +
@@ -168,7 +168,7 @@ Future<void> _release() async {
       body: jsonEncode({
         "tag_name": version.toString(),
         "name": "$humanName $version",
-        "prerelease": version.isPreRelease,
+        "prerelease": version!.isPreRelease,
         if (githubReleaseNotes.value != null) "body": githubReleaseNotes.value
       }));
 

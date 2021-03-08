@@ -30,10 +30,10 @@ final String _credentialsPath = () {
   if (pubCache != null) {
     cacheDir = pubCache;
   } else if (Platform.isWindows) {
-    var appData = Platform.environment['APPDATA'];
+    var appData = Platform.environment['APPDATA']!;
     cacheDir = p.join(appData, 'Pub', 'Cache');
   } else {
-    cacheDir = p.join(Platform.environment['HOME'], '.pub-cache');
+    cacheDir = p.join(Platform.environment['HOME']!, '.pub-cache');
   }
 
   return p.join(cacheDir, 'credentials.json');

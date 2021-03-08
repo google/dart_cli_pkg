@@ -61,7 +61,7 @@ final botEmail = InternalConfigVariable.fn<String>(() => "cli_pkg@none");
 /// may be modified, but the values must be paths to executable files in the
 /// package.
 final executables = InternalConfigVariable.fn<Map<String, String>>(() {
-  var executables = rawPubspec['executables'] as Map<Object, Object>;
+  var executables = rawPubspec['executables'] as Map<Object, Object>?;
 
   return {
     for (var entry in (executables ?? {}).entries)

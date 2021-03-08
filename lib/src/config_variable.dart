@@ -19,12 +19,12 @@
 /// `tool/grind.dart`, before any `add*Tasks()` functions are called.
 class ConfigVariable<T> {
   /// The cached value.
-  T/*?*/ _value;
+  T? _value;
 
   /// The variable's original value,
   ///
   /// This is always set if `_defaultCallback` is null.
-  T/*?*/ _defaultValue;
+  T? _defaultValue;
 
   /// Whether [_value] has been cached yet or not.
   ///
@@ -36,22 +36,22 @@ class ConfigVariable<T> {
   ///
   /// This can only be null if [_value] has been set explicitly and [_cached] is
   /// `true`.
-  T Function()/*?*/ _callback;
+  T Function()? _callback;
 
   /// The original callback for generating [_value].
-  T Function()/*?*/ _defaultCallback;
+  T Function()? _defaultCallback;
 
   /// Whether this variable has been frozen and can no longer be modified by the
   /// user.
   var _frozen = false;
 
   /// A function to call to make [_value] unmodifiable.
-  final T Function(T)/*?*/ _freeze;
+  final T Function(T)? _freeze;
 
   /// The variable's value.
-  T/*!*/ get value {
+  T get value {
     if (!_cached) {
-      _value = _callback/*!*/();
+      _value = _callback!();
       _cached = true;
     }
 
@@ -75,12 +75,12 @@ class ConfigVariable<T> {
 
   /// Returns the default value for this variable, even if its value has since
   /// been overridden.
-  T/*!*/ get defaultValue {
+  T get defaultValue {
     var defaultCallback = _defaultCallback;
     // We can't use `!` for `_defaultValue` because `T` might itself be a
     // nullable type. We don't necessarily know that `_value` isn't null, we
     // just know that it's the value returned by `_callback`.
-    return defaultCallback == null ? _defaultValue as T/*!*/ : defaultCallback();
+    return defaultCallback == null ? _defaultValue as T : defaultCallback();
   }
 
   /// Sets the variable's value to the result of calling [callback].
@@ -99,11 +99,11 @@ class ConfigVariable<T> {
     _cached = false;
   }
 
-  ConfigVariable._fn(this._callback, {T Function(T)/*?*/ freeze})
+  ConfigVariable._fn(this._callback, {T Function(T)? freeze})
       : _defaultCallback = _callback,
         _freeze = freeze;
 
-  ConfigVariable._value(this._value, {T Function(T)/*?*/ freeze})
+  ConfigVariable._value(this._value, {T Function(T)? freeze})
       : _defaultValue = _value,
         _cached = true,
         _freeze = freeze;
@@ -112,20 +112,20 @@ class ConfigVariable<T> {
 }
 
 /// Expose extension methods so we can hide them from external users.
-extension InternalConfigVariable<T> on ConfigVariable<T/*!*/> {
+extension InternalConfigVariable<T> on ConfigVariable<T> {
   /// Creates a configuration variable whose value defaults to the result of the
   /// given [_callback].
   ///
   /// If [freeze] is passed, it's called when the variable is frozen to make the
   /// value unmodifiable as well.
-  static ConfigVariable<T> fn<T>(T callback(), {T Function(T)/*?*/ freeze}) =>
+  static ConfigVariable<T> fn<T>(T callback(), {T Function(T)? freeze}) =>
       ConfigVariable._fn(callback, freeze: freeze);
 
   /// Creates a configuration variable with the given [value].
   ///
   /// If [freeze] is passed, it's called when the variable is frozen to make the
   /// value unmodifiable as well.
-  static ConfigVariable<T> value<T>(T value, {T Function(T)/*?*/ freeze}) =>
+  static ConfigVariable<T> value<T>(T value, {T Function(T)? freeze}) =>
       ConfigVariable._value(value, freeze: freeze);
 
   /// Marks the variable as unmodifiable.
@@ -139,9 +139,9 @@ extension InternalConfigVariable<T> on ConfigVariable<T/*!*/> {
         // We can't use `!` for `_value` because `T` might itself be a nullable
         // type. We don't necessarily know that `_value` isn't null, we just
         // know that it's the value returned by `_callback`.
-        _value = freeze(_value as T/*!*/);
+        _value = freeze(_value as T);
       } else {
-        var oldCallback = _callback/*!*/;
+        var oldCallback = _callback!;
         _callback = () => freeze(oldCallback());
       }
     }

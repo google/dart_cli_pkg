@@ -180,7 +180,7 @@ void main() {
 
   group("username", () {
     Future<void> assertUsername(String expected,
-        {Map<String, String> environment}) async {
+        {Map<String, String>? environment}) async {
       await _release("my_org/my_app", verify: (request) {
         expect(_getAuthorization(request).item1, equals(expected));
       }, environment: environment);
@@ -212,7 +212,7 @@ void main() {
 
   group("password", () {
     Future<void> assertPassword(String expected,
-        {Map<String, String> environment}) async {
+        {Map<String, String>? environment}) async {
       await _release("my_org/my_app", verify: (request) {
         expect(_getAuthorization(request).item2, equals(expected));
       }, environment: environment);
@@ -258,10 +258,10 @@ void main() {
 
   group("bearer token", () {
     Future<void> assertToken(String expected,
-        {Map<String, String> environment}) async {
+        {Map<String, String>? environment}) async {
       await _release("my_org/my_app", verify: (request) {
         expect(request.headers, contains("authorization"));
-        var authorization = request.headers["authorization"];
+        var authorization = request.headers["authorization"]!;
         expect(authorization, startsWith("Bearer "));
 
         expect(authorization.substring("Bearer ".length), equals(expected));
@@ -302,7 +302,7 @@ void main() {
   group("release notes", () {
     Future<void> assertReleaseNotes(Object matcher) async {
       await _release("my_org/my_app", verify: (request) async {
-        expect(json.decode(await request.readAsString())["body"] as String,
+        expect(json.decode(await request.readAsString())["body"] as String?,
             matcher);
       });
     }
@@ -488,8 +488,8 @@ String _enableGithub(
 /// given [repo], passes that POST request to [verify], and returns a 201
 /// CREATED response.
 Future<void> _release(String repo,
-    {FutureOr<void> verify(shelf.Request request),
-    Map<String, String> environment}) async {
+    {FutureOr<void> verify(shelf.Request request)?,
+    Map<String, String>? environment}) async {
   var server = await ShelfTestServer.create();
   server.handler.expect("POST", "/repos/$repo/releases",
       expectAsync1((request) async {
@@ -568,7 +568,7 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
 /// authentication header.
 Tuple2<String, String> _getAuthorization(shelf.Request request) {
   expect(request.headers, contains("authorization"));
-  var authorization = request.headers["authorization"];
+  var authorization = request.headers["authorization"]!;
   expect(authorization, startsWith("Basic "));
 
   var decoded =

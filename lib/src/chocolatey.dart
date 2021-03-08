@@ -128,14 +128,14 @@ final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
   return File(possibleNuspecs.single).readAsStringSync();
 });
 
-// TODO: late
+/// TODO: late
 /// Returns the XML-decoded contents of [chocolateyNuspecText], with a
 /// `"version"` field and a dependency on the Dart SDK automatically added.
-XmlDocument get _nuspec {
-  if (__nuspec != null) return __nuspec;
+final XmlDocument _nuspec = () {
+  XmlDocument nuspec;
 
   try {
-    __nuspec = XmlDocument.parse(chocolateyNuspec.value);
+    nuspec = XmlDocument.parse(chocolateyNuspec.value);
   } on XmlParserException catch (error) {
     fail("Invalid nuspec: $error");
   }
@@ -163,10 +163,8 @@ XmlDocument get _nuspec {
     XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]")
   ]));
 
-  return __nuspec;
-}
-
-XmlDocument __nuspec;
+  return nuspec;
+}();
 
 /// The `metadata` element in [_nuspec].
 XmlElement get _nuspecMetadata => _findElement(_nuspec.rootElement, "metadata");
@@ -301,7 +299,7 @@ XmlElement _findElement(XmlNode parent, String name) {
 
 /// Like [findElement], but returns `null` if there are no children of [parent]
 /// named [name].
-XmlElement _findElementAllowNone(XmlNode parent, String name) {
+XmlElement? _findElementAllowNone(XmlNode parent, String name) {
   var elements = parent.findElements(name);
   if (elements.length == 1) return elements.single;
   if (elements.isEmpty) return null;
@@ -312,10 +310,10 @@ XmlElement _findElementAllowNone(XmlNode parent, String name) {
 
 /// Returns a human-readable CSS-formatted path to the element named [name]
 /// within [parent].
-String _pathToElement(XmlNode/*!*/ parent, String name) {
+String _pathToElement(XmlNode? parent, String name) {
   var nesting = [name];
   while (parent is XmlElement) {
-    nesting.add((parent as XmlElement).name.qualified);
+    nesting.add(parent.name.qualified);
     parent = parent.parent;
   }
 
