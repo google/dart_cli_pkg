@@ -75,8 +75,7 @@ void main() {
               "my_app/build/my_app.dart.js",
               allOf([
                 contains('self.fs = require("fs");'),
-                // TODO: no dynamic
-                predicate((dynamic string) =>
+                predicate((string) =>
                     RegExp(r'require\("fs"\);')
                         .allMatches(string as String)
                         .length ==
@@ -401,7 +400,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emitsThrough("latest"));
+      await expectLater(grinder.stdout, emitsThrough("latest"));
       await grinder.shouldExit();
     });
 
@@ -413,7 +412,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emitsThrough("foo"));
+      await expectLater(grinder.stdout, emitsThrough("foo"));
       await grinder.shouldExit();
     });
 
@@ -425,7 +424,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emitsThrough("pre"));
+      await expectLater(grinder.stdout, emitsThrough("pre"));
       await grinder.shouldExit();
     });
 
@@ -438,7 +437,7 @@ void main() {
       """, [_packageJson]).create();
 
       var grinder = await grind(["pkg-npm-dev"]);
-      await expect(grinder.stdout, emitsThrough("qux"));
+      await expectLater(grinder.stdout, emitsThrough("qux"));
       await grinder.shouldExit();
     });
   });

@@ -41,11 +41,10 @@ final _ourPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 /// * Adds a dependency on grinder and `cli_pkg`.
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
-DirectoryDescriptor package(
-    Map<String, Object > pubspec, String grindDotDart,
+DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
     [List<Descriptor>? files]) {
   pubspec = {
-    "environment": _ourPubspec["environment"],
+    "environment": _ourPubspec["environment"] as Object,
     "executables": <String, Object>{},
     ...pubspec,
     "dev_dependencies": {
@@ -55,8 +54,8 @@ DirectoryDescriptor package(
       ...?(pubspec["dev_dependencies"] as Map<String, Object>?),
     },
     "dependency_overrides": {
-      ...?_ourDependencyOverride("grinder"),
-      ...?_ourDependencyOverride("test"),
+      ..._ourDependencyOverride("grinder"),
+      ..._ourDependencyOverride("test"),
     },
   };
 
@@ -96,18 +95,14 @@ DirectoryDescriptor package(
 
 /// Returns the dependency description for `package` from `cli_pkg`'s own
 /// pubspec, as a map so it can be included in a map literal with `...`.
-Map<String, Object > _ourDependency(String package) =>
-    {package: _ourPubspec["dependencies"][package]};
+Map<String, Object> _ourDependency(String package) =>
+    {package: _ourPubspec["dependencies"][package] as Object};
 
 /// Returns the dependency override for `package` from `cli_pkg`'s own pubspec,
 /// as a map so it can be included in a map literal with `...?`.
-Map<String, Object > _ourDependencyOverride(String package) {
-  var overrides = _ourPubspec["dependency_overrides"];
-  if (overrides == null) return const {};
-
-  // TODO: use ?[]
-  var descriptor = (overrides as YamlMap)[package];
-  return descriptor == null ? const {} : {package: overrides[package]};
+Map<String, Object> _ourDependencyOverride(String package) {
+  var descriptor = _ourPubspec["dependency_overrides"]?[package] as Object?;
+  return descriptor == null ? const {} : {package: descriptor};
 }
 
 /// Creates a new [ArchiveDescriptor] with [name] and [contents].

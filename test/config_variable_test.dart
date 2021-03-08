@@ -105,19 +105,19 @@ void main() {
 
     test("isn't called if the value isn't accessed", () {
       var variable = InternalConfigVariable.value(1);
-      variable.fn = expectAsync0(() => null, count: 0);
+      variable.fn = expectAsync0(() => 0, count: 0);
     });
 
     test("isn't called if the value is overridden", () {
       var variable = InternalConfigVariable.value(1);
-      variable.fn = expectAsync0(() => null, count: 0);
+      variable.fn = expectAsync0(() => 0, count: 0);
       variable.value = 12;
       expect(variable.value, equals(12));
     });
 
     test("isn't called if the function is overridden", () {
       var variable = InternalConfigVariable.value(1);
-      variable.fn = expectAsync0(() => null, count: 0);
+      variable.fn = expectAsync0(() => 0, count: 0);
       variable.fn = () => 12;
       expect(variable.value, equals(12));
     });
@@ -158,19 +158,19 @@ void main() {
     group("the freeze function", () {
       test("isn't called if ConfigVariable.freeze() isn't", () {
         var variable = InternalConfigVariable.value(1,
-            // TODO: no dynamic
-            freeze: expectAsync1((dynamic n) => 0, count: 0));
+            freeze: expectAsync1((n) => 0, count: 0));
         expect(variable.value, equals(1));
       });
 
       test("modifies a cached value", () {
-        var variable = InternalConfigVariable.value(1, freeze: (n) => n + 1);
+        var variable =
+            InternalConfigVariable.value<int>(1, freeze: (n) => n + 1);
         variable.freeze();
         expect(variable.value, equals(2));
       });
 
       test("is only called once", () {
-        var variable = InternalConfigVariable.value(1,
+        var variable = InternalConfigVariable.value<int>(1,
             freeze: expectAsync1((n) => n + 1, count: 1));
         variable.freeze();
         variable.freeze();
@@ -178,13 +178,14 @@ void main() {
       });
 
       test("modifies a function's return value", () {
-        var variable = InternalConfigVariable.fn(() => 1, freeze: (n) => n + 1);
+        var variable =
+            InternalConfigVariable.fn<int>(() => 1, freeze: (n) => n + 1);
         variable.freeze();
         expect(variable.value, equals(2));
       });
 
       test("is only called once", () {
-        var variable = InternalConfigVariable.fn(
+        var variable = InternalConfigVariable.fn<int>(
             expectAsync0(() => 1, count: 1),
             freeze: expectAsync1((n) => n + 1, count: 1));
         variable.freeze();

@@ -128,10 +128,9 @@ final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
   return File(possibleNuspecs.single).readAsStringSync();
 });
 
-/// TODO: late
 /// Returns the XML-decoded contents of [chocolateyNuspecText], with a
 /// `"version"` field and a dependency on the Dart SDK automatically added.
-final XmlDocument _nuspec = () {
+late final XmlDocument _nuspec = () {
   XmlDocument nuspec;
 
   try {

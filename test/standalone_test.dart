@@ -15,7 +15,6 @@
 import 'dart:io';
 import 'dart:convert';
 
-import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 

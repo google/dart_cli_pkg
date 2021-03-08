@@ -96,9 +96,8 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       // dependencies. This also includes dev dependencies, but it's possible those
       // are compiled into the distribution anyway (especially for stuff like
       // `node_preamble`).
-      // TODO: remove as
-      var packageConfigUrl = await (Isolate.packageConfig as FutureOr<Uri>);
-      var packageConfig = await loadPackageConfigUri(packageConfigUrl);
+      var packageConfigUrl = await Isolate.packageConfig;
+      var packageConfig = await loadPackageConfigUri(packageConfigUrl!);
 
       // Sort the dependencies alphabetically to guarantee a consistent
       // ordering.

@@ -17,7 +17,6 @@ import 'dart:io';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:grinder/grinder.dart';
-import 'package:meta/meta.dart';
 import 'package:node_preamble/preamble.dart' as preamble;
 import 'package:path/path.dart' as p;
 
@@ -265,10 +264,9 @@ void _js({required bool release}) {
   destination.writeAsStringSync(buffer.toString());
 }
 
-/// TODO: late
 /// A map from executable names in [executables] to JS- and Dart-safe
 /// identifiers to use to identify those modules.
-final Map<String, String> _executableIdentifiers = () {
+late final Map<String, String> _executableIdentifiers = () {
   var i = 0;
   return {
     // Add a trailing underscore to indicate that the name is intended to be
@@ -367,7 +365,7 @@ Future<void> _buildPackage() async {
       jsonEncode({
         ...npmPackageJson.value,
         "version": version.toString(),
-        "bin": {for (var name in executables.value.keys) name: "${name}.js"},
+        "bin": {for (var name in executables.value.keys) name: "$name.js"},
         if (jsModuleMainLibrary.value != null) "main": "$_npmName.dart.js"
       }));
 
