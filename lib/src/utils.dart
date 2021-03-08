@@ -30,9 +30,8 @@ import 'package:yaml/yaml.dart';
 import 'info.dart';
 
 /// The raw YAML of the pubspec.
-final rawPubspec =
-    loadYaml(File('pubspec.yaml').readAsStringSync(), sourceUrl: Uri(path: 'pubspec.yaml'))
-        as Map<Object, Object>/*!*/;
+final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
+    sourceUrl: Uri(path: 'pubspec.yaml')) as Map<Object, Object> /*!*/;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String> get entrypoints => p.PathSet.of(executables.value.values);

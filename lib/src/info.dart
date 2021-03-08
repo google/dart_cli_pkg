@@ -22,7 +22,7 @@ import 'utils.dart';
 
 /// The parsed pubspec for the CLI package.
 final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: 'pubspec.yaml');
+    sourceUrl: Uri(path: 'pubspec.yaml'));
 
 /// The name of the package, as specified in the pubspec.
 final dartName = pubspec.name;

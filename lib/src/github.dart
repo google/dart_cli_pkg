@@ -298,7 +298,7 @@ Future<void> _uploadExecutables(String os) async {
   ].map((architecture) async {
     var format = os == "windows" ? "zip" : "tar.gz";
     var package = "$standaloneName-$version-$os-$architecture.$format";
-    var response = await client.post("$uploadUrl?name=$package",
+    var response = await client.post(Uri.parse("$uploadUrl?name=$package"),
         headers: {
           "content-type":
               os == "windows" ? "application/zip" : "application/gzip",
