@@ -99,10 +99,10 @@ final jsModuleMainLibrary = InternalConfigVariable.value<String?>(null);
 /// `cli_pkg` will automatically add `"version"` and `"bin"` fields when
 /// building the npm package. If [jsModuleMainLibrary] is set, it will also add
 /// a `"main"` field.
-final npmPackageJson = InternalConfigVariable.fn<Map<String, Object>>(
+final npmPackageJson = InternalConfigVariable.fn<Map<String, dynamic>>(
     () => File("package.json").existsSync()
         ? jsonDecode(File("package.json").readAsStringSync())
-            as Map<String, Object>
+            as Map<String, dynamic>
         : fail("pkg.npmPackageJson must be set to build an npm package."),
     freeze: freezeJsonMap);
 
@@ -337,12 +337,12 @@ class _Exports {""");
   // Dart list, if `main()` takes arguments.
   wrapper.writeln("""
 Function _wrapMain(Function main) {
-  if (main is Object Function()) {
+  if (main is dynamic Function()) {
     return allowInterop((_) => _translateReturnValue(main()));
   } else {
     return allowInterop(
         (args) => _translateReturnValue(
-            main(List<String>.from(args as List<Object>))));
+            main(List<String>.from(args as List<dynamic>))));
   }
 }""");
 

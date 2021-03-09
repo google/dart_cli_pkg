@@ -31,7 +31,7 @@ import 'info.dart';
 
 /// The raw YAML of the pubspec.
 final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: Uri(path: 'pubspec.yaml')) as Map<Object, Object>;
+    sourceUrl: Uri(path: 'pubspec.yaml')) as Map<dynamic, dynamic>;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
@@ -226,7 +226,7 @@ String humanOSName(String os) {
 ///
 /// This converts each element of [iter] to a string and separates them with
 /// commas and/or [conjunction] (`"and"` by default) where appropriate.
-String toSentence(Iterable<Object> iter, {String? conjunction}) {
+String toSentence(Iterable<dynamic> iter, {String? conjunction}) {
   if (iter.length == 1) return iter.first.toString();
   conjunction ??= 'and';
   return iter.take(iter.length - 1).join(", ") + " $conjunction ${iter.last}";
@@ -321,15 +321,15 @@ Future<String> cloneOrPull(String url) async {
 
 /// Returns an unmodifiable copy of the JSON-compatible [object] (that is, a
 /// structure of lists and arrays of immutable scalar objects).
-Object freezeJson(Object object) {
-  if (object is Map<String, Object>) return freezeJsonMap(object);
-  if (object is List<Object>) {
-    return List<Object>.unmodifiable(object.map(freezeJson));
+dynamic freezeJson(dynamic object) {
+  if (object is Map<String, dynamic>) return freezeJsonMap(object);
+  if (object is List<dynamic>) {
+    return List<dynamic>.unmodifiable(object.map(freezeJson));
   }
   return object;
 }
 
 /// Like [freezeJson], but typed specifically for a map argument.
-Map<String, Object> freezeJsonMap(Map<String, Object> map) =>
+Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
     UnmodifiableMapView(
         {for (var entry in map.entries) entry.key: freezeJson(entry.value)});

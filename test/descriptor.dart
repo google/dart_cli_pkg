@@ -41,17 +41,17 @@ final _ourPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 /// * Adds a dependency on grinder and `cli_pkg`.
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
-DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
+DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
     [List<Descriptor>? files]) {
   pubspec = {
-    "environment": _ourPubspec["environment"] as Object,
-    "executables": <String, Object>{},
+    "environment": _ourPubspec["environment"],
+    "executables": <String, dynamic>{},
     ...pubspec,
     "dev_dependencies": {
       ..._ourDependency("grinder"),
       ..._ourDependency("test"),
       "cli_pkg": {"path": p.current},
-      ...?(pubspec["dev_dependencies"] as Map<String, Object>?),
+      ...?(pubspec["dev_dependencies"] as Map<String, dynamic>?),
     },
     "dependency_overrides": {
       ..._ourDependencyOverride("grinder"),
@@ -60,8 +60,8 @@ DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
   };
 
   var executables = pubspec.containsKey("executables")
-      ? (pubspec["executables"] as Map<String, Object>).values.toSet()
-      : const <Object>{};
+      ? (pubspec["executables"] as Map<String, dynamic>).values.toSet()
+      : const <dynamic>{};
 
   return dir(p.basename(appDir), [
     file("pubspec.yaml", json.encode(pubspec)),
@@ -95,13 +95,13 @@ DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
 
 /// Returns the dependency description for `package` from `cli_pkg`'s own
 /// pubspec, as a map so it can be included in a map literal with `...`.
-Map<String, Object> _ourDependency(String package) =>
-    {package: _ourPubspec["dependencies"][package] as Object};
+Map<String, dynamic> _ourDependency(String package) =>
+    {package: _ourPubspec["dependencies"][package]};
 
 /// Returns the dependency override for `package` from `cli_pkg`'s own pubspec,
 /// as a map so it can be included in a map literal with `...?`.
-Map<String, Object> _ourDependencyOverride(String package) {
-  var descriptor = _ourPubspec["dependency_overrides"]?[package] as Object?;
+Map<String, dynamic> _ourDependencyOverride(String package) {
+  var descriptor = _ourPubspec["dependency_overrides"]?[package];
   return descriptor == null ? const {} : {package: descriptor};
 }
 
