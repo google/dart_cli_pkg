@@ -139,7 +139,7 @@ late final XmlDocument _nuspec = () {
     fail("Invalid nuspec: $error");
   }
 
-  var metadata = _nuspecMetadata;
+  var metadata = _findElement(nuspec.rootElement, "metadata");
   if (metadata.findElements("version").isNotEmpty) {
     fail("The nuspec must not have a package > metadata > version element. One "
         "will be added automatically.");
