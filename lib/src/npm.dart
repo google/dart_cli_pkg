@@ -299,7 +299,7 @@ String get _wrapperLibrary {
   // Define a JS-interop Future to Promise translator so that we can export
   // a Promise-based API
   wrapper.writeln("""
-Object _translateReturnValue(Object val) {
+dynamic _translateReturnValue(dynamic val) {
   if (val is Future) {
     return futureToPromise(val);
   } else {
