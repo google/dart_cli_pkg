@@ -34,10 +34,8 @@ final homebrewFormula = InternalConfigVariable.value<String?>(null);
 /// `@`-versioned formula file for the current version number.
 ///
 /// By default, this is `true` if and only if [version] is a prerelease version.
-final homebrewCreateVersionedFormula = InternalConfigVariable.fn<bool>(() =>
-    version?.isPreRelease ??
-    fail("pkg.homebrewCreateVersionedFormula must be explicitly set if no "
-        "pubspec version exists."));
+final homebrewCreateVersionedFormula =
+    InternalConfigVariable.fn(() => version.isPreRelease);
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -100,7 +98,7 @@ Future<void> _update() async {
     formula = _replaceFirstMappedMandatory(
         formula,
         RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
-        (match) => 'class ${match[1]}AT${_classify(version!)} < Formula',
+        (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
         "Couldn't find a Formula subclass in $formulaPath.");
 
     var newFormulaPath = p.join(p.dirname(formulaPath),

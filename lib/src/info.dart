@@ -14,7 +14,9 @@
 
 import 'dart:io';
 
+import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 
 import 'config_variable.dart';
@@ -28,7 +30,12 @@ final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
 final dartName = pubspec.name;
 
 /// The package's version, as specified in the pubspec.
-final version = pubspec.version;
+final Version version = () {
+  var version = pubspec.version;
+  if (version != null) return version;
+
+  fail("The pubspec must declare a version number.");
+}();
 
 /// The default name of the package on package managers other than pub.
 ///

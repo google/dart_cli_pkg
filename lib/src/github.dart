@@ -168,7 +168,7 @@ Future<void> _release() async {
       body: jsonEncode({
         "tag_name": version.toString(),
         "name": "$humanName $version",
-        "prerelease": version!.isPreRelease,
+        "prerelease": version.isPreRelease,
         if (githubReleaseNotes.value != null) "body": githubReleaseNotes.value
       }));
 

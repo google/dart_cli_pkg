@@ -150,11 +150,8 @@ final npmToken = InternalConfigVariable.fn<String>(() =>
 ///
 /// * For other prerelease versions, `"pre"`.
 final npmDistTag = InternalConfigVariable.fn<String>(() {
-  if (version == null) {
-    fail("pkg.npmDistTag must be set explicitly if no pubspec version exists.");
-  }
-  if (version!.preRelease.isEmpty) return "latest";
-  var firstComponent = version!.preRelease[0];
+  if (version.preRelease.isEmpty) return "latest";
+  var firstComponent = version.preRelease[0];
   return firstComponent is String ? firstComponent : "pre";
 });
 
