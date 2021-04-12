@@ -28,14 +28,14 @@ final homebrewRepo = InternalConfigVariable.fn<String>(
 /// If this isn't set, the task will default to looking for a single `.rb` file
 /// at the root of the repo without an `@` in its filename and modifying that.
 /// If there isn't exactly one such file, the task will fail.
-final homebrewFormula = InternalConfigVariable.value<String>(null);
+final homebrewFormula = InternalConfigVariable.value<String?>(null);
 
 /// Whether to update [homebrewFormula] in-place or copy it to a new
 /// `@`-versioned formula file for the current version number.
 ///
 /// By default, this is `true` if and only if [version] is a prerelease version.
 final homebrewCreateVersionedFormula =
-    InternalConfigVariable.fn<bool>(() => version.isPreRelease);
+    InternalConfigVariable.fn(() => version.isPreRelease);
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -196,5 +196,5 @@ Future<String> _originHead(String repo) async {
 String _classify(Version version) => version
     .toString()
     .replaceAllMapped(
-        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1].toUpperCase())
+        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1]!.toUpperCase())
     .replaceAll('+', 'x');

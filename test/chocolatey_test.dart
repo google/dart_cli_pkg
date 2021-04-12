@@ -318,7 +318,7 @@ String _enableChocolatey({bool token = true}) {
 ///
 /// If [extraMetadata] is passed, it's added to the nuspec's `<metadata>`tag.
 
-d.FileDescriptor _nuspec([String extraMetadata]) {
+d.FileDescriptor _nuspec([String? extraMetadata]) {
   return d.file("my_app_choco.nuspec", """
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
@@ -334,7 +334,7 @@ d.FileDescriptor _nuspec([String extraMetadata]) {
 
 /// A [Matcher] that asserts that a string has the same XML structure as
 /// [expected], ignoring whitespace.
-Matcher _equalsXml(String expected) => predicate((actual) {
+Matcher _equalsXml(String expected) => predicate((dynamic actual) {
       expect(actual, isA<String>());
       expect(XmlDocument.parse(actual as String).toXmlString(pretty: true),
           equals(XmlDocument.parse(expected).toXmlString(pretty: true)));

@@ -1,3 +1,7 @@
+# 1.3.0
+
+* Migrate to null-safety.
+
 # 1.2.0
 
 * Add a `pkg.githubBearerToken` to make it easier to integrate with GitHub
