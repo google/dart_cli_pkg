@@ -44,7 +44,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   ///
   /// If [parent] is passed, it's used as the parent directory for filenames.
   Future<Iterable<ArchiveFile>> _files(Iterable<Descriptor> descriptors,
-      [String parent]) async {
+      [String? parent]) async {
     return (await waitAndReportErrors(descriptors.map((descriptor) async {
       var fullName =
           parent == null ? descriptor.name : '$parent/${descriptor.name}';
@@ -73,7 +73,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
       : contents = List.unmodifiable(contents),
         super(name);
 
-  Future<void> create([String parent]) async {
+  Future<void> create([String? parent]) async {
     var path = p.join(parent ?? sandbox, name);
     var file = File(path).openWrite();
     try {
@@ -96,7 +96,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
         return _encodeFunction()(await archive);
       }());
 
-  Future<void> validate([String parent]) async {
+  Future<void> validate([String? parent]) async {
     // Access this first so we eaerly throw an error for a path with an invalid
     // extension.
     var decoder = _decodeFunction();
@@ -108,7 +108,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     }
 
     var bytes = await File(fullPath).readAsBytes();
-    Archive archive;
+    late Archive archive;
     try {
       archive = decoder(bytes);
     } catch (_) {
@@ -135,7 +135,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
         } on TestFailure catch (error) {
           // Replace the temporary directory with the path to the archive to
           // make the error more user-friendly.
-          fail(error.message.replaceAll(tempDir, pretty));
+          fail(error.message?.replaceAll(tempDir, pretty) ?? '');
         }
       }));
     } finally {
@@ -147,13 +147,13 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   /// [name].
   List<int> Function(Archive) _encodeFunction() {
     if (name.endsWith('.zip')) {
-      return ZipEncoder().encode;
+      return (archive) => ZipEncoder().encode(archive)!;
     } else if (name.endsWith('.tar')) {
       return TarEncoder().encode;
     } else if (name.endsWith('.tar.gz') ||
         name.endsWith('.tar.gzip') ||
         name.endsWith('.tgz')) {
-      return (archive) => GZipEncoder().encode(TarEncoder().encode(archive));
+      return (archive) => GZipEncoder().encode(TarEncoder().encode(archive))!;
     } else if (name.endsWith('.tar.bz2') || name.endsWith('.tar.bzip2')) {
       return (archive) => BZip2Encoder().encode(TarEncoder().encode(archive));
     } else {

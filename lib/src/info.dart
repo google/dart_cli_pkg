@@ -14,7 +14,9 @@
 
 import 'dart:io';
 
+import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 
 import 'config_variable.dart';
@@ -22,13 +24,18 @@ import 'utils.dart';
 
 /// The parsed pubspec for the CLI package.
 final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: 'pubspec.yaml');
+    sourceUrl: Uri(path: 'pubspec.yaml'));
 
 /// The name of the package, as specified in the pubspec.
 final dartName = pubspec.name;
 
 /// The package's version, as specified in the pubspec.
-final version = pubspec.version;
+final Version version = () {
+  var version = pubspec.version;
+  if (version != null) return version;
+
+  fail("The pubspec must declare a version number.");
+}();
 
 /// The default name of the package on package managers other than pub.
 ///
@@ -61,7 +68,7 @@ final botEmail = InternalConfigVariable.fn<String>(() => "cli_pkg@none");
 /// may be modified, but the values must be paths to executable files in the
 /// package.
 final executables = InternalConfigVariable.fn<Map<String, String>>(() {
-  var executables = rawPubspec['executables'] as Map<Object, Object>;
+  var executables = rawPubspec['executables'] as Map<dynamic, dynamic>?;
 
   return {
     for (var entry in (executables ?? {}).entries)

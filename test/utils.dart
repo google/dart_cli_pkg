@@ -36,8 +36,8 @@ String get appDir => d.path("my_app");
 /// The [environment] and [forwardStdio] arguments have the same meanings as for
 /// [TestProcess.start].
 Future<TestProcess> grind(List<String> arguments,
-    {ShelfTestServer server,
-    Map<String, String> environment,
+    {ShelfTestServer? server,
+    Map<String, String>? environment,
     bool forwardStdio = false}) async {
   if (!File(d.path(p.join(appDir, ".packages"))).existsSync()) {
     await pubGet(forwardStdio: forwardStdio);
@@ -65,7 +65,7 @@ Future<void> pubGet({bool forwardStdio = false}) async {
 ///
 /// The Git process is run in [workingDirectory], which should be relative to
 /// [d.sandbox]. If it's not passed, [appDir] is used instead.
-Future<void> git(List<String> arguments, {String workingDirectory}) async {
+Future<void> git(List<String> arguments, {String? workingDirectory}) async {
   await (await TestProcess.start("git", arguments,
           workingDirectory: d.path(workingDirectory ?? appDir)))
       .shouldExit(0);
@@ -94,7 +94,7 @@ Future<void> extract(String path, String destination) async {
 /// it's been passed through the [transformation] function.
 ///
 /// If [description] is passed
-Matcher after<T>(Object Function(T) transformation, Object matcher) =>
+Matcher after<T>(Object? Function(T) transformation, Object matcher) =>
     predicate((value) {
       expect(value, isA<T>());
       expect(transformation(value as T), matcher);

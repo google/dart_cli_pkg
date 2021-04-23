@@ -30,12 +30,11 @@ import 'package:yaml/yaml.dart';
 import 'info.dart';
 
 /// The raw YAML of the pubspec.
-final rawPubspec =
-    loadYaml(File('pubspec.yaml').readAsStringSync(), sourceUrl: 'pubspec.yaml')
-        as Map<Object, Object>;
+final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
+    sourceUrl: Uri(path: 'pubspec.yaml')) as Map<dynamic, dynamic>;
 
 /// The set of entrypoint paths for executables defined by this package.
-Set<String> get entrypoints => p.PathSet.of(executables.value.values);
+Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
 
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
@@ -98,7 +97,7 @@ Future<String> get license => _licenseMemo.runOnce(() async {
       // are compiled into the distribution anyway (especially for stuff like
       // `node_preamble`).
       var packageConfigUrl = await Isolate.packageConfig;
-      var packageConfig = await loadPackageConfigUri(packageConfigUrl);
+      var packageConfig = await loadPackageConfigUri(packageConfigUrl!);
 
       // Sort the dependencies alphabetically to guarantee a consistent
       // ordering.
@@ -145,7 +144,7 @@ String _readSdkLicense() {
 
 /// Returns the contents of the `LICENSE` file in [dir], with various possible
 /// filenames and extensions, or `null`.
-String _readLicense(String dir) {
+String? _readLicense(String dir) {
   if (!Directory(dir).existsSync()) return null;
 
   var possibilities = Directory(dir)
@@ -227,7 +226,7 @@ String humanOSName(String os) {
 ///
 /// This converts each element of [iter] to a string and separates them with
 /// commas and/or [conjunction] (`"and"` by default) where appropriate.
-String toSentence(Iterable<Object> iter, {String conjunction}) {
+String toSentence(Iterable<dynamic> iter, {String? conjunction}) {
   if (iter.length == 1) return iter.first.toString();
   conjunction ??= 'and';
   return iter.take(iter.length - 1).join(", ") + " $conjunction ${iter.last}";
@@ -322,13 +321,15 @@ Future<String> cloneOrPull(String url) async {
 
 /// Returns an unmodifiable copy of the JSON-compatible [object] (that is, a
 /// structure of lists and arrays of immutable scalar objects).
-Object freezeJson(Object object) {
-  if (object is Map<String, Object>) return freezeJsonMap(object);
-  if (object is List) return List<Object>.unmodifiable(object.map(freezeJson));
+dynamic freezeJson(dynamic object) {
+  if (object is Map<String, dynamic>) return freezeJsonMap(object);
+  if (object is List<dynamic>) {
+    return List<dynamic>.unmodifiable(object.map(freezeJson));
+  }
   return object;
 }
 
 /// Like [freezeJson], but typed specifically for a map argument.
-Map<String, Object> freezeJsonMap(Map<String, Object> map) =>
+Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
     UnmodifiableMapView(
         {for (var entry in map.entries) entry.key: freezeJson(entry.value)});

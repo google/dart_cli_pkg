@@ -11,7 +11,7 @@ It's easiest to run Chocolatey on Windows (it comes pre-installed on Travis CI's
 Windows VMs), but it's also possible to [run it on other platforms][] using
 Mono.
 
-[run on other platforms]: https://github.com/chocolatey/choco#other-platforms
+[run it on other platforms]: https://github.com/chocolatey/choco#other-platforms
 
 ## `pkg-chocolatey`
 

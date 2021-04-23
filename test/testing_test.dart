@@ -48,7 +48,7 @@ void main() {
         await pubGet();
 
         await _testCase("""
-          var process = await pkg.start("foo", []);
+          var process = await pkg.start("foo", [], encoding: utf8);
           expect(process.stdout, emits("in foo 1.2.3"));
           await process.shouldExit(0);
         """).create();
@@ -63,7 +63,7 @@ void main() {
         await pubGet();
 
         await _testCase("""
-          var process = await pkg.start("foo", []);
+          var process = await pkg.start("foo", [], encoding: utf8);
           expect(process.stderr, emitsThrough(contains("Failed assertion")));
           await process.shouldExit(255);
         """).create();
@@ -77,7 +77,7 @@ void main() {
         await (await grind(["pkg-standalone-dev"])).shouldExit(0);
 
         await _testCase("""
-          var process = await pkg.start("foo", []);
+          var process = await pkg.start("foo", [], encoding: utf8);
           expect(process.stdout, emits("in foo 1.2.3"));
           await process.shouldExit(0);
         """).create();
@@ -91,7 +91,8 @@ void main() {
         await _touch("my_app/bin/foo.dart");
 
         await _testCase("""
-          expect(pkg.start('foo', []), throwsA(isA<TestFailure>()));
+          expect(pkg.start('foo', [], encoding: utf8),
+            throwsA(isA<TestFailure>()));
         """).create();
         await (await _test()).shouldExit(0);
       });
@@ -102,7 +103,7 @@ void main() {
         await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
         await _testCase("""
-          var process = await pkg.start("foo", [], node: true);
+          var process = await pkg.start("foo", [], node: true, encoding: utf8);
           expect(process.stdout, emits("in foo 1.2.3"));
           await process.shouldExit(0);
         """).create();
@@ -116,7 +117,8 @@ void main() {
         await _touch("my_app/bin/foo.dart");
 
         await _testCase("""
-          expect(pkg.start('foo', [], node: true), throwsA(isA<TestFailure>()));
+          expect(pkg.start('foo', [], node: true, encoding: utf8),
+            throwsA(isA<TestFailure>()));
         """).create();
         await (await _test()).shouldExit(0);
       });
@@ -354,6 +356,7 @@ void main() {
 /// test case that runs [code].
 d.FileDescriptor _testCase(String code) {
   return d.file("my_app/test.dart", """
+    import 'dart:convert';
     import 'dart:io';
 
     import 'package:test/test.dart';

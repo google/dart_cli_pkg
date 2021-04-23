@@ -54,12 +54,12 @@ final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
 /// an out-of-date executable.
 Future<TestProcess> start(String executable, Iterable<String> arguments,
         {bool node = false,
-        String workingDirectory,
-        Map<String, String> environment,
+        String? workingDirectory,
+        Map<String, String>? environment,
         bool includeParentEnvironment = true,
         bool runInShell = false,
-        String description,
-        Encoding encoding,
+        String? description,
+        required Encoding encoding,
         bool forwardStdio = false}) async =>
     await TestProcess.start(executableRunner(executable, node: node),
         [...executableArgs(executable, node: node), ...arguments],
@@ -193,7 +193,7 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
 /// If [path] doesn't exist or is out of date, throws a [TestFailure]
 /// encouraging the user to run [commandToRun].
 void ensureUpToDate(String path, String commandToRun,
-    {Iterable<String> dependencies}) {
+    {Iterable<String?>? dependencies}) {
   // Ensure path is relative so the error messages are more readable.
   path = p.relative(path);
   if (!File(path).existsSync()) {
@@ -202,7 +202,7 @@ void ensureUpToDate(String path, String commandToRun,
 
   var entriesToCheck = [
     for (var dependency in [...?dependencies, "lib"])
-      if (Directory(dependency).existsSync())
+      if (Directory(dependency!).existsSync())
         ...Directory(dependency).listSync(recursive: true)
       else if (File(dependency).existsSync())
         File(dependency),

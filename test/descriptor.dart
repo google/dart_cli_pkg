@@ -16,20 +16,19 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:test_descriptor/test_descriptor.dart' hide ArchiveDescriptor;
+import 'package:test_descriptor/test_descriptor.dart';
 import 'package:yaml/yaml.dart';
 
 import 'descriptor/archive.dart';
 import 'utils.dart';
 
-export 'package:test_descriptor/test_descriptor.dart'
-    hide archive, ArchiveDescriptor;
+export 'package:test_descriptor/test_descriptor.dart';
 
 export 'descriptor/archive.dart';
 
 /// The `cli_pkg` package's pubpsec.
-final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: 'pubspec.yaml');
+final _ourPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
+    sourceUrl: Uri(path: 'pubspec.yaml'));
 
 /// Returns a directory descriptor for a package in [appDir] with the given
 /// pubspec and `grind.dart` file, as well as other optional files.
@@ -42,27 +41,27 @@ final _ourPubpsec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 /// * Adds a dependency on grinder and `cli_pkg`.
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
-DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
-    [List<Descriptor> files]) {
+DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
+    [List<Descriptor>? files]) {
   pubspec = {
-    "environment": _ourPubpsec["environment"],
-    "executables": <String, Object>{},
+    "environment": _ourPubspec["environment"],
+    "executables": <String, dynamic>{},
     ...pubspec,
     "dev_dependencies": {
       ..._ourDependency("grinder"),
       ..._ourDependency("test"),
       "cli_pkg": {"path": p.current},
-      ...?(pubspec["dev_dependencies"] as Map<String, Object>),
+      ...?(pubspec["dev_dependencies"] as Map<String, dynamic>?),
     },
     "dependency_overrides": {
-      ...?_ourDependencyOverride("grinder"),
-      ...?_ourDependencyOverride("test"),
+      ..._ourDependencyOverride("grinder"),
+      ..._ourDependencyOverride("test"),
     },
   };
 
   var executables = pubspec.containsKey("executables")
-      ? (pubspec["executables"] as Map<String, Object>).values.toSet()
-      : const <Object>{};
+      ? (pubspec["executables"] as Map<String, dynamic>).values.toSet()
+      : const <dynamic>{};
 
   return dir(p.basename(appDir), [
     file("pubspec.yaml", json.encode(pubspec)),
@@ -96,16 +95,14 @@ DirectoryDescriptor package(Map<String, Object> pubspec, String grindDotDart,
 
 /// Returns the dependency description for `package` from `cli_pkg`'s own
 /// pubspec, as a map so it can be included in a map literal with `...`.
-Map<String, Object> _ourDependency(String package) =>
-    {package: _ourPubpsec["dependencies"][package]};
+Map<String, dynamic> _ourDependency(String package) =>
+    {package: _ourPubspec["dependencies"][package]};
 
 /// Returns the dependency override for `package` from `cli_pkg`'s own pubspec,
 /// as a map so it can be included in a map literal with `...?`.
-Map<String, Object> _ourDependencyOverride(String package) {
-  var overrides = (_ourPubpsec["dependency_overrides"] as YamlMap);
-  return overrides != null && overrides.containsKey(package)
-      ? {package: overrides[package]}
-      : const {};
+Map<String, dynamic> _ourDependencyOverride(String package) {
+  var descriptor = _ourPubspec["dependency_overrides"]?[package];
+  return descriptor == null ? const {} : {package: descriptor};
 }
 
 /// Creates a new [ArchiveDescriptor] with [name] and [contents].
