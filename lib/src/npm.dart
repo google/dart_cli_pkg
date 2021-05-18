@@ -213,8 +213,8 @@ void _js({required bool release}) {
   Dart2js.compile(source, outFile: destination, extraArgs: [
     '--server-mode',
     '-Dnode=true',
-    '-Dversion=$version',
-    '-Ddart-version=$dartVersion',
+    for (var entry in environmentConstants.value.entries)
+      '-D${entry.key}=${entry.value}',
     ...jsFlags.value,
     if (release) ...jsReleaseFlags.value else ...jsDevFlags.value
   ]);

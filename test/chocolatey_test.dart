@@ -268,33 +268,78 @@ void main() {
     });
   });
 
-  // Note: this test requires an administrative shell to run.
-  test("can be installed and run", () async {
-    // Chocolatey doesn't allow release versions to depend on pre-release
-    // versions.
-    var version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
-    await d
-        .package(
-            {...pubspec, "version": version}, _enableChocolatey(), [_nuspec()])
-        .create();
+  // Note: these tests requires an administrative shell to run.
+  group("can be installed", () {
+    test("and run", () async {
+      // Chocolatey doesn't allow release versions to depend on pre-release
+      // versions.
+      var version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
+      await d
+          .package({...pubspec, "version": version}, _enableChocolatey(),
+              [_nuspec()])
+          .create();
 
-    await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
+      await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
-    await (await TestProcess.start("choco", [
-      "install",
-      // We already have Dart installed, and sometimes this fails to find it.
-      "--ignore-dependencies",
-      d.path("my_app/build/my_app_choco.$version.nupkg")
-    ]))
-        .shouldExit(0);
+      await (await TestProcess.start("choco", [
+        "install",
+        // We already have Dart installed, and sometimes this fails to find it.
+        "--ignore-dependencies",
+        d.path("my_app/build/my_app_choco.$version.nupkg")
+      ]))
+          .shouldExit(0);
 
-    var foo = await TestProcess.start("foo", []);
-    expect(foo.stdout, emits("in foo $version"));
-    await foo.shouldExit(0);
+      var foo = await TestProcess.start("foo", []);
+      expect(foo.stdout, emits("in foo $version"));
+      await foo.shouldExit(0);
 
-    var bar = await TestProcess.start("bar", []);
-    expect(bar.stdout, emits("in baz $version"));
-    await bar.shouldExit(0);
+      var bar = await TestProcess.start("bar", []);
+      expect(bar.stdout, emits("in baz $version"));
+      await bar.shouldExit(0);
+    });
+
+    test("and escapes a custom environment constant", () async {
+      // Chocolatey doesn't allow release versions to depend on pre-release
+      // versions.
+      var version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
+      await d.package({
+        "name": "my_app",
+        "version": version,
+        "executables": {"const": "const"}
+      }, r"""
+          void main(List<String> args) {
+            // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
+            // #44995 are fixed.
+            pkg.environmentConstants.value["my-const"] =
+                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH";
+
+            pkg.addChocolateyTasks();
+            grind(args);
+          }
+        """, [
+        _nuspec()
+      ]).create();
+
+      await d.dir("my_app/bin", [
+        d.file("const.dart",
+            "void main() => print(const String.fromEnvironment('my-const'));")
+      ]).create();
+
+      await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
+
+      await (await TestProcess.start("choco", [
+        "install",
+        // We already have Dart installed, and sometimes this fails to find it.
+        "--ignore-dependencies",
+        d.path("my_app/build/my_app_choco.$version.nupkg")
+      ]))
+          .shouldExit(0);
+
+      var executable = await TestProcess.start("const", []);
+      expect(executable.stdout,
+          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH"));
+      await executable.shouldExit(0);
+    });
   }, testOn: "windows");
 }
 

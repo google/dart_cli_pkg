@@ -150,7 +150,8 @@ List<String> executableArgs(String executable, {bool node = false}) {
   if (File(snapshot).existsSync()) return [snapshot];
 
   return [
-    "-Dversion=$version",
+    for (var entry in environmentConstants.value.entries)
+      '-D${entry.key}=${entry.value}',
     "--enable-asserts",
     p.absolute("bin/$executable.dart")
   ];

@@ -176,7 +176,32 @@ void main() {
     // Normally each of these would be separate test cases, but running grinder
     // takes so long that we collapse them for efficiency.
     test("can be invoked", () async {
-      await d.package(pubspec, _enableStandalone).create();
+      await d.package({
+        "name": "my_app",
+        "version": "1.2.3",
+        "executables": {
+          "foo": "foo",
+          "bar": "bar",
+          "qux": "bar",
+          "const": "const"
+        },
+      }, r"""
+          void main(List<String> args) {
+            // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
+            // #44995 are fixed.
+            pkg.environmentConstants.value["my-const"] =
+                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH";
+
+            pkg.addStandaloneTasks();
+            grind(args);
+          }
+        """).create();
+
+      await d.dir("my_app/bin", [
+        d.file("const.dart",
+            "void main() => print(const String.fromEnvironment('my-const'));")
+      ]).create();
+
       await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
@@ -193,27 +218,45 @@ void main() {
       expect(executable.stdout, emits("in bar 1.2.3"));
       await executable.shouldExit(0);
 
-      // Through a relative symlink
-      Link(d.path("foo-relative")).createSync("out/my_app/foo$dotBat");
-      executable = await TestProcess.start(d.path("foo-relative"), [],
-          workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo 1.2.3"));
-      await executable.shouldExit(0);
+      // We don't currently support resolving scripts through symlinks on
+      // Windows. Although `%~dp0` refers to the symlink's location rather than
+      // the script's, it's theoretically possible to determine the original
+      // location by parsing the output of `dir /a %0`. However, that would
+      // involve a lot of complex batch scripting, soif someone wants it they'll
+      // need to add it themself.
+      if (!Platform.isWindows) {
+        // Through a relative symlink
+        Link(d.path("foo-relative$dotBat")).createSync("out/my_app/foo$dotBat");
+        executable = await TestProcess.start(d.path("foo-relative$dotBat"), [],
+            workingDirectory: d.sandbox);
+        expect(executable.stdout, emits("in foo 1.2.3"));
+        await executable.shouldExit(0);
 
-      // Through an absolute symlink
-      Link(d.path("foo-absolute")).createSync(d.path("out/my_app/foo$dotBat"));
-      executable = await TestProcess.start(d.path("foo-absolute"), [],
-          workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo 1.2.3"));
-      await executable.shouldExit(0);
+        // Through an absolute symlink
+        Link(d.path("foo-absolute$dotBat"))
+            .createSync(d.path("out/my_app/foo$dotBat"));
+        executable = await TestProcess.start(d.path("foo-absolute$dotBat"), [],
+            workingDirectory: d.sandbox);
+        expect(executable.stdout, emits("in foo 1.2.3"));
+        await executable.shouldExit(0);
 
-      // Through a nested symlink
-      Link(d.path("foo-nested")).createSync(d.path("foo-relative"));
-      executable = await TestProcess.start(d.path("foo-nested"), [],
+        // Through a nested symlink
+        Link(d.path("foo-nested$dotBat"))
+            .createSync(d.path("foo-relative$dotBat"));
+        executable = await TestProcess.start(d.path("foo-nested$dotBat"), [],
+            workingDirectory: d.sandbox);
+        expect(executable.stdout, emits("in foo 1.2.3"));
+        await executable.shouldExit(0);
+      }
+
+      // Escapes environment constants
+      executable = await TestProcess.start(
+          d.path("out/my_app/const$dotBat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits("in foo 1.2.3"));
+      expect(executable.stdout,
+          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH"));
       await executable.shouldExit(0);
-    }, onPlatform: {"windows": Skip("google/dart_cli_pkg#25")});
+    });
   }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
 
   group("the LICENSE file", () {
@@ -386,6 +429,36 @@ void main() {
           workingDirectory: d.sandbox);
       expect(executable.stderr, emitsThrough(contains("Failed assertion")));
       await executable.shouldExit(255);
+    });
+
+    test("and escapes a custom environment constants", () async {
+      await d.package({
+        "name": "my_app",
+        "version": "1.2.3",
+        "executables": {"const": "const"}
+      }, r"""
+          void main(List<String> args) {
+            pkg.environmentConstants.value["my-const"] =
+                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH";
+
+            pkg.addStandaloneTasks();
+            grind(args);
+          }
+        """).create();
+
+      await d.dir("my_app/bin", [
+        d.file("const.dart",
+            "void main() => print(const String.fromEnvironment('my-const'));")
+      ]).create();
+
+      await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+
+      var executable = await TestProcess.start(
+          d.path("my_app/build/const$dotBat"), [],
+          workingDirectory: d.sandbox);
+      expect(executable.stdout,
+          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH"));
+      await executable.shouldExit(0);
     });
   });
 }

@@ -19,6 +19,7 @@ import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:async/async.dart';
+import 'package:charcode/charcode.dart';
 import 'package:collection/collection.dart';
 import 'package:grinder/grinder.dart';
 import 'package:http/http.dart' as http;
@@ -333,3 +334,54 @@ dynamic freezeJson(dynamic object) {
 Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
     UnmodifiableMapView(
         {for (var entry in map.entries) entry.key: freezeJson(entry.value)});
+
+/// Verifies that [environmentConstants] doesn't contain values that are broken
+/// for dart2native.
+void verifyEnvironmentConstantsForDart2Native() {
+  for (var entry in environmentConstants.value.entries) {
+    for (var character in const [" ", ","]) {
+      if (entry.value.contains(character)) {
+        fail('Environment constant ${json.encode(entry.key)} contains '
+            '"$character" which is broken on dart2native.\n'
+            'Full value: ${json.encode(entry.value)}');
+      }
+    }
+  }
+}
+
+/// Escapes [value] so it can be passed as an argument in PowerShell.
+String powershellEscape(String value) =>
+    // In addition to escaping the argument for PowerShell, we also need to escape
+    // it for Windows's built-in argument parsing.
+    "'" + windowsArgEscape(value).replaceAll("'", "''") + "'";
+
+/// Escapes [value] so it can be passed as an argument in a Unix shell.
+String shEscape(String value) => "'" + value.replaceAll("'", r"'\''") + "'";
+
+/// Escapes [value] so it can be passed as an argument to a Windows executable.
+///
+/// In Windows, each executable handles its own argument parsing. Both Dart and
+/// Node parse executables according to Windows's default C++ arg parsing
+/// algorithm, which is described [on MSDN].
+///
+/// [on MSDN]: https://docs.microsoft.com/en-us/cpp/cpp/main-function-command-line-args?view=msvc-160#parsing-c-command-line-arguments
+String windowsArgEscape(String value) {
+  var buffer = StringBuffer()..writeCharCode($double_quote);
+  for (var i = 0; i < value.length; i++) {
+    var codeUnit = value.codeUnitAt(i);
+    if (codeUnit == $double_quote) {
+      buffer.writeCharCode($double_quote);
+      buffer.writeCharCode($double_quote);
+    } else if (codeUnit == $percent) {
+      // There's no way to escape a percent sign within quotes, but a percent on
+      // its own outside quotes isn't interpreted specially.
+      buffer.writeCharCode($double_quote);
+      buffer.writeCharCode($percent);
+      buffer.writeCharCode($double_quote);
+    } else {
+      buffer.writeCharCode(codeUnit);
+    }
+  }
+  buffer.writeCharCode($double_quote);
+  return buffer.toString();
+}

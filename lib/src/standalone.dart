@@ -60,7 +60,8 @@ void _compileSnapshot({required bool release}) {
       existingSnapshots[path] = name;
       Dart.run(path, vmArgs: [
         if (!release) '--enable-asserts',
-        '-Dversion=$version',
+        for (var entry in environmentConstants.value.entries)
+          '-D${entry.key}=${entry.value}',
         '--snapshot=build/$name.snapshot'
       ]);
     }
@@ -71,6 +72,7 @@ void _compileSnapshot({required bool release}) {
 /// executable to `build/${executable}.native`.
 void _compileNative() {
   ensureBuild();
+  verifyEnvironmentConstantsForDart2Native();
 
   var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');
   if (!useDart2Native && !File(dart2AotPath).existsSync()) {
@@ -89,7 +91,8 @@ void _compileNative() {
       existingSnapshots[path] = name;
       run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
         path,
-        '-Dversion=$version',
+        for (var entry in environmentConstants.value.entries)
+          '-D${entry.key}=${entry.value}',
         if (useDart2Native && !_useExe) '--output-kind=aot',
         if (useDart2Native) '--output',
         'build/$name.native'
@@ -183,7 +186,11 @@ Future<void> _buildDev() async {
         renderTemplate(
             "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
           "dart": Platform.resolvedExecutable,
-          "version": version.toString(),
+          "environment-constants":
+              environmentConstants.value.entries.map((entry) {
+            var arg = "-D${entry.key}=${entry.value}";
+            return Platform.isWindows ? windowsArgEscape(arg) : shEscape(arg);
+          }).join(" "),
           "executable": "$name.snapshot"
         }));
 
