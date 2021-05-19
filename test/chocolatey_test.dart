@@ -323,6 +323,7 @@ String _enableChocolatey({bool token = true}) {
 
   if (token) buffer.writeln('pkg.chocolateyToken.value = "tkn";');
   buffer.writeln("pkg.addChocolateyTasks();");
+  buffer.writeln('pkg.githubRepo.value = "google/right";');
   buffer.writeln("grind(args);");
   buffer.writeln("}");
 
