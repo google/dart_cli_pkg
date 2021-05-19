@@ -14,6 +14,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
@@ -289,13 +290,18 @@ void main() {
       ]))
           .shouldExit(0);
 
-      var foo = await TestProcess.start("foo", []);
-      expect(foo.stdout, emits("in foo $version"));
-      await foo.shouldExit(0);
+      try {
+        var foo = await TestProcess.start("foo", []);
+        expect(foo.stdout, emits("in foo $version"));
+        await foo.shouldExit(0);
 
-      var bar = await TestProcess.start("bar", []);
-      expect(bar.stdout, emits("in baz $version"));
-      await bar.shouldExit(0);
+        var bar = await TestProcess.start("bar", []);
+        expect(bar.stdout, emits("in baz $version"));
+        await bar.shouldExit(0);
+      } finally {
+        // We can't use [TestProcess] because it'll be killed if the test fails.
+        Process.runSync("choco", ["uninstall", "my_app_choco"]);
+      }
     });
 
     test("and escapes a custom environment constant", () async {
@@ -333,9 +339,14 @@ void main() {
       ]))
           .shouldExit(0);
 
-      var executable = await TestProcess.start("const", []);
-      expect(executable.stdout, emits(riskyArg(dart2native: true)));
-      await executable.shouldExit(0);
+      try {
+        var executable = await TestProcess.start("const", []);
+        expect(executable.stdout, emits(riskyArg(dart2native: true)));
+        await executable.shouldExit(0);
+      } finally {
+        // We can't use [TestProcess] because it'll be killed if the test fails.
+        Process.runSync("choco", ["uninstall", "my_app_choco"]);
+      }
     });
   }, testOn: "windows");
 }
