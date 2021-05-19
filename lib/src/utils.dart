@@ -341,7 +341,7 @@ void verifyEnvironmentConstantsForProcessArg() {
   if (!Platform.isWindows) return;
 
   for (var entry in environmentConstants.value.entries) {
-    for (var character in const ["%", ">", "|", "^", "&"]) {
+    for (var character in const ["%", "<", ">", "|", "^", "&"]) {
       if (entry.value.contains(character)) {
         fail('Environment constant ${json.encode(entry.key)} contains '
             '"$character" which is broken on Windows.\n'

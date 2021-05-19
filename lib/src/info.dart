@@ -103,8 +103,8 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
 /// * Due to [dart-lang/sdk#46050] and [#44995], it's not safe to include commas
 ///   or spaces in environment constant values.
 ///
-/// * Due to [dart-lang/sdk#46067], it's not safe to include `>`, `^`, `&`, `|`,
-///   or `%` in environment constant variables that are passed by Dart to
+/// * Due to [dart-lang/sdk#46067], it's not safe to include `<`, `>`, `^`, `&`,
+///   `|`, or `%` in environment constant variables that are passed by Dart to
 ///   subprocessses on Windows.
 ///
 /// [dart-lang/sdk#46050]: https://github.com/dart-lang/sdk/issues/46050

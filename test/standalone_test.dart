@@ -439,7 +439,7 @@ void main() {
       }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(dart2native: true)};
+                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -456,7 +456,8 @@ void main() {
       var executable = await TestProcess.start(
           d.path("my_app/build/const$dotBat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout, emits(riskyArg(dart2native: true)));
+      expect(executable.stdout,
+          emits(riskyArg(invokedByDart: true, dart2native: true)));
       await executable.shouldExit(0);
     });
   });

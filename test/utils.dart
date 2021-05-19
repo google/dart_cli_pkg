@@ -138,10 +138,10 @@ String riskyArg({bool invokedByDart = false, bool dart2native = false}) {
   if (!Platform.isWindows) invokedByDart = false;
 
   var buffer = StringBuffer();
-  buffer.write(r'~`!@#$*()_-+={[}]\:;"<.?/');
+  buffer.write(r'~`!@#$*()_-+={[}]\:;".?/');
   buffer.write("'");
   if (!dart2native) buffer.write(',');
-  if (!invokedByDart) buffer.write('%>^&|');
+  if (!invokedByDart) buffer.write('<%>^&|');
   if (!dart2native) buffer.write(' ');
   if (!invokedByDart) buffer.write('%PATH%');
   if (!dart2native) buffer.write(' ');
