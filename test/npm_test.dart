@@ -217,10 +217,10 @@ void main() {
     });
 
     test("escapes a custom environment constant", () async {
-      await d.package(pubspec, r"""
+      await d.package(pubspec, """
         void main(List<String> args) {
           pkg.environmentConstants.value["my-const"] =
-              "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH";
+              ${riskyArgStringLiteral(invokedByDart: true)};
 
           pkg.addNpmTasks();
           grind(args);
@@ -236,8 +236,7 @@ void main() {
 
       var process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
-      expect(process.stdout,
-          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH"));
+      expect(process.stdout, emits(riskyArg(invokedByDart: true)));
       await process.shouldExit(0);
     });
 

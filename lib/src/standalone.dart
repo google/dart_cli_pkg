@@ -50,6 +50,8 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 /// If [release] is `false`, this compiles with `--enable-asserts`.
 void _compileSnapshot({required bool release}) {
   ensureBuild();
+  verifyEnvironmentConstantsForProcessArg();
+
   var existingSnapshots = <String, String>{};
   executables.value.forEach((name, path) {
     if (existingSnapshots.containsKey(path)) {
@@ -72,6 +74,7 @@ void _compileSnapshot({required bool release}) {
 /// executable to `build/${executable}.native`.
 void _compileNative() {
   ensureBuild();
+  verifyEnvironmentConstantsForProcessArg();
   verifyEnvironmentConstantsForDart2Native();
 
   var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');

@@ -185,12 +185,12 @@ void main() {
           "qux": "bar",
           "const": "const"
         },
-      }, r"""
+      }, """
           void main(List<String> args) {
             // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
             // #44995 are fixed.
             pkg.environmentConstants.value["my-const"] =
-                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH";
+                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -254,7 +254,7 @@ void main() {
           d.path("out/my_app/const$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout,
-          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH"));
+          emits(riskyArg(invokedByDart: true, dart2native: true)));
       await executable.shouldExit(0);
     });
   }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
@@ -436,10 +436,10 @@ void main() {
         "name": "my_app",
         "version": "1.2.3",
         "executables": {"const": "const"}
-      }, r"""
+      }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH";
+                ${riskyArgStringLiteral(dart2native: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -456,8 +456,7 @@ void main() {
       var executable = await TestProcess.start(
           d.path("my_app/build/const$dotBat"), [],
           workingDirectory: d.sandbox);
-      expect(executable.stdout,
-          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/ %PATH% \$PATH"));
+      expect(executable.stdout, emits(riskyArg(dart2native: true)));
       await executable.shouldExit(0);
     });
   });

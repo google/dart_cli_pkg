@@ -306,12 +306,10 @@ void main() {
         "name": "my_app",
         "version": version,
         "executables": {"const": "const"}
-      }, r"""
+      }, """
           void main(List<String> args) {
-            // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
-            // #44995 are fixed.
             pkg.environmentConstants.value["my-const"] =
-                "~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH";
+                ${riskyArgStringLiteral(dart2native: true)};
 
             pkg.addChocolateyTasks();
             grind(args);
@@ -336,8 +334,7 @@ void main() {
           .shouldExit(0);
 
       var executable = await TestProcess.start("const", []);
-      expect(executable.stdout,
-          emits("~`!@#\$%^&*()_-+={[}]|\\:;\"'<>.?/%PATH%\$PATH"));
+      expect(executable.stdout, emits(riskyArg(dart2native: true)));
       await executable.shouldExit(0);
     });
   }, testOn: "windows");

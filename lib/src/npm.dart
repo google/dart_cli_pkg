@@ -204,6 +204,7 @@ void addNpmTasks() {
 /// compiles with [jsDevFlags].
 void _js({required bool release}) {
   ensureBuild();
+  verifyEnvironmentConstantsForProcessArg();
 
   var source = File("build/${_npmName}_npm.dart");
   source.writeAsStringSync(_wrapperLibrary);
