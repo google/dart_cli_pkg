@@ -204,6 +204,7 @@ void addChocolateyTasks() {
 /// Builds a package to upload to Chocolatey.
 Future<void> _build() async {
   ensureBuild();
+  verifyEnvironmentConstants(forDart2Native: true);
 
   var dir = Directory('build/chocolatey');
   if (dir.existsSync()) dir.deleteSync(recursive: true);
@@ -241,9 +242,13 @@ Write-Host "Building executable${executables.value.length == 1 ? '' : 's'}..."
 """);
   var uninstall = StringBuffer();
   executables.value.forEach((name, path) {
+    var constants = environmentConstants.value.entries
+        .map((entry) => powershellEscape("-D${entry.key}=${entry.value}"))
+        .join(" ");
+
     install.write("""
 \$ExePath = "\$PackageFolder\\bin\\$name.exe"
-dart2native "-Dversion=$version" "\$SourceDir\\$path" -o \$ExePath
+dart2native $constants "\$SourceDir\\$path" -o \$ExePath
 Generate-BinFile "$name" \$ExePath
 """);
     uninstall
