@@ -216,6 +216,30 @@ void main() {
       await process.shouldExit(0);
     });
 
+    test("escapes a custom environment constant", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.environmentConstants.value["my-const"] =
+              ${riskyArgStringLiteral(invokedByDart: true)};
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [_packageJson]).create();
+
+      await d.dir("my_app/bin", [
+        d.file("foo.dart",
+            "void main() => print(const String.fromEnvironment('my-const'));")
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emits(riskyArg(invokedByDart: true)));
+      await process.shouldExit(0);
+    });
+
     test("with access to command-line args", () async {
       await d.package(pubspec, _enableNpm, [_packageJson]).create();
 

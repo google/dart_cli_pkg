@@ -21,6 +21,7 @@ import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
 import 'src/info.dart';
+import 'src/utils.dart';
 
 /// A set of executable targets whose up-to-date status has already been
 /// verified.
@@ -149,8 +150,10 @@ List<String> executableArgs(String executable, {bool node = false}) {
   var snapshot = p.absolute("build/$executable.snapshot");
   if (File(snapshot).existsSync()) return [snapshot];
 
+  verifyEnvironmentConstants();
   return [
-    "-Dversion=$version",
+    for (var entry in environmentConstants.value.entries)
+      '-D${entry.key}=${entry.value}',
     "--enable-asserts",
     p.absolute("bin/$executable.dart")
   ];

@@ -50,6 +50,8 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 /// If [release] is `false`, this compiles with `--enable-asserts`.
 void _compileSnapshot({required bool release}) {
   ensureBuild();
+  verifyEnvironmentConstants(forSubprocess: true);
+
   var existingSnapshots = <String, String>{};
   executables.value.forEach((name, path) {
     if (existingSnapshots.containsKey(path)) {
@@ -60,7 +62,8 @@ void _compileSnapshot({required bool release}) {
       existingSnapshots[path] = name;
       Dart.run(path, vmArgs: [
         if (!release) '--enable-asserts',
-        '-Dversion=$version',
+        for (var entry in environmentConstants.value.entries)
+          '-D${entry.key}=${entry.value}',
         '--snapshot=build/$name.snapshot'
       ]);
     }
@@ -71,6 +74,7 @@ void _compileSnapshot({required bool release}) {
 /// executable to `build/${executable}.native`.
 void _compileNative() {
   ensureBuild();
+  verifyEnvironmentConstants(forSubprocess: true, forDart2Native: true);
 
   var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');
   if (!useDart2Native && !File(dart2AotPath).existsSync()) {
@@ -89,7 +93,8 @@ void _compileNative() {
       existingSnapshots[path] = name;
       run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
         path,
-        '-Dversion=$version',
+        for (var entry in environmentConstants.value.entries)
+          '-D${entry.key}=${entry.value}',
         if (useDart2Native && !_useExe) '--output-kind=aot',
         if (useDart2Native) '--output',
         'build/$name.native'
@@ -176,6 +181,8 @@ bool _useNative(String os, {required bool x64}) {
 /// Builds scripts for testing each executable on the current OS and
 /// architecture.
 Future<void> _buildDev() async {
+  verifyEnvironmentConstants();
+
   for (var name in executables.value.keys) {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
@@ -183,7 +190,11 @@ Future<void> _buildDev() async {
         renderTemplate(
             "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
           "dart": Platform.resolvedExecutable,
-          "version": version.toString(),
+          "environment-constants":
+              environmentConstants.value.entries.map((entry) {
+            var arg = "-D${entry.key}=${entry.value}";
+            return Platform.isWindows ? windowsArgEscape(arg) : shEscape(arg);
+          }).join(" "),
           "executable": "$name.snapshot"
         }));
 
