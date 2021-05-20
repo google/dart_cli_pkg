@@ -336,32 +336,44 @@ Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
         {for (var entry in map.entries) entry.key: freezeJson(entry.value)});
 
 /// Verifies that [environmentConstants] doesn't contain values that are broken
-/// when passed to a subprocess on Windows.
-void verifyEnvironmentConstantsForProcessArg() {
-  if (!Platform.isWindows) return;
-
+/// in the given context.
+///
+/// If [forSubprocess] is `true`, this checks for values that are broken when
+/// passed to subprocesses invoked through `dart:io`. If [forDart2Native] is
+/// `true`, this checks for values that are broken when passed to `dart2native`.
+void verifyEnvironmentConstants(
+    {bool forSubprocess = false, bool forDart2Native = false}) {
   for (var entry in environmentConstants.value.entries) {
-    for (var character in const ["%", "<", ">", "|", "^", "&"]) {
-      if (entry.value.contains(character)) {
+    if (Platform.isWindows) {
+      if (entry.value.contains('"')) {
         fail('Environment constant ${json.encode(entry.key)} contains '
-            '"$character" which is broken on Windows.\n'
-            'See https://github.com/dart-lang/sdk/issues/46067\n'
+            '\'"\' which is broken on Windows.\n'
+            'See https://github.com/dart-lang/sdk/issues/46079\n'
             'Full value: ${json.encode(entry.value)}');
       }
-    }
-  }
-}
 
-/// Verifies that [environmentConstants] doesn't contain values that are broken
-/// for dart2native.
-void verifyEnvironmentConstantsForDart2Native() {
-  for (var entry in environmentConstants.value.entries) {
-    for (var character in const [" ", ","]) {
-      if (entry.value.contains(character)) {
-        fail('Environment constant ${json.encode(entry.key)} contains '
-            '"$character" which is broken on dart2native.\n'
-            'See https://github.com/dart-lang/sdk/issues/46050 and /44995\n'
-            'Full value: ${json.encode(entry.value)}');
+      if (forSubprocess) {
+        for (var character in const ["%", "<", ">", "|", "^", "&"]) {
+          if (entry.value.contains(character)) {
+            fail('Environment constant ${json.encode(entry.key)} contains '
+                '"$character" which is broken on Windows.\n'
+                'See https://github.com/dart-lang/sdk/issues/46067\n'
+                'Full value: ${json.encode(entry.value)}');
+          }
+        }
+      }
+    }
+
+    if (forDart2Native) {
+      for (var entry in environmentConstants.value.entries) {
+        for (var character in const [" ", ","]) {
+          if (entry.value.contains(character)) {
+            fail('Environment constant ${json.encode(entry.key)} contains '
+                '"$character" which is broken on dart2native.\n'
+                'See https://github.com/dart-lang/sdk/issues/46050 and /44995\n'
+                'Full value: ${json.encode(entry.value)}');
+          }
+        }
       }
     }
   }

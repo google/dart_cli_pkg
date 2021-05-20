@@ -50,7 +50,7 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 /// If [release] is `false`, this compiles with `--enable-asserts`.
 void _compileSnapshot({required bool release}) {
   ensureBuild();
-  verifyEnvironmentConstantsForProcessArg();
+  verifyEnvironmentConstants(forSubprocess: true);
 
   var existingSnapshots = <String, String>{};
   executables.value.forEach((name, path) {
@@ -74,8 +74,7 @@ void _compileSnapshot({required bool release}) {
 /// executable to `build/${executable}.native`.
 void _compileNative() {
   ensureBuild();
-  verifyEnvironmentConstantsForProcessArg();
-  verifyEnvironmentConstantsForDart2Native();
+  verifyEnvironmentConstants(forSubprocess: true, forDart2Native: true);
 
   var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');
   if (!useDart2Native && !File(dart2AotPath).existsSync()) {
@@ -182,6 +181,8 @@ bool _useNative(String os, {required bool x64}) {
 /// Builds scripts for testing each executable on the current OS and
 /// architecture.
 Future<void> _buildDev() async {
+  verifyEnvironmentConstants();
+
   for (var name in executables.value.keys) {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(

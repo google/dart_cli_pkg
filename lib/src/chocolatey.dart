@@ -204,7 +204,7 @@ void addChocolateyTasks() {
 /// Builds a package to upload to Chocolatey.
 Future<void> _build() async {
   ensureBuild();
-  verifyEnvironmentConstantsForDart2Native();
+  verifyEnvironmentConstants(forDart2Native: true);
 
   var dir = Directory('build/chocolatey');
   if (dir.existsSync()) dir.deleteSync(recursive: true);

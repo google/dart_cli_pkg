@@ -101,15 +101,19 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
 /// bugged:
 ///
 /// * Due to [dart-lang/sdk#46050] and [#44995], it's not safe to include commas
-///   or spaces in environment constant values.
+///   or spaces in environment constant values that are passed to `dart2native`.
 ///
 /// * Due to [dart-lang/sdk#46067], it's not safe to include `<`, `>`, `^`, `&`,
 ///   `|`, or `%` in environment constant variables that are passed by Dart to
 ///   subprocessses on Windows.
 ///
+/// * Due to [dart-lang/sdk#46079], it's not safe to include double quotes in
+///   environment constant values on Windows.
+///
 /// [dart-lang/sdk#46050]: https://github.com/dart-lang/sdk/issues/46050
 /// [#44995]: https://github.com/dart-lang/sdk/issues/44995
 /// [dart-lang/sdk#46067]: https://github.com/dart-lang/sdk/issues/46067
+/// [dart-lang/sdk#46079]: https://github.com/dart-lang/sdk/issues/46079
 final environmentConstants = InternalConfigVariable.fn<Map<String, String>>(
     () =>
         {"version": version.toString(), "dart-version": dartVersion.toString()},
