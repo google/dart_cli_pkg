@@ -3,6 +3,9 @@
 * `pkg.addChocolateyTasks()` no longer automatically adds standalone tasks,
   since Chocolatey tasks no longer depend on standalone tasks.
 
+* `pkg-chocolatey` now creates a file named `LICENSE.txt` rather than `LICENSE`,
+  at the request of the Chocolatey reviewers.
+
 # 1.4.0
 
 * Add `pkg.environmentConstants` to make it possible to define custom

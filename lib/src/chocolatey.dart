@@ -210,7 +210,7 @@ Future<void> _build() async {
   writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
   Directory("build/chocolatey/tools/source").createSync(recursive: true);
 
-  writeString("build/chocolatey/tools/LICENSE", await license);
+  writeString("build/chocolatey/tools/LICENSE.txt", await license);
 
   writeString(
       'build/chocolatey/tools/source/pubspec.yaml',
