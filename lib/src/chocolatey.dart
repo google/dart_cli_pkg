@@ -88,6 +88,21 @@ String get chocolateyDartVersion {
   return result.toString();
 }
 
+/// The Chocolatey Repo Url
+///
+/// This is used for the Chocolatey verification file.
+/// It defaults to [githubRepo].
+final chocolateyRepoUrl = InternalConfigVariable.fn<String>(
+  () => 'https://github.com/${githubRepo.value}',
+);
+
+/// The Chocolatey Release URL
+///
+/// This is the Release URL used for the verification file.
+/// It defaults to https://github.com/[githubRepo]/releases/tag/[tag].
+final chocolateyReleaseUrl = InternalConfigVariable.fn<String>(() =>
+    'https://github.com/${githubRepo.value}/releases/tag/${version.toString()}');
+
 /// The set of files to include directly in the Chocolatey package.
 ///
 /// This should be at least enough files to compile the package's executables.
@@ -328,7 +343,7 @@ String get _verificationFile {
   final osVersion = Platform.operatingSystemVersion;
   final dartInfo = Platform.version;
   final tag = version.toString();
-  final repo = 'https://github.com/${githubRepo.value}';
+  final repo = chocolateyRepoUrl.value;
   final releaseUrl = '$repo/releases/tag/$tag';
 
   final dartVersion = dartInfo.split(' ')[0];
