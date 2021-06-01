@@ -349,7 +349,7 @@ String get _verificationFile {
   final dartInfo = Platform.version;
   final tag = version.toString();
   final repo = chocolateyRepoUrl.value;
-  final releaseUrl = '$repo/releases/tag/$tag';
+  final releaseUrl = chocolateyReleaseUrl.value;
 
   final dartVersion = dartInfo.split(' ')[0];
   final contents = '''VERIFICATION

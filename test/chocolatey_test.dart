@@ -16,6 +16,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cli_pkg/cli_pkg.dart';
 import 'package:cli_pkg/src/chocolatey.dart';
 import 'package:cli_pkg/src/utils.dart';
 import 'package:test/test.dart';
@@ -228,7 +229,7 @@ void main() {
       test('the Verification file', () async {
         await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
         await (await grind(["pkg-chocolatey"])).shouldExit(0);
-
+        final version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
         await d
             .file(
                 "my_app/build/chocolatey/tools/VERIFICATION.txt",
@@ -236,6 +237,11 @@ void main() {
                   contains(Platform.version),
                   contains(Platform.operatingSystem),
                   contains(Platform.operatingSystemVersion),
+                  contains(version),
+                  contains('https://github.com/google/right'),
+                  contains(
+                    'https://github.com/google/right/releases/tag/$version',
+                  ),
                 ]))
             .validate();
       });
