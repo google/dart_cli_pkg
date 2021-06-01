@@ -2,4 +2,4 @@
 
 set SCRIPTPATH=%~dp0
 set arguments=%*
-"{{{dart}}}" --enable-asserts "-Dversion={{{version}}}" "%SCRIPTPATH%\{{{executable}}}" %arguments%
+"{{{dart}}}" --enable-asserts {{{environment-constants}}} "%SCRIPTPATH%\{{{executable}}}" %arguments%

@@ -541,8 +541,9 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
               os == "windows" ? "application/zip" : "application/gzip"));
       var archive = os == "windows"
           ? ZipDecoder().decodeBytes(await collectBytes(request.read()))
-          : TarDecoder().decodeBytes(
-              await collectBytes(request.read().transform(gzip.decoder)));
+          : TarDecoder().decodeBytes(await collectBytes(
+              // Cast to work around dart-lang/shelf#189.
+              request.read().cast<List<int>>().transform(gzip.decoder)));
 
       expect(archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
           isNotNull);
