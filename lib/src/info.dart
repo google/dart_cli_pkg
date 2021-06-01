@@ -76,10 +76,54 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
   };
 }, freeze: (map) => Map.unmodifiable(map));
 
+/// A mutable map of environment constants to pass to Dart (using
+/// `-D${name}=${value}`) when compiling executables for this package.
+///
+/// These values can be accessed using [String.fromEnvironment],
+/// [int.fromEnvironment], and [bool.fromEnvironment].
+///
+/// This is also passed when spawning executables via the
+/// `package:cli_pkg/testing.dart`. However, if the executable is run from
+/// source (as opposed to from a compiled artifact) it won't use the value of
+/// [environmentConstants] that's set in `tool/grind.dart`. It also needs to be
+/// set in the test itself.
+///
+/// By default, this contains the following entries:
+///
+/// * "version": The value of [version].
+///
+/// * "dart-version": The version of the Dart SDK on which this application is
+///   running.
+///
+/// **Warning:** There are several Dart SDK bugs that restrict which values can
+/// be used in environment constants. If any values include these characters,
+/// `cli_pkg` will throw an error in the situations where those characters
+/// bugged:
+///
+/// * Due to [dart-lang/sdk#46050] and [#44995], it's not safe to include commas
+///   or spaces in environment constant values that are passed to `dart2native`.
+///
+/// * Due to [dart-lang/sdk#46067], it's not safe to include `<`, `>`, `^`, `&`,
+///   `|`, or `%` in environment constant variables that are passed by Dart to
+///   subprocessses on Windows.
+///
+/// * Due to [dart-lang/sdk#46079], it's not safe to include double quotes in
+///   environment constant values on Windows.
+///
+/// [dart-lang/sdk#46050]: https://github.com/dart-lang/sdk/issues/46050
+/// [#44995]: https://github.com/dart-lang/sdk/issues/44995
+/// [dart-lang/sdk#46067]: https://github.com/dart-lang/sdk/issues/46067
+/// [dart-lang/sdk#46079]: https://github.com/dart-lang/sdk/issues/46079
+final environmentConstants = InternalConfigVariable.fn<Map<String, String>>(
+    () =>
+        {"version": version.toString(), "dart-version": dartVersion.toString()},
+    freeze: (map) => Map.unmodifiable(map));
+
 /// Freezes all the [ConfigVariable]s defined in `info.dart`.
 void freezeSharedVariables() {
   name.freeze();
   humanName.freeze();
   botName.freeze();
   executables.freeze();
+  environmentConstants.freeze();
 }

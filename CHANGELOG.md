@@ -1,3 +1,8 @@
+# 1.4.0
+
+* Add `pkg.environmentConstants` to make it possible to define custom
+  environment constants for the compiled executables.
+
 # 1.3.0
 
 * Migrate to null-safety.
