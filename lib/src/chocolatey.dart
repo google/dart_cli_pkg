@@ -22,7 +22,6 @@ import 'package:xml/xml.dart' hide parse;
 
 import 'config_variable.dart';
 import 'info.dart';
-import 'standalone.dart';
 import 'utils.dart';
 
 /// The Chocolatey API key (available from [the Chocolatey website][] and the
@@ -184,8 +183,6 @@ void addChocolateyTasks() {
   chocolateyFiles.freeze();
   chocolateyNuspec.freeze();
 
-  addStandaloneTasks();
-
   addTask(GrinderTask('pkg-chocolatey',
       taskFunction: () => _build(),
       description: 'Build a Chocolatey package directory.'));
@@ -213,7 +210,7 @@ Future<void> _build() async {
   writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
   Directory("build/chocolatey/tools/source").createSync(recursive: true);
 
-  writeString("build/chocolatey/tools/LICENSE", await license);
+  writeString("build/chocolatey/tools/LICENSE.txt", await license);
 
   writeString(
       'build/chocolatey/tools/source/pubspec.yaml',

@@ -34,7 +34,7 @@ This does not require the `choco` command-line executable.
 
 Depends on: [`pkg-chocolatey`][]
 
-[`pkg-chocolatey`]: standalone.md#pkg-chocolatey
+[`pkg-chocolatey`]: #pkg-chocolatey
 
 Uses configuration: [`pkg.chocolateyNuspec`][]
 
@@ -44,9 +44,9 @@ Builds a Chocolatey-formatted `.nupkg` file.
 
 ## `pkg-chocolatey-deploy`
 
-Depends on: [`pkg-chocolatey-build`][]
+Depends on: [`pkg-chocolatey-pack`][]
 
-[`pkg-chocolatey-build`]: standalone.md#pkg-chocolatey-build
+[`pkg-chocolatey-pack`]: #pkg-chocolatey-pack
 
 Uses configuration: [`pkg.version`][], [`pkg.chocolateyNuspec`][],
 [`pkg.chocolateyToken`][]
