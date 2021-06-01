@@ -16,12 +16,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cli_pkg/cli_pkg.dart';
+import 'package:cli_pkg/src/chocolatey.dart';
+import 'package:cli_pkg/src/utils.dart';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 import 'package:xml/xml.dart' hide parse;
-
-import 'package:cli_pkg/src/chocolatey.dart';
-import 'package:cli_pkg/src/utils.dart';
 
 import 'descriptor.dart' as d;
 import 'utils.dart';
@@ -212,7 +212,7 @@ void main() {
                 _enableChocolatey(),
                 [_nuspec(), d.file("LICENSE", "Please use my code")])
             .create();
-        await (await grind(["pkg-chocolatey"])).shouldExit(0);
+        await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
         await d
             .file(
@@ -222,6 +222,26 @@ void main() {
                   contains("Copyright 2012, the Dart project authors."),
                   contains("Direct dependency license"),
                   contains("Indirect dependency license")
+                ]))
+            .validate();
+      });
+
+      test('the Verification file', () async {
+        await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
+        await (await grind(["pkg-chocolatey"])).shouldExit(0);
+        final version = dartVersion.isPreRelease ? "1.2.3-beta" : "1.2.3";
+        await d
+            .file(
+                "my_app/build/chocolatey/tools/VERIFICATION.txt",
+                allOf([
+                  contains(Platform.version),
+                  contains(Platform.operatingSystem),
+                  contains(Platform.operatingSystemVersion),
+                  contains(version),
+                  contains('https://github.com/google/right'),
+                  contains(
+                    'https://github.com/google/right/releases/tag/$version',
+                  ),
                 ]))
             .validate();
       });
@@ -361,6 +381,7 @@ String _enableChocolatey({bool token = true}) {
 
   if (token) buffer.writeln('pkg.chocolateyToken.value = "tkn";');
   buffer.writeln("pkg.addChocolateyTasks();");
+  buffer.writeln('pkg.githubRepo.value = "google/right";');
   buffer.writeln("grind(args);");
   buffer.writeln("}");
 
