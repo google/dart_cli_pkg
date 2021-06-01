@@ -22,7 +22,6 @@ import 'package:xml/xml.dart' hide parse;
 
 import 'config_variable.dart';
 import 'info.dart';
-import 'standalone.dart';
 import 'utils.dart';
 
 /// The Chocolatey API key (available from [the Chocolatey website][] and the
@@ -183,8 +182,6 @@ void addChocolateyTasks() {
   chocolateyToken.freeze();
   chocolateyFiles.freeze();
   chocolateyNuspec.freeze();
-
-  addStandaloneTasks();
 
   addTask(GrinderTask('pkg-chocolatey',
       taskFunction: () => _build(),

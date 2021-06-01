@@ -1,3 +1,8 @@
+# 1.4.1
+
+* `pkg.addChocolateyTasks()` no longer automatically adds standalone tasks,
+  since Chocolatey tasks no longer depend on standalone tasks.
+
 # 1.4.0
 
 * Add `pkg.environmentConstants` to make it possible to define custom
