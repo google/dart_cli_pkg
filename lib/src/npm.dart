@@ -288,9 +288,12 @@ String get _wrapperLibrary {
     var import = jsonEncode(p.toUri(p.join('..', path)).toString());
     wrapper.writeln("import $import as ${_executableIdentifiers[name]};");
   });
-  if (jsModuleMainLibrary.value != null) {
-    var target =
-        jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary.value)).toString());
+
+  var mainLibrary = jsModuleMainLibrary.value;
+  if (mainLibrary != null) {
+    var target = jsonEncode(p.isWithin("lib", mainLibrary)
+        ? "package:$dartName/${p.toUri(p.relative(mainLibrary, from: "lib"))}"
+        : p.toUri(p.relative(mainLibrary, from: "build")).toString());
     wrapper.writeln("import $target as module_main;");
   }
 
