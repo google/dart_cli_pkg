@@ -1,3 +1,13 @@
+# 1.4.2
+
+* Allow the `pkg.jsModuleMainLibrary` path to be absolute rather than requiring
+  it to be relative to the package root.
+
+* Load `pkg.jsModuleMainLibrary` using a `package:` URL. While this shouldn't
+  affect behavior at all, it will cause dart2js to generate less code if the
+  executables *also* properly import libraries in the `lib` directory using
+  `package:` URLs.
+
 # 1.4.1
 
 * `pkg.addChocolateyTasks()` no longer automatically adds standalone tasks,

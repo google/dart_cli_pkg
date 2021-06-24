@@ -14,6 +14,7 @@
 
 import 'dart:convert';
 
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
@@ -104,46 +105,92 @@ void main() {
           .validate();
     });
 
-    test("exports from jsModuleMainLibrary can be imported", () async {
-      await d.package(pubspec, """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+    group("exports from jsModuleMainLibrary can be imported", () {
+      setUp(() async {
+        await d.package(pubspec, "", [
+          _packageJson,
+          d.dir("lib/src", [
+            d.file("exports.dart", """
+              import 'package:js/js.dart';
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """, [
-        _packageJson,
-        d.dir("lib/src", [
-          d.file("exports.dart", """
-            import 'package:js/js.dart';
+              @JS()
+              class Exports {
+                external set hello(String value);
+              }
 
-            @JS()
-            class Exports {
-              external set hello(String value);
-            }
+              @JS()
+              external Exports get exports;
 
-            @JS()
-            external Exports get exports;
+              void main() {
+                exports.hello = "Hi, there!";
+              }
+            """)
+          ])
+        ]).create();
+      });
 
-            void main() {
-              exports.hello = "Hi, there!";
-            }
-          """)
-        ])
-      ]).create();
+      test("with a relative path", () async {
+        await d.dir(p.basename(appDir), [
+          d.dir("tool", [
+            d.file("grind.dart", """
+              import 'package:cli_pkg/cli_pkg.dart' as pkg;
+              import 'package:grinder/grinder.dart';
 
-      await (await grind(["pkg-js-dev"])).shouldExit();
+              void main(List<String> args) {
+                pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
 
-      await d.file("test.js", """
-        var my_app = require("./my_app/build/my_app.dart.js");
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """)
+          ])
+        ]).create();
 
-        console.log(my_app.hello);
-      """).create();
+        await (await grind(["pkg-js-dev"])).shouldExit();
 
-      var process = await TestProcess.start("node$dotExe", [d.path("test.js")]);
-      expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
-      await process.shouldExit(0);
+        await d.file("test.js", """
+          var my_app = require("./my_app/build/my_app.dart.js");
+
+          console.log(my_app.hello);
+        """).create();
+
+        var process =
+            await TestProcess.start("node$dotExe", [d.path("test.js")]);
+        expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
+        await process.shouldExit(0);
+      });
+
+      test("with an absolute path", () async {
+        await d.dir(p.basename(appDir), [
+          d.dir("tool", [
+            d.file("grind.dart", """
+              import 'package:cli_pkg/cli_pkg.dart' as pkg;
+              import 'package:grinder/grinder.dart';
+              import 'package:path/path.dart' as p;
+
+              void main(List<String> args) {
+                pkg.jsModuleMainLibrary.value = p.absolute("lib/src/exports.dart");
+
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """)
+          ])
+        ]).create();
+
+        await (await grind(["pkg-js-dev"])).shouldExit();
+
+        await d.file("test.js", """
+          var my_app = require("./my_app/build/my_app.dart.js");
+
+          console.log(my_app.hello);
+        """).create();
+
+        var process =
+            await TestProcess.start("node$dotExe", [d.path("test.js")]);
+        expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
+        await process.shouldExit(0);
+      });
     });
 
     test("takes its name from the package.json name field", () async {
