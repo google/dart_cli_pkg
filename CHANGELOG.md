@@ -1,4 +1,7 @@
-# 1.4.1
+# 1.5.0
+
+* Add `pkg.npmAdditionalFiles` to make it possible to add custom files to npm
+  packages.
 
 * `pkg.addChocolateyTasks()` no longer automatically adds standalone tasks,
   since Chocolatey tasks no longer depend on standalone tasks.

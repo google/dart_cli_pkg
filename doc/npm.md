@@ -78,10 +78,11 @@ Depends on: [`pkg-js-dev`][]
 
 [`pkg-js-dev`]: #pkg-js-dev
 
-Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][], [`pkg.npmDistTag`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][], [`pkg.npmDistTag`][], [`pkg.npmAdditionalFiles`]
 
 [`pkg.npmReadme`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmReadme.html
 [`pkg.npmDistTag`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmDistTag.html
+[`pkg.npmAdditionalFiles`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/npmAdditionalFilesTag.html
 
 Output: `build/npm/*`
 
@@ -105,7 +106,7 @@ Depends on: [`pkg-js-release`][]
 
 [`pkg-js-release`]: #pkg-js-release
 
-Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.npmPackageJson`][], [`pkg.jsModuleMainLibrary`][], [`pkg.npmReadme`][], [`pkg.npmAdditionalFiles`]
 
 Output: `build/npm/*`
 

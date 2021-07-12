@@ -106,6 +106,14 @@ final npmPackageJson = InternalConfigVariable.fn<Map<String, dynamic>>(
         : fail("pkg.npmPackageJson must be set to build an npm package."),
     freeze: freezeJsonMap);
 
+/// A set of additional files to include in the npm package.
+///
+/// This is a map from paths (relative to the root of the package) to the
+/// contents of those files. It defaults to an empty map.
+final npmAdditionalFiles = InternalConfigVariable.fn<Map<String, String>>(
+    () => {},
+    freeze: (map) => Map.unmodifiable(map));
+
 /// The name of the npm package, from `package.json`.
 String get _npmName {
   var name = npmPackageJson.value["name"];
@@ -381,6 +389,17 @@ module.${_executableIdentifiers[name]}(process.argv.slice(2));
   if (readme != null) writeString('build/npm/README.md', readme);
 
   writeString(p.join(dir.path, "LICENSE"), await license);
+
+  for (var entry in npmAdditionalFiles.value.entries) {
+    if (!p.isRelative(entry.key)) {
+      fail('pkg.npmAdditionalFiles keys must be relative paths,\n'
+          'but "${entry.key}" is absolute.');
+    }
+
+    var path = p.join(dir.path, entry.key);
+    Directory(p.dirname(path)).createSync(recursive: true);
+    File(path).writeAsStringSync(entry.value);
+  }
 }
 
 /// Publishes the contents of `build/npm` to npm.

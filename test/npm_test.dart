@@ -567,4 +567,37 @@ void main() {
           .validate();
     });
   });
+
+  group("npmAdditionalFiles", () {
+    test("adds a file to the generated directory", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.npmAdditionalFiles.value = {"foo/bar/baz.txt": "contents"};
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [_packageJson]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit(0);
+
+      await d.file("my_app/build/npm/foo/bar/baz.txt", "contents").validate();
+    });
+
+    test("throws for an absolute path", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.npmAdditionalFiles.value = {"/foo/bar/baz.txt": "contents"};
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [_packageJson]).create();
+
+      var process = await grind(["pkg-npm-dev"]);
+      expect(
+          process.stderr,
+          emitsThrough(
+              contains("pkg.npmAdditionalFiles keys must be relative paths,")));
+      expect(process.stderr, emits(contains("/foo/bar/baz.txt")));
+      await process.shouldExit(1);
+    });
+  });
 }
