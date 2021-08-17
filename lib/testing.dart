@@ -150,12 +150,15 @@ List<String> executableArgs(String executable, {bool node = false}) {
   var snapshot = p.absolute("build/$executable.snapshot");
   if (File(snapshot).existsSync()) return [snapshot];
 
+  var path = executables.value[executable];
+  if (path == null) fail('There is no executable named "$executable".');
+
   verifyEnvironmentConstants();
   return [
     for (var entry in environmentConstants.value.entries)
       '-D${entry.key}=${entry.value}',
     "--enable-asserts",
-    p.absolute("bin/$executable.dart")
+    p.absolute(path)
   ];
 }
 
