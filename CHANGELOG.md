@@ -1,3 +1,8 @@
+# 1.5.1
+
+* Properly run executables from source in `testing.dart` when their public names
+  are different than their filenames.
+
 # 1.5.0
 
 * Add `pkg.npmAdditionalFiles` to make it possible to add custom files to npm
