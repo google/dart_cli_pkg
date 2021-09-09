@@ -74,14 +74,7 @@ void _compileSnapshot({required bool release}) {
 /// executable to `build/${executable}.native`.
 void _compileNative() {
   ensureBuild();
-  verifyEnvironmentConstants(forSubprocess: true, forDart2Native: true);
-
-  var dart2AotPath = p.join(sdkDir.path, 'bin/dart2aot$dotBat');
-  if (!useDart2Native && !File(dart2AotPath).existsSync()) {
-    fail("Your SDK doesn't have dart2aot or dart2native. This probably means "
-        "that you're using a 32-bit SDK, which doesn't support native "
-        "compilation.");
-  }
+  verifyEnvironmentConstants(forSubprocess: true, forDartCompileExe: true);
 
   var existingSnapshots = <String, String>{};
   executables.value.forEach((name, path) {
@@ -91,12 +84,13 @@ void _compileNative() {
       File('build/$existingName.native').copySync('build/$name.native');
     } else {
       existingSnapshots[path] = name;
-      run(useDart2Native ? dart2NativePath : dart2AotPath, arguments: [
+      run('dart', arguments: [
+        'compile',
+        _useExe ? 'exe' : 'aot-snapshot',
         path,
         for (var entry in environmentConstants.value.entries)
           '-D${entry.key}=${entry.value}',
-        if (useDart2Native && !_useExe) '--output-kind=aot',
-        if (useDart2Native) '--output',
+        '--output',
         'build/$name.native'
       ]);
     }
@@ -166,14 +160,11 @@ void addStandaloneTasks() {
 ///
 /// We can only use the native executable on the current operating system *and*
 /// on 64-bit machines, because currently Dart doesn't support cross-compilation
-/// (dart-lang/sdk#28617) and only 64-bit Dart SDKs ship with `dart2aot`.
+/// (dart-lang/sdk#28617) and only 64-bit Dart SDKs support `dart compile exe`
+/// (dart-lang/sdk#47177).
 bool _useNative(String os, {required bool x64}) {
   if (os != Platform.operatingSystem) return false;
   if (x64 != _is64Bit) return false;
-
-  // Don't compile native executables on Windows in SDK versions affected by
-  // dart-lang/sdk#37897.
-  if (os == 'windows' && !useDart2Native) return false;
 
   return true;
 }

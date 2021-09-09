@@ -358,7 +358,7 @@ void main() {
       }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(dart2native: true)};
+                ${riskyArgStringLiteral(dartCompileExe: true)};
 
             pkg.addChocolateyTasks();
             grind(args);
@@ -384,7 +384,7 @@ void main() {
 
       try {
         var executable = await TestProcess.start("const", []);
-        expect(executable.stdout, emits(riskyArg(dart2native: true)));
+        expect(executable.stdout, emits(riskyArg(dartCompileExe: true)));
         await executable.shouldExit(0);
       } finally {
         // We can't use [TestProcess] because it'll be killed if the test fails.

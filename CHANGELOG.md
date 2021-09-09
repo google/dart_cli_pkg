@@ -1,3 +1,11 @@
+# 1.5.2
+
+* Use `dart compile exe` and `dart compile aot-snapshot` instead of
+  `dart2native` when compiling standalone executables.
+
+* The space character is no longer forbidden in environment constants, since
+  https://github.com/dart-lang/sdk/issues/46050 has been fixed.
+
 # 1.5.1
 
 * Properly run executables from source in `testing.dart` when their public names
