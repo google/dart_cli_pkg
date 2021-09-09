@@ -95,7 +95,7 @@ void main() {
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
           [d.dir("my-sa-app")]).validate();
     });
-  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
+  });
 
   group("executables", () {
     var pubspec = {
@@ -190,7 +190,7 @@ void main() {
             // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
             // #44995 are fixed.
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
+                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -254,10 +254,10 @@ void main() {
           d.path("out/my_app/const$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dart2native: true)));
+          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
       await executable.shouldExit(0);
     });
-  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
+  });
 
   group("the LICENSE file", () {
     // Normally each of these would be separate test cases, but running grinder
@@ -384,8 +384,6 @@ void main() {
       test("64-bit", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
         await archive("windows", x64: true).validate();
-      }, onPlatform: {
-        if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
       });
     });
 
@@ -399,8 +397,6 @@ void main() {
         archive("windows", x64: false).validate(),
         archive("windows", x64: true).validate()
       ]);
-    }, onPlatform: {
-      if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
     });
   });
 
@@ -439,7 +435,7 @@ void main() {
       }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
+                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -457,7 +453,7 @@ void main() {
           d.path("my_app/build/const$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dart2native: true)));
+          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
       await executable.shouldExit(0);
     });
   });
