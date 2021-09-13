@@ -1,3 +1,14 @@
+# 1.6.0
+
+* Add `pkg-standalone-linux-arm64` and `pkg-standalone-mac-arm64` tasks, which
+  compile Linux and Mac OS binaries respectively for 64-bit ARM architectures.
+  As with other 64-bit architectures, these will compile native executables when
+  invoked on the same OS/architecture combination they're targeting, and will
+  compile script snapshots otherwise.
+
+* `pkg-standalone-all` now compiles Linux and Mac OS binaries for 64-bit ARM
+  architectures.
+
 # 1.5.2
 
 * Use `dart compile exe` and `dart compile aot-snapshot` instead of
