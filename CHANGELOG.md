@@ -1,3 +1,9 @@
+# 1.7.0
+
+* Callbacks passed to `ConfigVariable.fn=` can now return nullable values even
+  for non-nullable types. Doing so will cause the variable to use its default
+  value. The behavior for nullable types remains unchanged.
+
 # 1.6.0
 
 * Add `pkg-standalone-linux-arm64` and `pkg-standalone-mac-arm64` tasks, which

@@ -36,7 +36,7 @@ class ConfigVariable<T> {
   ///
   /// This can only be null if [_value] has been set explicitly and [_cached] is
   /// `true`.
-  T Function()? _callback;
+  T? Function()? _callback;
 
   /// The original callback for generating [_value].
   T Function()? _defaultCallback;
@@ -51,7 +51,8 @@ class ConfigVariable<T> {
   /// The variable's value.
   T get value {
     if (!_cached) {
-      _value = _callback!();
+      var value = _callback!();
+      _value = value is T ? value : defaultValue;
       _cached = true;
     }
 
@@ -87,7 +88,10 @@ class ConfigVariable<T> {
   ///
   /// This callback will be called lazily, if and when the variable's value is
   /// actually needed.
-  set fn(T callback()) {
+  ///
+  /// If `T` is non-nullable and [callback] returns `null`, the default value
+  /// for this variable will be used.
+  set fn(T? callback()) {
     if (_frozen) {
       throw StateError(
           "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
@@ -99,8 +103,9 @@ class ConfigVariable<T> {
     _cached = false;
   }
 
-  ConfigVariable._fn(this._callback, {T Function(T)? freeze})
-      : _defaultCallback = _callback,
+  ConfigVariable._fn(T Function() callback, {T Function(T)? freeze})
+      : _callback = callback,
+        _defaultCallback = callback,
         _freeze = freeze;
 
   ConfigVariable._value(this._value, {T Function(T)? freeze})
@@ -142,7 +147,10 @@ extension InternalConfigVariable<T> on ConfigVariable<T> {
         _value = freeze(_value as T);
       } else {
         var oldCallback = _callback!;
-        _callback = () => freeze(oldCallback());
+        _callback = () {
+          var value = oldCallback();
+          return freeze(value is T ? value : defaultValue);
+        };
       }
     }
   }

@@ -128,6 +128,20 @@ void main() {
       expect(variable.value, equals(12));
       expect(variable.value, equals(12));
     });
+
+    group("if the callback returns null", () {
+      test("uses the default value if T is non-nullable", () {
+        var variable = InternalConfigVariable.value(1);
+        variable.fn = expectAsync0(() => null, count: 1);
+        expect(variable.value, equals(1));
+      });
+
+      test("uses the default value if T is nullable", () {
+        var variable = InternalConfigVariable.value<int?>(1);
+        variable.fn = expectAsync0(() => null, count: 1);
+        expect(variable.value, isNull);
+      });
+    });
   });
 
   group("frozen", () {
