@@ -104,46 +104,100 @@ void main() {
           .validate();
     });
 
-    test("exports from jsModuleMainLibrary can be imported", () async {
-      await d.package(pubspec, """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+    group("exports from jsModuleMainLibrary", () {
+      test("can be imported", () async {
+        await d.package(pubspec, """
+          void main(List<String> args) {
+            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """, [
-        _packageJson,
-        d.dir("lib/src", [
-          d.file("exports.dart", """
-            import 'package:js/js.dart';
+            pkg.addNpmTasks();
+            grind(args);
+          }
+        """, [
+          _packageJson,
+          d.dir("lib/src", [_exportsHello('"Hi, there!"')])
+        ]).create();
 
-            @JS()
-            class Exports {
-              external set hello(String value);
-            }
+        await (await grind(["pkg-js-dev"])).shouldExit();
 
-            @JS()
-            external Exports get exports;
+        await d.file("test.js", """
+          var my_app = require("./my_app/build/my_app.dart.js");
 
-            void main() {
-              exports.hello = "Hi, there!";
-            }
-          """)
-        ])
-      ]).create();
+          console.log(my_app.hello);
+        """).create();
 
-      await (await grind(["pkg-js-dev"])).shouldExit();
+        var process =
+            await TestProcess.start("node$dotExe", [d.path("test.js")]);
+        expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
+        await process.shouldExit(0);
+      });
 
-      await d.file("test.js", """
-        var my_app = require("./my_app/build/my_app.dart.js");
+      /// Determines whether a package that declares a `pkg.JSRequire` on the
+      /// `os` package has access to that package when loaded as a Node library.
+      Future<bool> hasAccessToRequire(String requireDeclaration) async {
+        await d.package(pubspec, """
+          void main(List<String> args) {
+            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+            pkg.jsRequires.value.add($requireDeclaration);
 
-        console.log(my_app.hello);
-      """).create();
+            pkg.addNpmTasks();
+            grind(args);
+          }
+        """, [
+          _packageJson,
+          d.dir("lib/src", [_exportsHello('osLoaded')])
+        ]).create();
 
-      var process = await TestProcess.start("node$dotExe", [d.path("test.js")]);
-      expect(process.stdout, emitsInOrder(["Hi, there!", emitsDone]));
-      await process.shouldExit(0);
+        await (await grind(["pkg-npm-dev"])).shouldExit();
+
+        await d.dir("depender", [
+          d.file(
+              "package.json",
+              json.encode({
+                "dependencies": {"my_app": "file:../my_app/build/npm"}
+              })),
+          d.file("test.js", """
+          var my_app = require("my_app");
+
+          console.log(my_app.hello);
+        """)
+        ]).create();
+
+        await (await TestProcess.start("npm$dotExe", ["install"],
+                workingDirectory: d.path("depender")))
+            .shouldExit(0);
+
+        var process = await TestProcess.start(
+            "node$dotExe", [d.path("depender/test.js")]);
+        var result = (await process.stdout.next) == "true";
+        await process.shouldExit(0);
+        return result;
+      }
+
+      test("have access to global requires", () async {
+        expect(hasAccessToRequire("pkg.JSRequire('os')"), completion(isTrue));
+      });
+
+      test("have access to node requires", () async {
+        expect(
+            hasAccessToRequire(
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)"),
+            completion(isTrue));
+      });
+
+      test("don't have access to cli requires", () async {
+        expect(
+            hasAccessToRequire(
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)"),
+            completion(isFalse));
+      });
+
+      test("don't have access to browser requires", () async {
+        expect(
+            hasAccessToRequire(
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)"),
+            completion(isFalse));
+      });
     });
 
     test("takes its name from the package.json name field", () async {
@@ -184,6 +238,68 @@ void main() {
           "node$dotExe", [d.path("my_app/build/npm/qux.js")]);
       expect(process.stdout, emitsInOrder(["in zang 1.2.3", emitsDone]));
       await process.shouldExit(0);
+    });
+
+    /// Determines whether a package that declares a `pkg.JSRequire` on the
+    /// `os` package has access to that package in its CLI executables.
+    Future<bool> hasAccessToRequire(String requireDeclaration) async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+          pkg.jsRequires.value.add($requireDeclaration);
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        _packageJson,
+        d.dir("lib/src", [d.file("exports.dart", "void main() {}")]),
+        d.dir("bin", [
+          d.file("foo.dart", """
+            import 'package:js/js.dart';
+
+            @JS('os')
+            external Object? os;
+
+            void main() {
+              print(os != null);
+            }
+          """)
+        ])
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      var result = (await process.stdout.next) == "true";
+      await process.shouldExit(0);
+      return result;
+    }
+
+    test("with access to global requires", () async {
+      expect(hasAccessToRequire("pkg.JSRequire('os')"), completion(isTrue));
+    });
+
+    test("with access to cli requires", () async {
+      expect(
+          hasAccessToRequire(
+              "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)"),
+          completion(isTrue));
+    });
+
+    test("with access to node requires", () async {
+      expect(
+          hasAccessToRequire(
+              "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)"),
+          completion(isTrue));
+    });
+
+    test("without access to browser requires", () async {
+      expect(
+          hasAccessToRequire(
+              "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)"),
+          completion(isFalse));
     });
 
     test("with access to the node, version, and dart-version constants",
@@ -601,3 +717,29 @@ void main() {
     });
   });
 }
+
+/// Returns a [d.FileDescriptor] named `export.dart` that exports a JS value
+/// named "hello" whose value is the given Dart [expression].
+///
+/// The [expression] has access to an `osLoaded` field that's true if Node.js's
+/// `os` core library has been loaded and `false` otherwise.
+d.FileDescriptor _exportsHello(String expression) => d.file("exports.dart", """
+    import 'package:js/js.dart';
+
+    @JS()
+    class Exports {
+      external set hello(Object value);
+    }
+
+    @JS()
+    external Exports get exports;
+
+    @JS('os')
+    external Object? os;
+
+    final osLoaded = os != null;
+
+    void main() {
+      exports.hello = ($expression);
+    }
+  """);
