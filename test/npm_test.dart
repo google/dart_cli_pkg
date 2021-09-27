@@ -163,7 +163,7 @@ void main() {
         """)
         ]).create();
 
-        await (await TestProcess.start("npm$dotExe", ["install"],
+        await (await TestProcess.start("npm", ["install"],
                 workingDirectory: d.path("depender")))
             .shouldExit(0);
 
