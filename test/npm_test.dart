@@ -253,20 +253,21 @@ void main() {
         }
       """, [
         _packageJson,
-        d.dir("lib/src", [d.file("exports.dart", "void main() {}")]),
-        d.dir("bin", [
-          d.file("foo.dart", """
-            import 'package:js/js.dart';
-
-            @JS('os')
-            external Object? os;
-
-            void main() {
-              print(os != null);
-            }
-          """)
-        ])
+        d.dir("lib/src", [d.file("exports.dart", "void main() {}")])
       ]).create();
+
+      // Generate this after the package so it doesn't race the creation of the
+      // default exectuable file.
+      await d.file("my_app/bin/foo.dart", """
+        import 'package:js/js.dart';
+
+        @JS('os')
+        external Object? os;
+
+        void main() {
+          print(os != null);
+        }
+      """);
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
