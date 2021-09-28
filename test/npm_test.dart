@@ -267,7 +267,7 @@ void main() {
         void main() {
           print(os != null);
         }
-      """);
+      """).create();
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
