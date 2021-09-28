@@ -163,8 +163,8 @@ void main() {
         """)
         ]).create();
 
-        await (await TestProcess.start("npm$dotBat", ["install"],
-                workingDirectory: d.path("depender")))
+        await (await TestProcess.start("npm", ["install"],
+                runInShell: true, workingDirectory: d.path("depender")))
             .shouldExit(0);
 
         var process = await TestProcess.start(
