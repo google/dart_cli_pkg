@@ -1,3 +1,11 @@
+# 2.0.0
+
+* **Breaking change:** The `jsRequires` map has been changed to a list of
+  `JSRequire` objects. These objects allow packages to specify exactly which
+  target(s) a given dependency should be loaded on, so for example they can
+  provide a package that loads the `fs` module for Node.js but can still be
+  bundled for the browser without it.
+
 # 1.7.0
 
 * Callbacks passed to `ConfigVariable.fn=` can now return nullable values even
