@@ -1,3 +1,7 @@
+# 2.0.1
+
+* Work around an npm bug that was causing `npm publish` to fail.
+
 # 2.0.0
 
 * **Breaking change:** The `jsRequires` map has been changed to a list of
