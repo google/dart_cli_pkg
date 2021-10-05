@@ -1,5 +1,5 @@
 name: cli_pkg
-version: 2.0.0
+version: 2.0.1
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
@@ -29,7 +29,6 @@ dependencies:
   yaml: ^3.1.0
 
 dev_dependencies:
-  pedantic: ^1.11.0
   sass_analysis:
     git: {url: git://github.com/sass/dart-sass, path: analysis}
   shelf: ^1.0.0

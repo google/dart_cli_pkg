@@ -523,9 +523,11 @@ Future<void> _deploy() async {
   file.writeStringSync("\n//registry.npmjs.org/:_authToken=$npmToken");
   file.closeSync();
 
-  log("npm publish --tag $npmDistTag build/npm");
+  // The trailing slash in "build/npm/" is necessary to avoid NPM trying to
+  // treat the path name as a GitHub repository slug.
+  log("npm publish --tag $npmDistTag build/npm/");
   var process = await Process.start(
-      "npm", ["publish", "--tag", npmDistTag.value, "build/npm"]);
+      "npm", ["publish", "--tag", npmDistTag.value, "build/npm/"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("npm publish failed");

@@ -52,12 +52,11 @@ String? _repoFromOrigin() {
 /// Parses a GitHub repo name from an SSH reference or a `git://` URL.
 ///
 /// Returns `null` if it couldn't be parsed.
-String? _parseGit(String url) {
-  var match = RegExp(r"^(git@github\.com:|git://github\.com/)"
-          r"(?<repo>[^/]+/[^/]+?)(\.git)?$")
-      .firstMatch(url);
-  return match == null ? null : match.namedGroup('repo');
-}
+String? _parseGit(String url) =>
+    RegExp(r"^(git@github\.com:|git://github\.com/)"
+            r"(?<repo>[^/]+/[^/]+?)(\.git)?$")
+        .firstMatch(url)
+        ?.namedGroup('repo');
 
 /// Parses a GitHub repo name from an HTTP or HTTPS URL.
 ///
