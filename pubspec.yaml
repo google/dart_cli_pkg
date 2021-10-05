@@ -29,7 +29,6 @@ dependencies:
   yaml: ^3.1.0
 
 dev_dependencies:
-  pedantic: ^1.11.0
   sass_analysis:
     git: {url: git://github.com/sass/dart-sass, path: analysis}
   shelf: ^1.0.0
