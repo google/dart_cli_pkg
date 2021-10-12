@@ -1,3 +1,8 @@
+# 2.0.2
+
+* Fix a bug where an `npm` package with target-specific `JSRequire`s would
+  include an invalid `"main"` field in its `package.json`.
+
 # 2.0.1
 
 * Work around an npm bug that was causing `npm publish` to fail.
