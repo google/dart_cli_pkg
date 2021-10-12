@@ -438,7 +438,7 @@ Future<void> _buildPackage() async {
         "version": version.toString(),
         "bin": {for (var name in executables.value.keys) name: "$name.js"},
         if (jsModuleMainLibrary.value != null)
-          "main": "$_npmName.dart${_needsRequireWrapper ? '.default' : ''}.js",
+          "main": "$_npmName${_needsRequireWrapper ? '.default' : ''}.dart.js",
         if (_needsRequireWrapper)
           "exports": {
             if (nodeRequires.isNotEmpty) "node": "./$_npmName.node.dart.js",
