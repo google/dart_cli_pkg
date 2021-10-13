@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
@@ -66,7 +67,7 @@ void main() {
         """)
       ]).create();
 
-      await (await grind(["pkg-js-dev"])).shouldExit();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
 
       // Test that the only occurrence of `require("fs")` is the one assigning
       // it to a global variable.
@@ -82,6 +83,13 @@ void main() {
                     1)
               ]))
           .validate();
+
+      // Test that running the executable still works.
+      await d.dir("dir").create();
+      await (await TestProcess.start("node$dotExe",
+              [d.path("my_app/build/npm/foo.js"), d.path("dir")]))
+          .shouldExit(0);
+      expect(Directory(d.path("dir")).existsSync(), isFalse);
     });
 
     test("includes a source map comment in dev mode", () async {

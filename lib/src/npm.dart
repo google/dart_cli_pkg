@@ -262,7 +262,11 @@ void _js({required bool release}) {
     var identifier = jsRequires.value.reversed
         .firstWhereOrNull((require) => require.package == package)
         ?.identifier;
-    if (identifier == null) requires.add(JSRequire(package));
+    if (identifier == null) {
+      var require = JSRequire(package);
+      requires.add(require);
+      identifier = require.identifier;
+    }
     return "self.$identifier";
   });
 
