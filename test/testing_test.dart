@@ -56,6 +56,29 @@ void main() {
         await (await _test()).shouldExit(0);
       });
 
+      test("runs an executable with a different filename", () async {
+        await d.package({
+          ...pubspec,
+          "executables": {"bar": "foo"}
+        }, """
+          void main(List<String> args) {
+            pkg.addNpmTasks();
+            pkg.addStandaloneTasks();
+            grind(args);
+          }
+        """).create();
+
+        await pubGet();
+
+        await _testCase("""
+          var process = await pkg.start("bar", [], encoding: utf8);
+          expect(process.stdout, emits("in foo 1.2.3"));
+          await process.shouldExit(0);
+        """).create();
+
+        await (await _test()).shouldExit(0);
+      });
+
       test("runs with asserts enabled", () async {
         await d
             .file("my_app/bin/foo.dart", "void main() { assert(false); }")

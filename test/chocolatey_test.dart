@@ -171,59 +171,104 @@ void main() {
     });
 
     group("the LICENSE file", () {
-      // Normally each of these would be separate test cases, but running
-      // grinder takes so long that we collapse them for efficiency.
-      test(
-          "includes the license for the package, Dart, direct dependencies, "
-          "and transitive dependencies", () async {
-        await d.dir("direct_dep", [
-          d.file(
-              "pubspec.yaml",
-              json.encode({
-                "name": "direct_dep",
-                "version": "1.0.0",
-                "environment": {"sdk": ">=2.0.0 <3.0.0"},
-                "dependencies": {
-                  "indirect_dep": {"path": "../indirect_dep"}
-                }
-              })),
-          d.file("LICENSE.md", "Direct dependency license")
-        ]).create();
+      group("includes the license for", () {
+        test("the package", () async {
+          await d.package(pubspec, _enableChocolatey(),
+              [_nuspec(), d.file("LICENSE", "Please use my code")]).create();
+          await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
-        await d.dir("indirect_dep", [
-          d.file(
-              "pubspec.yaml",
-              json.encode({
-                "name": "indirect_dep",
-                "version": "1.0.0",
-                "environment": {"sdk": ">=2.0.0 <3.0.0"}
-              })),
-          d.file("COPYING", "Indirect dependency license")
-        ]).create();
+          await d
+              .file("my_app/build/chocolatey/tools/LICENSE.txt",
+                  contains("Please use my code"))
+              .validate();
+        });
 
-        await d
-            .package(
-                {
-                  ...pubspec,
+        test("Dart", () async {
+          await d.package(pubspec, _enableChocolatey(), [_nuspec()]).create();
+          await (await grind(["pkg-chocolatey"])).shouldExit(0);
+
+          await d
+              .file("my_app/build/chocolatey/tools/LICENSE.txt",
+                  contains("Copyright 2012, the Dart project authors."))
+              .validate();
+        });
+
+        test("direct dependencies", () async {
+          await d.dir("direct_dep", [
+            d.file(
+                "pubspec.yaml",
+                json.encode({
+                  "name": "direct_dep",
+                  "version": "1.0.0",
+                  "environment": {"sdk": ">=2.0.0 <3.0.0"},
+                })),
+            d.file("LICENSE.md", "Direct dependency license")
+          ]).create();
+
+          await d
+              .package(
+                  {
+                    ...pubspec,
+                    "dependencies": {
+                      "direct_dep": {"path": "../direct_dep"}
+                    }
+                  },
+                  _enableChocolatey(),
+                  [_nuspec()])
+              .create();
+          await (await grind(["pkg-chocolatey"])).shouldExit(0);
+
+          await d
+              .file("my_app/build/chocolatey/tools/LICENSE.txt",
+                  contains("Direct dependency license"))
+              .validate();
+        });
+
+        test("transitive dependencies", () async {
+          await d.dir("direct_dep", [
+            d.file(
+                "pubspec.yaml",
+                json.encode({
+                  "name": "direct_dep",
+                  "version": "1.0.0",
+                  "environment": {"sdk": ">=2.0.0 <3.0.0"},
                   "dependencies": {
-                    "direct_dep": {"path": "../direct_dep"}
+                    "indirect_dep": {"path": "../indirect_dep"}
                   }
-                },
-                _enableChocolatey(),
-                [_nuspec(), d.file("LICENSE", "Please use my code")])
-            .create();
-        await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
-        await d
-            .file(
-                "my_app/build/chocolatey/tools/LICENSE",
-                allOf([
-                  contains("Please use my code"),
-                  contains("Copyright 2012, the Dart project authors."),
-                  contains("Direct dependency license"),
-                  contains("Indirect dependency license")
-                ]))
-            .validate();
+                }))
+          ]).create();
+
+          await d.dir("indirect_dep", [
+            d.file(
+                "pubspec.yaml",
+                json.encode({
+                  "name": "indirect_dep",
+                  "version": "1.0.0",
+                  "environment": {"sdk": ">=2.0.0 <3.0.0"}
+                })),
+            d.file("COPYING", "Indirect dependency license")
+          ]).create();
+
+          await d
+              .package(
+                  {
+                    ...pubspec,
+                    "dependencies": {
+                      "direct_dep": {"path": "../direct_dep"}
+                    }
+                  },
+                  _enableChocolatey(),
+                  [_nuspec()])
+              .create();
+          await (await grind(["pkg-chocolatey"])).shouldExit(0);
+
+          await d
+              .file("my_app/build/chocolatey/tools/LICENSE.txt",
+                  contains("Indirect dependency license"))
+              .validate();
+        });
+
       });
 
       test('the Verification file', () async {
@@ -252,7 +297,7 @@ void main() {
         await (await grind(["pkg-chocolatey"])).shouldExit(0);
 
         await d
-            .file("my_app/build/chocolatey/tools/LICENSE",
+            .file("my_app/build/chocolatey/tools/LICENSE.txt",
                 contains("Copyright 2012, the Dart project authors."))
             .validate();
       });
@@ -335,7 +380,7 @@ void main() {
       }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(dart2native: true)};
+                ${riskyArgStringLiteral(dartCompileExe: true)};
 
             pkg.addChocolateyTasks();
             grind(args);
@@ -361,7 +406,7 @@ void main() {
 
       try {
         var executable = await TestProcess.start("const", []);
-        expect(executable.stdout, emits(riskyArg(dart2native: true)));
+        expect(executable.stdout, emits(riskyArg(dartCompileExe: true)));
         await executable.shouldExit(0);
       } finally {
         // We can't use [TestProcess] because it'll be killed if the test fails.

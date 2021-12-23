@@ -23,7 +23,6 @@ import 'package:xml/xml.dart' hide parse;
 
 import 'config_variable.dart';
 import 'info.dart';
-import 'standalone.dart';
 import 'utils.dart';
 
 /// The Chocolatey API key (available from [the Chocolatey website][] and the
@@ -200,8 +199,6 @@ void addChocolateyTasks() {
   chocolateyFiles.freeze();
   chocolateyNuspec.freeze();
 
-  addStandaloneTasks();
-
   addTask(GrinderTask('pkg-chocolatey',
       taskFunction: () => _build(),
       description: 'Build a Chocolatey package directory.'));
@@ -220,7 +217,7 @@ void addChocolateyTasks() {
 /// Builds a package to upload to Chocolatey.
 Future<void> _build() async {
   ensureBuild();
-  verifyEnvironmentConstants(forDart2Native: true);
+  verifyEnvironmentConstants(forDartCompileExe: true);
 
   var dir = Directory('build/chocolatey');
   if (dir.existsSync()) dir.deleteSync(recursive: true);
@@ -229,7 +226,7 @@ Future<void> _build() async {
   writeString("build/chocolatey/$_chocolateyName.nuspec", _nuspec.toString());
   Directory("build/chocolatey/tools/source").createSync(recursive: true);
 
-  writeString("build/chocolatey/tools/LICENSE", await license);
+  writeString("build/chocolatey/tools/LICENSE.txt", await license);
 
   writeString("build/chocolatey/tools/VERIFICATION.txt", _verificationFile);
 
@@ -266,7 +263,7 @@ Write-Host "Building executable${executables.value.length == 1 ? '' : 's'}..."
 
     install.write("""
 \$ExePath = "\$PackageFolder\\bin\\$name.exe"
-dart2native $constants "\$SourceDir\\$path" -o \$ExePath
+dart compile exe $constants "\$SourceDir\\$path" -o \$ExePath
 Generate-BinFile "$name" \$ExePath
 """);
     uninstall

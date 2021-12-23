@@ -63,19 +63,6 @@ final dotBat = Platform.isWindows ? ".bat" : "";
 /// The `.exe` extension on Windows, the empty string everywhere else.
 final dotExe = Platform.isWindows ? ".exe" : "";
 
-/// The path to the `dart2native` executable in the Dart SDK.
-final dart2NativePath = p.join(sdkDir.path, 'bin/dart2native$dotBat');
-
-/// Whether we should compile native executables using `dart2native` rather than
-/// `dart2aot`.
-///
-/// Dart 2.6 and up uses an executable called "dart2native" to generate both
-/// bundled native code executables AND native snapshot "AOT" executables which
-/// need to be run with `dartaotruntime`. Earlier SDK versions use a different
-/// executable, `dart2aot`, which has a different calling convention and only
-/// generates "AOT" snapshots. We support both.
-final useDart2Native = File(dart2NativePath).existsSync();
-
 /// The combined license text for the package and all its dependencies.
 ///
 /// We include all dependency licenses because their code may be compiled into
@@ -339,10 +326,11 @@ Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
 /// in the given context.
 ///
 /// If [forSubprocess] is `true`, this checks for values that are broken when
-/// passed to subprocesses invoked through `dart:io`. If [forDart2Native] is
-/// `true`, this checks for values that are broken when passed to `dart2native`.
+/// passed to subprocesses invoked through `dart:io`. If [forDartCompileExe] is
+/// `true`, this checks for values that are broken when passed to `dart compile
+/// exe`.
 void verifyEnvironmentConstants(
-    {bool forSubprocess = false, bool forDart2Native = false}) {
+    {bool forSubprocess = false, bool forDartCompileExe = false}) {
   for (var entry in environmentConstants.value.entries) {
     if (Platform.isWindows) {
       if (entry.value.contains('"')) {
@@ -364,15 +352,13 @@ void verifyEnvironmentConstants(
       }
     }
 
-    if (forDart2Native) {
+    if (forDartCompileExe) {
       for (var entry in environmentConstants.value.entries) {
-        for (var character in const [" ", ","]) {
-          if (entry.value.contains(character)) {
-            fail('Environment constant ${json.encode(entry.key)} contains '
-                '"$character" which is broken on dart2native.\n'
-                'See https://github.com/dart-lang/sdk/issues/46050 and /44995\n'
-                'Full value: ${json.encode(entry.value)}');
-          }
+        if (entry.value.contains(",")) {
+          fail('Environment constant ${json.encode(entry.key)} contains " " '
+              'which is broken for dart compile exe.\n'
+              'See https://github.com/dart-lang/sdk/issues/44995\n'
+              'Full value: ${json.encode(entry.value)}');
         }
       }
     }

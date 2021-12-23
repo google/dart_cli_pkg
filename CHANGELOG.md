@@ -1,3 +1,66 @@
+# 2.0.3
+
+* Fix a bug where dynamic calls to `require()` would always be `null` in an npm
+  package.
+
+# 2.0.2
+
+* Fix a bug where an npm package with target-specific `JSRequire`s would include
+  an invalid `"main"` field in its `package.json`.
+
+# 2.0.1
+
+* Work around an npm bug that was causing `npm publish` to fail.
+
+# 2.0.0
+
+* **Breaking change:** The `jsRequires` map has been changed to a list of
+  `JSRequire` objects. These objects allow packages to specify exactly which
+  target(s) a given dependency should be loaded on, so for example they can
+  provide a package that loads the `fs` module for Node.js but can still be
+  bundled for the browser without it.
+
+# 1.7.0
+
+* Callbacks passed to `ConfigVariable.fn=` can now return nullable values even
+  for non-nullable types. Doing so will cause the variable to use its default
+  value. The behavior for nullable types remains unchanged.
+
+# 1.6.0
+
+* Add `pkg-standalone-linux-arm64` and `pkg-standalone-mac-arm64` tasks, which
+  compile Linux and Mac OS binaries respectively for 64-bit ARM architectures.
+  As with other 64-bit architectures, these will compile native executables when
+  invoked on the same OS/architecture combination they're targeting, and will
+  compile script snapshots otherwise.
+
+* `pkg-standalone-all` now compiles Linux and Mac OS binaries for 64-bit ARM
+  architectures.
+
+# 1.5.2
+
+* Use `dart compile exe` and `dart compile aot-snapshot` instead of
+  `dart2native` when compiling standalone executables.
+
+* The space character is no longer forbidden in environment constants, since
+  https://github.com/dart-lang/sdk/issues/46050 has been fixed.
+
+# 1.5.1
+
+* Properly run executables from source in `testing.dart` when their public names
+  are different than their filenames.
+
+# 1.5.0
+
+* Add `pkg.npmAdditionalFiles` to make it possible to add custom files to npm
+  packages.
+
+* `pkg.addChocolateyTasks()` no longer automatically adds standalone tasks,
+  since Chocolatey tasks no longer depend on standalone tasks.
+
+* `pkg-chocolatey` now creates a file named `LICENSE.txt` rather than `LICENSE`,
+  at the request of the Chocolatey reviewers.
+
 # 1.4.0
 
 * Add `pkg.environmentConstants` to make it possible to define custom

@@ -122,30 +122,28 @@ Future<List<T>> waitAndReportErrors<T>(Iterable<Future<T>> futures) {
 
 /// Returns a Dart string literal whose value is [riskyArg].
 String riskyArgStringLiteral(
-        {bool invokedByDart = false, bool dart2native = false}) =>
+        {bool invokedByDart = false, bool dartCompileExe = false}) =>
     json
-        .encode(
-            riskyArg(invokedByDart: invokedByDart, dart2native: dart2native))
+        .encode(riskyArg(
+            invokedByDart: invokedByDart, dartCompileExe: dartCompileExe))
         .replaceAll(r'$', r'\$');
 
 /// Returns a string that contains text that might need shell escaping.
 ///
 /// If [invokedByDart] is `true`, this omits syntax that's broken by
-/// dart-lang/sdk#46067. If [dart2native] is `true`, this omits syntax that's
-/// broken by dart-lang/sdk#46050 and #44995.
-String riskyArg({bool invokedByDart = false, bool dart2native = false}) {
+/// dart-lang/sdk#46067. If [dartCompileExe] is `true`, this omits syntax that's
+/// broken by dart-lang/sdk#44995.
+String riskyArg({bool invokedByDart = false, bool dartCompileExe = false}) {
   // dart-lang/sdk#46067 only affects Windows.
   if (!Platform.isWindows) invokedByDart = false;
 
   var buffer = StringBuffer();
-  buffer.write(r'~`!@#$*()_-+={[}]\:;.?/');
+  buffer.write(r'~`!@#$*()_-+={[}]\: ;.?/');
   buffer.write("'");
   if (!Platform.isWindows) buffer.write('"');
-  if (!dart2native) buffer.write(',');
+  if (!dartCompileExe) buffer.write(',');
   if (!invokedByDart) buffer.write('<%>^&|');
-  if (!dart2native) buffer.write(' ');
   if (!invokedByDart) buffer.write('%PATH%');
-  if (!dart2native) buffer.write(' ');
   buffer.write(r'$PATH');
   return buffer.toString();
 }

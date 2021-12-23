@@ -100,8 +100,8 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
 /// `cli_pkg` will throw an error in the situations where those characters
 /// bugged:
 ///
-/// * Due to [dart-lang/sdk#46050] and [#44995], it's not safe to include commas
-///   or spaces in environment constant values that are passed to `dart2native`.
+/// * Due to [#44995], it's not safe to include commas in environment constant
+///   values that are passed to `dart compile exe`.
 ///
 /// * Due to [dart-lang/sdk#46067], it's not safe to include `<`, `>`, `^`, `&`,
 ///   `|`, or `%` in environment constant variables that are passed by Dart to

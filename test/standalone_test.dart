@@ -23,19 +23,23 @@ import 'package:cli_pkg/src/utils.dart';
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
-/// Whether we're using a 64-bit Dart SDK.
-final _is64Bit = Platform.version.contains("x64");
+/// The architecture of the current operating system.
+final _architecture = () {
+  if (Platform.version.contains("x64")) return "x64";
+  if (Platform.version.contains("arm64")) return "arm64";
+  return "ia32";
+}();
 
 /// The operating system/architecture combination for the current machine.
 ///
 /// We build this for most tests so we can avoid downloading SDKs from the Dart
 /// server.
-final _target = Platform.operatingSystem + "-" + (_is64Bit ? "x64" : "ia32");
+final _target = "${Platform.operatingSystem}-$_architecture";
 
 /// Whether `pkg-compile-native` will generate fully standalone executable that
 /// doesn't need a separate `dartaotruntime` executable to run.
-final _useExe =
-    Platform.operatingSystem == "linux" && Platform.version.contains("x64");
+final _useExe = Platform.operatingSystem == "linux" &&
+    ["x64", "arm64"].contains(_architecture);
 
 /// The archive suffix for the current platform.
 final _archiveSuffix = _target + (Platform.isWindows ? ".zip" : ".tar.gz");
@@ -95,7 +99,7 @@ void main() {
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
           [d.dir("my-sa-app")]).validate();
     });
-  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
+  });
 
   group("executables", () {
     var pubspec = {
@@ -190,7 +194,7 @@ void main() {
             // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
             // #44995 are fixed.
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
+                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -254,10 +258,10 @@ void main() {
           d.path("out/my_app/const$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dart2native: true)));
+          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
       await executable.shouldExit(0);
     });
-  }, onPlatform: {if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")});
+  });
 
   group("the LICENSE file", () {
     // Normally each of these would be separate test cases, but running grinder
@@ -337,11 +341,12 @@ void main() {
           "executables": {"foo": "foo"}
         }, _enableStandalone).create());
 
-    d.Descriptor archive(String os, {required bool x64}) {
-      var name = "my_app/build/my_app-1.2.3-$os-${x64 ? 'x64' : 'ia32'}."
+    d.Descriptor archive(String os, String arch) {
+      var name = "my_app/build/my_app-1.2.3-$os-$arch."
           "${os == 'windows' ? 'zip' : 'tar.gz'}";
 
-      var useExe = Platform.operatingSystem == os && x64 == _is64Bit && _useExe;
+      var useExe =
+          Platform.operatingSystem == os && arch == _architecture && _useExe;
       return d.archive(name, [
         d.dir("my_app", [
           d.file("foo${os == 'windows' ? (useExe ? '.exe' : '.bat') : ''}",
@@ -357,35 +362,43 @@ void main() {
     }
 
     group("Mac OS", () {
-      test("64-bit", () async {
+      test("64-bit x86", () async {
         await (await grind(["pkg-standalone-macos-x64"])).shouldExit(0);
-        await archive("macos", x64: true).validate();
+        await archive("macos", "x64").validate();
+      });
+
+      test("64-bit ARM", () async {
+        await (await grind(["pkg-standalone-macos-arm64"])).shouldExit(0);
+        await archive("macos", "arm64").validate();
       });
     });
 
     group("Linux", () {
       test("32-bit", () async {
         await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
-        await archive("linux", x64: false).validate();
+        await archive("linux", "ia32").validate();
       });
 
-      test("64-bit", () async {
+      test("64-bit x86", () async {
         await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
-        await archive("linux", x64: true).validate();
+        await archive("linux", "x64").validate();
+      });
+
+      test("64-bit ARM", () async {
+        await (await grind(["pkg-standalone-linux-arm64"])).shouldExit(0);
+        await archive("linux", "arm64").validate();
       });
     });
 
     group("Windows", () {
       test("32-bit", () async {
         await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
-        await archive("windows", x64: false).validate();
+        await archive("windows", "ia32").validate();
       });
 
       test("64-bit", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
-        await archive("windows", x64: true).validate();
-      }, onPlatform: {
-        if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
+        await archive("windows", "x64").validate();
       });
     });
 
@@ -393,14 +406,14 @@ void main() {
       await (await grind(["pkg-standalone-all"])).shouldExit(0);
 
       await Future.wait([
-        archive("macos", x64: true).validate(),
-        archive("linux", x64: false).validate(),
-        archive("linux", x64: true).validate(),
-        archive("windows", x64: false).validate(),
-        archive("windows", x64: true).validate()
+        archive("macos", "x64").validate(),
+        archive("macos", "arm64").validate(),
+        archive("linux", "ia32").validate(),
+        archive("linux", "x64").validate(),
+        archive("linux", "arm64").validate(),
+        archive("windows", "ia32").validate(),
+        archive("windows", "x64").validate()
       ]);
-    }, onPlatform: {
-      if (!useDart2Native) "windows": Skip("dart-lang/sdk#37897")
     });
   });
 
@@ -439,7 +452,7 @@ void main() {
       }, """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dart2native: true)};
+                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
             pkg.addStandaloneTasks();
             grind(args);
@@ -457,7 +470,7 @@ void main() {
           d.path("my_app/build/const$dotBat"), [],
           workingDirectory: d.sandbox);
       expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dart2native: true)));
+          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
       await executable.shouldExit(0);
     });
   });

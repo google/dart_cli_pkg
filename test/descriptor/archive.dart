@@ -78,7 +78,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     var file = File(path).openWrite();
     try {
       try {
-        await readAsBytes().listen(file.add).asFuture();
+        await readAsBytes().listen(file.add).asFuture<void>();
       } finally {
         await file.close();
       }

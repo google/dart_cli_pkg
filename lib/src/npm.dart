@@ -22,6 +22,8 @@ import 'package:path/path.dart' as p;
 
 import 'config_variable.dart';
 import 'info.dart';
+import 'js_require.dart';
+import 'js_require_target.dart';
 import 'utils.dart';
 
 /// A modifiable list of additional flags to pass to `dart2js` when compiling
@@ -44,21 +46,25 @@ final jsReleaseFlags = InternalConfigVariable.value<List<String>>(
     ["-O4", "--no-minify", "--fast-startup"],
     freeze: (list) => List.unmodifiable(list));
 
-/// A modifiable map of JavaScript packages to `require()` at the beginning of
+/// A modifiable list of JavaScript packages to `require()` at the beginning of
 /// the generated JS file.
 ///
-/// Each map value is the string to pass to `require()`, and its corresponding
-/// key is the name of the global variable to which to assign the resulting
-/// module.
-///
-/// For example, `jsRequires["sass"] = "dart-sass"` would produce `self.sass =
-/// require("dart-sass")`.
+/// The same identifier may be used for multiple requires. If so, the require
+/// with the most specific [JSRequireTarget] will be used for a given
+/// identifier. If there are multiple requires with the same [JSRequireTarget],
+/// the last one will be used.
 ///
 /// If an executable passes a literal string to `require()` through Dart's JS
-/// interop, that's automatically converted to a `require()` at the beginning of
-/// the generated JS file.
-final jsRequires = InternalConfigVariable.value(<String, String>{},
-    freeze: (map) => Map.unmodifiable(map));
+/// interop, that's also automatically converted to a `require()` at the
+/// beginning of the generated JS file. If this list contains a [JSRequire] for
+/// the same package, the last such [JSRequire]'s identifier will be used
+/// instead.
+///
+/// If any requires have a target other than [JSRequireTarget.all],
+/// [jsModuleMainLibrary] must also be set, since otherwise there's no reason to
+/// split requires up by target.
+final jsRequires = InternalConfigVariable.value<List<JSRequire>>([],
+    freeze: (list) => List.unmodifiable(list));
 
 /// The path to a Dart library whose `main()` method will be called when the
 /// compiled JavaScript module is loaded.
@@ -91,6 +97,19 @@ final jsRequires = InternalConfigVariable.value(<String, String>{},
 /// which means no user-defined code will run when the module is loaded.
 final jsModuleMainLibrary = InternalConfigVariable.value<String?>(null);
 
+/// Returns whether the dart2js output needs to be wrapped in a function that's
+/// passed additional requires.
+final bool _needsRequireWrapper = () {
+  var result =
+      jsRequires.value.any((require) => require.target != JSRequireTarget.all);
+  if (result && jsModuleMainLibrary.value == null) {
+    fail("If jsModuleMain library isn't set, all jsRequires must have "
+        "JSRequireTarget.all.");
+  }
+
+  return result;
+}();
+
 /// The decoded contents of the npm package's `package.json` file.
 ///
 /// By default, this is loaded from `package.json` at the root of the
@@ -105,6 +124,14 @@ final npmPackageJson = InternalConfigVariable.fn<Map<String, dynamic>>(
             as Map<String, dynamic>
         : fail("pkg.npmPackageJson must be set to build an npm package."),
     freeze: freezeJsonMap);
+
+/// A set of additional files to include in the npm package.
+///
+/// This is a map from paths (relative to the root of the package) to the
+/// contents of those files. It defaults to an empty map.
+final npmAdditionalFiles = InternalConfigVariable.fn<Map<String, String>>(
+    () => {},
+    freeze: (map) => Map.unmodifiable(map));
 
 /// The name of the npm package, from `package.json`.
 String get _npmName {
@@ -222,42 +249,48 @@ void _js({required bool release}) {
 
   // If the code invokes `require()`, convert that to a pre-load to avoid
   // Webpack complaining about dynamic `require()`.
-  var requires = Map.of(jsRequires.value);
-  var text = destination.readAsStringSync()
+  var requires = _requiresForTarget(JSRequireTarget.all);
+  var compiledDart = destination.readAsStringSync()
       // Some dependencies dynamically invoke `require()`, which makes Webpack
       // complain. We replace those with direct references to the modules, which
       // we load explicitly after the preamble.
       .replaceAllMapped(RegExp(r'self\.require\(("[^"]+")\)'), (match) {
     var package = jsonDecode(match[1]!) as String;
-    var identifier = requires.entries
-        .firstWhereOrNull((entry) => entry.value == package)
-        ?.key;
 
+    // Don't add a new require for [package] unless there isn't an explicit one
+    // declared.
+    var identifier = jsRequires.value.reversed
+        .firstWhereOrNull((require) => require.package == package)
+        ?.identifier;
     if (identifier == null) {
-      identifier = _packageNameToIdentifier(package);
-      requires[identifier] = package;
+      var require = JSRequire(package);
+      requires.add(require);
+      identifier = require.identifier;
     }
-
     return "self.$identifier";
   });
 
   if (release) {
     // We don't ship the source map, so remove the source map comment.
-    text =
-        text.replaceFirst(RegExp(r"\n*//# sourceMappingURL=[^\n]+\n*$"), "\n");
+    compiledDart = compiledDart.replaceFirst(
+        RegExp(r"\n*//# sourceMappingURL=[^\n]+\n*$"), "\n");
   }
 
   var buffer = StringBuffer();
+
+  if (_needsRequireWrapper) {
+    buffer.writeln("exports.load = function(_cli_pkg_requires) {");
+  }
 
   // Reassigning require() makes Webpack complain.
   buffer.writeln(
       preamble.getPreamble().replaceFirst("self.require = require;\n", ""));
 
-  requires.forEach((identifier, package) {
-    buffer.writeln("self.$identifier = require(${jsonEncode(package)});");
-  });
+  _writeModules(buffer, requires);
 
-  buffer.write(text);
+  buffer.write(compiledDart);
+
+  if (_needsRequireWrapper) buffer.writeln("}");
 
   destination.writeAsStringSync(buffer.toString());
 }
@@ -347,10 +380,50 @@ Function _wrapMain(Function main) {
   return wrapper.toString();
 }
 
-/// Converts [package] to a valid JS identifier based on its name.
-String _packageNameToIdentifier(String package) => package
-    .replaceFirst(RegExp(r'^@'), '')
-    .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+/// Returns the subset of [jsRequires] that apply to [target].
+List<JSRequire> _requiresForTarget(JSRequireTarget target) {
+  var identifiers = <String>{};
+  var result = <JSRequire>[];
+
+  // Iterate in reverse order so later matching requires take precedence over
+  // earlier ones.
+  for (var require in jsRequires.value.reversed) {
+    if ((require.target == target ||
+            (target == JSRequireTarget.cli &&
+                require.target == JSRequireTarget.node)) &&
+        identifiers.add(require.identifier)) {
+      result.add(require);
+    }
+  }
+  return result;
+}
+
+/// Writes the module declarations for the JS blob to [buffer].
+///
+/// The [requires] represent modules that can be loaded for
+/// [JSRequireTarget.all].
+void _writeModules(StringBuffer buffer, List<JSRequire> requires) {
+  var loadedIdentifiers = <String>{};
+  for (var require in requires) {
+    loadedIdentifiers.add(require.identifier);
+    var hasTargetSpecificRequire = jsRequires.value.any((otherRequire) =>
+        otherRequire.identifier == require.identifier &&
+        otherRequire.target != JSRequireTarget.all);
+    buffer.writeln("self.${require.identifier} = " +
+        (hasTargetSpecificRequire
+            ? "_cli_pkg_requires.${require.identifier} ?? "
+            : "") +
+        "require(${jsonEncode(require.package)});");
+  }
+
+  var unloadedIdentifiers = {
+    for (var require in jsRequires.value)
+      if (!loadedIdentifiers.contains(require.identifier)) require.identifier
+  };
+  for (var identifier in unloadedIdentifiers) {
+    buffer.writeln("self.$identifier = _cli_pkg_requires.$identifier;");
+  }
+}
 
 /// Builds a pure-JS npm package.
 Future<void> _buildPackage() async {
@@ -358,29 +431,94 @@ Future<void> _buildPackage() async {
   if (dir.existsSync()) dir.deleteSync(recursive: true);
   dir.createSync(recursive: true);
 
+  var cliRequires = _requiresForTarget(JSRequireTarget.cli);
+  var nodeRequires = _requiresForTarget(JSRequireTarget.node);
+  var browserRequires = _requiresForTarget(JSRequireTarget.browser);
+
   writeString(
       p.join('build', 'npm', 'package.json'),
       jsonEncode({
         ...npmPackageJson.value,
         "version": version.toString(),
         "bin": {for (var name in executables.value.keys) name: "$name.js"},
-        if (jsModuleMainLibrary.value != null) "main": "$_npmName.dart.js"
+        if (jsModuleMainLibrary.value != null)
+          "main": "$_npmName${_needsRequireWrapper ? '.default' : ''}.dart.js",
+        if (_needsRequireWrapper)
+          "exports": {
+            if (nodeRequires.isNotEmpty) "node": "./$_npmName.node.dart.js",
+            if (browserRequires.isNotEmpty)
+              "browser": "./$_npmName.browser.dart.js",
+            "default": "./$_npmName.default.dart.js",
+          }
       }));
 
   safeCopy('build/$_npmName.dart.js', dir.path);
   for (var name in executables.value.keys) {
-    writeString(p.join('build', 'npm', '$name.js'), """
+    var buffer = StringBuffer("""
 #!/usr/bin/env node
 
-var module = require('./$_npmName.dart.js');
-module.${_executableIdentifiers[name]}(process.argv.slice(2));
+var library = require('./$_npmName.dart.js');
 """);
+
+    if (_needsRequireWrapper) buffer.writeln(_loadRequires(cliRequires));
+
+    buffer.writeln(
+        "library.${_executableIdentifiers[name]}(process.argv.slice(2));");
+    writeString(p.join('build', 'npm', '$name.js'), buffer.toString());
+  }
+
+  if (_needsRequireWrapper) {
+    _writeRequireWrapper(
+        p.join('build', 'npm', '$_npmName.default.dart.js'), []);
+
+    if (nodeRequires.isNotEmpty) {
+      _writeRequireWrapper(
+          p.join('build', 'npm', '$_npmName.node.dart.js'), nodeRequires);
+    }
+
+    if (browserRequires.isNotEmpty) {
+      _writeRequireWrapper(
+          p.join('build', 'npm', '$_npmName.browser.dart.js'), browserRequires);
+    }
   }
 
   var readme = npmReadme.value;
   if (readme != null) writeString('build/npm/README.md', readme);
 
   writeString(p.join(dir.path, "LICENSE"), await license);
+
+  for (var entry in npmAdditionalFiles.value.entries) {
+    if (!p.isRelative(entry.key)) {
+      fail('pkg.npmAdditionalFiles keys must be relative paths,\n'
+          'but "${entry.key}" is absolute.');
+    }
+
+    var path = p.join(dir.path, entry.key);
+    Directory(p.dirname(path)).createSync(recursive: true);
+    File(path).writeAsStringSync(entry.value);
+  }
+}
+
+/// Writes a wrapper to [path] that loads `$_npmName.dart.js` with [requires]
+/// injected and
+void _writeRequireWrapper(String path, List<JSRequire> requires) {
+  writeString(
+      path,
+      "var library = require('./$_npmName.dart.js');\n"
+      "${_loadRequires(requires)}\n"
+      "module.exports = library;\n");
+}
+
+/// Returns the text of a `library.load()` call that loads [requires].
+String _loadRequires(List<JSRequire> requires) {
+  var buffer = StringBuffer("library.load({");
+  if (requires.isNotEmpty) buffer.writeln();
+  for (var require in requires) {
+    buffer.writeln(
+        "  ${require.identifier}: require(${json.encode(require.package)}),");
+  }
+  buffer.writeln("});");
+  return buffer.toString();
 }
 
 /// Publishes the contents of `build/npm` to npm.
@@ -389,9 +527,11 @@ Future<void> _deploy() async {
   file.writeStringSync("\n//registry.npmjs.org/:_authToken=$npmToken");
   file.closeSync();
 
-  log("npm publish --tag $npmDistTag build/npm");
+  // The trailing slash in "build/npm/" is necessary to avoid NPM trying to
+  // treat the path name as a GitHub repository slug.
+  log("npm publish --tag $npmDistTag build/npm/");
   var process = await Process.start(
-      "npm", ["publish", "--tag", npmDistTag.value, "build/npm"]);
+      "npm", ["publish", "--tag", npmDistTag.value, "build/npm/"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("npm publish failed");
