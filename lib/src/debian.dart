@@ -41,6 +41,17 @@ final gpgPassphrase = InternalConfigVariable.fn<String>(() =>
     Platform.environment["GPG_PASSPHRASE"] ??
     fail("pkg.gpgPassphrase must be set to deploy to PPA repository."));
 
+/// Common GPG Arguments used while signing the release files
+final getGpgArgs = () => [
+      "--pinentry-mode",
+      "loopback",
+      "--default-key",
+      "${gpgFingerprint.value}",
+      "--passphrase",
+      "${gpgPassphrase.value}",
+      "--yes",
+    ];
+
 /// Whether [addDebianTasks] has been called yet.
 var _addedDebianTasks = false;
 
@@ -75,7 +86,8 @@ Future<void> _update() async {
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
   await _createDebianPackage(repo, packageName);
-  // TODO: Functions to Release and Upload the package to Git Upstream
+  await _releaseNewPackage(repo);
+  // TODO: Function to Upload the package to the Git repository.
 }
 
 /// Creates a Debian package from the source code.
@@ -95,6 +107,15 @@ Future<void> _removeDirectory(String directory) async {
   if (result.exitCode != 0) {
     fail('Unable to remove the directory\n${result.stderr}');
   }
+}
+
+/// Scans the PPA [repo] for new packages and updates the
+/// release files, also signing them.
+Future<void> _releaseNewPackage(String repo) async {
+  await _updatePackagesFile(repo);
+  await _updateReleaseFile(repo);
+  await _updateReleaseGPGFile(repo);
+  await _updateInReleaseFile(repo);
 }
 
 /// Create the directory `repo/packageName` and relevant subfolders for the
@@ -130,4 +151,50 @@ void _generateControlFile(String debianDir) {
       "Couldn't find a version field in the given CONTROL file.");
 
   writeString(controlFilePath, _updatedControlData);
+}
+
+/// Scan for new .deb packages in the [repo] and update the `Packages` file.
+Future<void> _updatePackagesFile(String repo) async {
+  // Scan for new packages
+  String output = run("dpkg-scanpackages",
+      arguments: ["--multiversion", "."], workingDirectory: repo);
+  // Write the stdout to the file
+  writeString(p.join(repo, 'Packages'), output);
+  // Force Compress the Packages file
+  run("gzip", arguments: ["-k", "-f", "Packages"], workingDirectory: repo);
+}
+
+/// Generate the Release index for the PPA.
+Future<void> _updateReleaseFile(String repo) async {
+  String output = run("apt-ftparchive",
+      arguments: ["release", "."], workingDirectory: repo);
+  writeString(p.join(repo, 'Release'), output);
+}
+
+/// Sign the Release file with the GPG key.
+Future<void> _updateReleaseGPGFile(String repo) async {
+  run("gpg",
+      arguments: [
+        for (String arg in getGpgArgs()) arg,
+        "-abs",
+        "-o",
+        "Release.gpg",
+        "Release",
+      ],
+      quiet: true,
+      workingDirectory: repo);
+}
+
+/// Update the InRelease file with the new index and keys.
+Future<void> _updateInReleaseFile(String repo) async {
+  run("gpg",
+      arguments: [
+        for (String arg in getGpgArgs()) arg,
+        "--clearsign",
+        "-o",
+        "InRelease",
+        "Release",
+      ],
+      quiet: true,
+      workingDirectory: repo);
 }
