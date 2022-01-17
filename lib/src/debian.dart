@@ -87,7 +87,7 @@ Future<void> _update() async {
 
   await _createDebianPackage(repo, packageName);
   await _releaseNewPackage(repo);
-  // TODO: Function to Upload the package to the Git repository.
+  await _gitUpdateAndPush(repo);
 }
 
 /// Creates a Debian package from the source code.
@@ -196,5 +196,32 @@ Future<void> _updateInReleaseFile(String repo) async {
         "Release",
       ],
       quiet: true,
+      workingDirectory: repo);
+}
+
+/// Commit all the changes in the PPA repository and push to the remote upstream.
+Future<void> _gitUpdateAndPush(String repo) async {
+  run("git",
+      arguments: ["add", "."],
+      workingDirectory: repo,
+      runOptions: botEnvironment);
+
+  run("git",
+      arguments: [
+        "commit",
+        "--all",
+        "--message",
+        "Update $humanName to $version"
+      ],
+      workingDirectory: repo,
+      runOptions: botEnvironment);
+
+  await runAsync("git",
+      arguments: [
+        "push",
+        url("https://$githubUser:$githubPassword@github.com/$debianRepo.git")
+            .toString(),
+        "HEAD:${await originHead(repo)}"
+      ],
       workingDirectory: repo);
 }
