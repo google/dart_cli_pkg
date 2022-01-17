@@ -18,6 +18,7 @@ import 'src/homebrew.dart';
 import 'src/npm.dart';
 import 'src/pub.dart';
 import 'src/standalone.dart';
+import 'src/debian.dart';
 
 export 'src/chocolatey.dart';
 export 'src/config_variable.dart' hide InternalConfigVariable;
@@ -29,6 +30,7 @@ export 'src/js_require_target.dart';
 export 'src/npm.dart';
 export 'src/pub.dart';
 export 'src/standalone.dart';
+export 'src/debian.dart';
 
 /// Enables all tasks from the `cli_pkg` package.
 void addAllTasks() {
@@ -38,4 +40,5 @@ void addAllTasks() {
   addNpmTasks();
   addPubTasks();
   addStandaloneTasks();
+  addDebianTasks();
 }
