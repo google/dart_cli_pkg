@@ -129,7 +129,7 @@ Future<void> _update() async {
         "push",
         url("https://$githubUser:$githubPassword@github.com/$homebrewRepo.git")
             .toString(),
-        "HEAD:${await _originHead(repo)}"
+        "HEAD:${await originHead(repo)}"
       ],
       workingDirectory: repo);
 }
@@ -167,28 +167,6 @@ String _formulaFile(String repo) {
   } else {
     return entries.single;
   }
-}
-
-/// Returns the name of HEAD in the origin remote (that is, the default branch
-/// name of the upstream repository).
-Future<String> _originHead(String repo) async {
-  var result = await Process.run(
-      "git", ["symbolic-ref", "refs/remotes/origin/HEAD"],
-      workingDirectory: repo);
-  if (result.exitCode != 0) {
-    fail('"git symbolic-ref refs/remotes/origin/HEAD" failed:\n'
-        '${result.stderr}');
-  }
-
-  var stdout = (result.stdout as String).trim();
-  var prefix = "refs/remotes/origin/";
-  if (!stdout.startsWith(prefix)) {
-    fail('Unexpected output from "git symbolic-ref refs/remotes/origin/HEAD":\n'
-        'Expected a string starting with "$prefix", got:\n'
-        '$stdout');
-  }
-
-  return stdout.substring(prefix.length);
 }
 
 /// Converts [version] into the format Homebrew expects in an `@`-versioned
