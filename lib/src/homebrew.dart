@@ -82,20 +82,20 @@ Future<void> _update() async {
       await cloneOrPull(url("https://github.com/$homebrewRepo.git").toString());
 
   var formulaPath = _formulaFile(repo);
-  var formula = _replaceFirstMappedMandatory(
+  var formula = replaceFirstMappedMandatory(
       File(formulaPath).readAsStringSync(),
       RegExp(r'\n( *)url "[^"]+"'),
       (match) => '\n${match[1]}url '
           '"https://github.com/$githubRepo/archive/$homebrewTag.tar.gz"',
       "Couldn't find a url field in $formulaPath.");
-  formula = _replaceFirstMappedMandatory(
+  formula = replaceFirstMappedMandatory(
       formula,
       RegExp(r'\n( *)sha256 "[^"]+"'),
       (match) => '\n${match[1]}sha256 "$digest"',
       "Couldn't find a sha256 field in $formulaPath.");
 
   if (homebrewCreateVersionedFormula.value) {
-    formula = _replaceFirstMappedMandatory(
+    formula = replaceFirstMappedMandatory(
         formula,
         RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
         (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
@@ -132,19 +132,6 @@ Future<void> _update() async {
         "HEAD:${await originHead(repo)}"
       ],
       workingDirectory: repo);
-}
-
-/// Like [String.replaceFirstMapped], but fails with [error] if no match is found.
-String _replaceFirstMappedMandatory(
-    String string, Pattern from, String replace(Match match), String error) {
-  var found = false;
-  var result = string.replaceFirstMapped(from, (match) {
-    found = true;
-    return replace(match);
-  });
-
-  if (!found) fail(error);
-  return result;
 }
 
 /// Returns the path to the formula file to update in [repo].

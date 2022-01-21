@@ -423,3 +423,16 @@ Future<String> originHead(String repo) async {
 
   return stdout.substring(prefix.length);
 }
+
+/// Like [String.replaceFirstMapped], but fails with [error] if no match is found.
+String replaceFirstMappedMandatory(
+    String string, Pattern from, String replace(Match match), String error) {
+  var found = false;
+  var result = string.replaceFirstMapped(from, (match) {
+    found = true;
+    return replace(match);
+  });
+
+  if (!found) fail(error);
+  return result;
+}
