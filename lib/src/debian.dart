@@ -41,16 +41,20 @@ final gpgPassphrase = InternalConfigVariable.fn<String>(() =>
     Platform.environment["GPG_PASSPHRASE"] ??
     fail("pkg.gpgPassphrase must be set to deploy to PPA repository."));
 
+/// The private key for the GPG key to use when signing the release.
+///
+/// By default, it is set as empty. To sign the release, you must set this
+/// after exporting the private key. Or, if using external tools to import the key,
+/// you can leave this empty.
+final gpgPrivateKey = InternalConfigVariable.fn<String>(() => "");
+
 /// Common GPG Arguments used while signing the release files
-final getGpgArgs = () => [
-      "--pinentry-mode",
-      "loopback",
-      "--default-key",
-      "${gpgFingerprint.value}",
-      "--passphrase",
-      "${gpgPassphrase.value}",
-      "--yes",
-    ];
+const List<String> gpgArgs = [
+  "--batch",
+  "--pinentry-mode",
+  "loopback",
+  "--yes",
+];
 
 /// Whether [addDebianTasks] has been called yet.
 var _addedDebianTasks = false;
@@ -85,9 +89,19 @@ Future<void> _update() async {
   var repo =
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
+  if (gpgPrivateKey.value.isNotEmpty) {
+    _importGPGPrivateKey();
+  } else {
+    log("pkg.gpgPrivateKey not set. Assuming GPG key is already imported.");
+  }
+
   await _createDebianPackage(repo, packageName);
   await _releaseNewPackage(repo);
   await _gitUpdateAndPush(repo);
+
+  if (gpgPrivateKey.value.isNotEmpty) {
+    _deleteGPGKey();
+  }
 }
 
 /// Creates a Debian package from the source code.
@@ -175,7 +189,11 @@ Future<void> _updateReleaseFile(String repo) async {
 Future<void> _updateReleaseGPGFile(String repo) async {
   run("gpg",
       arguments: [
-        for (String arg in getGpgArgs()) arg,
+        for (String arg in gpgArgs) arg,
+        "--default-key",
+        (gpgFingerprint.value),
+        "--passphrase",
+        (gpgPassphrase.value),
         "-abs",
         "-o",
         "Release.gpg",
@@ -189,7 +207,11 @@ Future<void> _updateReleaseGPGFile(String repo) async {
 Future<void> _updateInReleaseFile(String repo) async {
   run("gpg",
       arguments: [
-        for (String arg in getGpgArgs()) arg,
+        for (String arg in gpgArgs) arg,
+        "--default-key",
+        (gpgFingerprint.value),
+        "--passphrase",
+        (gpgPassphrase.value),
         "--clearsign",
         "-o",
         "InRelease",
@@ -197,6 +219,39 @@ Future<void> _updateInReleaseFile(String repo) async {
       ],
       quiet: true,
       workingDirectory: repo);
+}
+
+/// Import the private key into the GPG.
+void _importGPGPrivateKey() {
+  log("Importing the GPG Private Key");
+  writeString("._privateKey", gpgPrivateKey.value);
+  run(
+    "gpg",
+    arguments: [
+      for (String arg in gpgArgs) arg,
+      "--passphrase",
+      gpgPassphrase.value,
+      "--allow-secret-key-import",
+      "--import",
+      "._privateKey"
+    ],
+    quiet: true,
+  );
+  runAsync("rm", arguments: ["._privateKey"]);
+}
+
+/// Delete the GPG key from the public and secret keyrings.
+String _deleteGPGKey() {
+  log("Cleaning up the GPG Keys");
+  return run(
+    "gpg",
+    arguments: [
+      for (String arg in gpgArgs) arg,
+      "--delete-secret-and-public-key",
+      gpgFingerprint.value,
+    ],
+    quiet: true,
+  );
 }
 
 /// Commit all the changes in the PPA repository and push to the remote upstream.
