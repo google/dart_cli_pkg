@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:cli_pkg/src/standalone.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
@@ -19,20 +21,22 @@ final debianRepo = InternalConfigVariable.fn<String>(
 /// The contents of the debian packages's control file.
 ///
 /// By default, it is loaded from `control` at the root of the repository.
-/// It's modifiable.
 ///
 /// `cli_pkg` will automatically update the `version` field when building the package.
-final controlData = InternalConfigVariable.fn<String>(() =>
+final debianControlData = InternalConfigVariable.fn<String>(() =>
     File("control").existsSync()
         ? File("control").readAsStringSync()
-        : fail("pkg.controlData must be set to update Debian package."));
+        : fail("pkg.debianControlData must be set to update Debian package."));
 
 /// The fingerprint for GPG key to use when signing the release.
+///
+/// This is used to look up the GPG private key in the local machine's keystore
+/// if [gpgPrivateKey] is unset.
 ///
 /// By default, this comes from the `GPG_FINGERPRINT` environment variable.
 final gpgFingerprint = InternalConfigVariable.fn<String>(() =>
     Platform.environment["GPG_FINGERPRINT"] ??
-    fail("pkg.gpgPassphrase must be set to deploy to PPA repository."));
+    fail("pkg.gpgFingerprint must be set to deploy to PPA repository."));
 
 /// The passphrase for the GPG key to use when signing the release.
 ///
@@ -43,13 +47,12 @@ final gpgPassphrase = InternalConfigVariable.fn<String>(() =>
 
 /// The private key for the GPG key to use when signing the release.
 ///
-/// By default, it is set as empty. To sign the release, you must set this
-/// after exporting the private key. Or, if using external tools to import the key,
-/// you can leave this empty.
-final gpgPrivateKey = InternalConfigVariable.fn<String>(() => "");
+/// If this is set, it's used to sign the release. Otherwise, a key is looked up
+/// in the local system's key store using [gpgFingerprint].
+final gpgPrivateKey = InternalConfigVariable.value<String?>(null);
 
 /// Common GPG Arguments used while signing the release files
-const List<String> gpgArgs = [
+const List<String> _gpgArgs = [
   "--batch",
   "--pinentry-mode",
   "loopback",
@@ -70,9 +73,10 @@ void addDebianTasks() {
 
   freezeSharedVariables();
   debianRepo.freeze();
-  controlData.freeze();
+  debianControlData.freeze();
   gpgFingerprint.freeze();
   gpgPassphrase.freeze();
+  gpgPrivateKey.freeze();
 
   addTask(GrinderTask('pkg-debian-update',
       taskFunction: () => _update(),
@@ -89,8 +93,8 @@ Future<void> _update() async {
   var repo =
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
-  if (gpgPrivateKey.value.isNotEmpty) {
-    _importGPGPrivateKey();
+  if (gpgPrivateKey.value != null) {
+    _importGpgPrivateKey();
   } else {
     log("pkg.gpgPrivateKey not set. Assuming GPG key is already imported.");
   }
@@ -99,28 +103,18 @@ Future<void> _update() async {
   await _releaseNewPackage(repo);
   await _gitUpdateAndPush(repo);
 
-  if (gpgPrivateKey.value.isNotEmpty) {
-    _deleteGPGKey();
-  }
+  if (gpgPrivateKey.value != null) _deleteGPGKey();
 }
 
 /// Creates a Debian package from the source code.
 Future<void> _createDebianPackage(String repo, String packageName) async {
-  String debianDir = await _createPackageDirectory(repo, packageName);
+  var debianDir = await _createPackageDirectory(repo, packageName);
 
   _generateControlFile(debianDir);
   _copyExecutableFiles(debianDir);
   // Pack the files into a .deb file
   run("dpkg-deb", arguments: ["--build", packageName], workingDirectory: repo);
-  await _removeDirectory(debianDir);
-}
-
-/// Delete the Directory with path [directory].
-Future<void> _removeDirectory(String directory) async {
-  var result = await Process.run("rm", ["-r", directory]);
-  if (result.exitCode != 0) {
-    fail('Unable to remove the directory\n${result.stderr}');
-  }
+  delete(Directory(debianDir));
 }
 
 /// Scans the PPA [repo] for new packages and updates the
@@ -137,7 +131,7 @@ Future<void> _releaseNewPackage(String repo) async {
 ///
 /// Returns the path of created folder.
 Future<String> _createPackageDirectory(String repo, String packageName) async {
-  String debianDir = p.join(repo, packageName);
+  var debianDir = p.join(repo, packageName);
   await Directory('$debianDir/DEBIAN').create(recursive: true);
   await Directory('$debianDir/usr/local/bin').create(recursive: true);
   return debianDir;
@@ -145,21 +139,18 @@ Future<String> _createPackageDirectory(String repo, String packageName) async {
 
 /// Copy all executable files listed in the map [executables] from the `build` folder
 void _copyExecutableFiles(String debianDir) {
-  final executablePath = p.join(debianDir, "usr", "local", "bin");
-  executables.value.forEach((name, path) {
-    run("cp", arguments: [
-      p.join("build", "$name.native"),
-      p.join(executablePath, name)
-    ]);
-  });
+  var executablePath = p.join(debianDir, "usr", "local", "bin");
+  for (var name in executables.value.keys) {
+    safeCopy(p.join("build", "$name.native"), p.join(executablePath, name));
+  }
 }
 
 /// Generate the control file for the Debian package.
 void _generateControlFile(String debianDir) {
   var controlFilePath = p.join(debianDir, "DEBIAN", "control");
 
-  String _updatedControlData = replaceFirstMappedMandatory(
-      controlData.value,
+  var _updatedControlData = replaceFirstMappedMandatory(
+      debianControlData.value,
       RegExp(r'Version: ([0-9].*)'),
       (match) => 'Version: ${version.toString()}',
       "Couldn't find a version field in the given CONTROL file.");
@@ -170,17 +161,20 @@ void _generateControlFile(String debianDir) {
 /// Scan for new .deb packages in the [repo] and update the `Packages` file.
 Future<void> _updatePackagesFile(String repo) async {
   // Scan for new packages
-  String output = run("dpkg-scanpackages",
+  var output = run("dpkg-scanpackages",
       arguments: ["--multiversion", "."], workingDirectory: repo);
   // Write the stdout to the file
   writeString(p.join(repo, 'Packages'), output);
   // Force Compress the Packages file
-  run("gzip", arguments: ["-k", "-f", "Packages"], workingDirectory: repo);
+  log('Creating Packages.gz');
+  var compressedBytes = GZipEncoder().encode(utf8.encode(output));
+  File(p.join(repo, 'Packages.gz'))
+      .writeAsBytesSync(compressedBytes as List<int>);
 }
 
 /// Generate the Release index for the PPA.
 Future<void> _updateReleaseFile(String repo) async {
-  String output = run("apt-ftparchive",
+  var output = run("apt-ftparchive",
       arguments: ["release", "."], workingDirectory: repo);
   writeString(p.join(repo, 'Release'), output);
 }
@@ -189,13 +183,15 @@ Future<void> _updateReleaseFile(String repo) async {
 Future<void> _updateReleaseGPGFile(String repo) async {
   run("gpg",
       arguments: [
-        for (String arg in gpgArgs) arg,
+        ..._gpgArgs,
         "--default-key",
-        (gpgFingerprint.value),
+        gpgFingerprint.value,
         "--passphrase",
-        (gpgPassphrase.value),
-        "-abs",
-        "-o",
+        gpgPassphrase.value,
+        "--armor",
+        "--detach-sign",
+        "--sign",
+        "--output",
         "Release.gpg",
         "Release",
       ],
@@ -207,13 +203,13 @@ Future<void> _updateReleaseGPGFile(String repo) async {
 Future<void> _updateInReleaseFile(String repo) async {
   run("gpg",
       arguments: [
-        for (String arg in gpgArgs) arg,
+        ..._gpgArgs,
         "--default-key",
-        (gpgFingerprint.value),
+        gpgFingerprint.value,
         "--passphrase",
-        (gpgPassphrase.value),
+        gpgPassphrase.value,
         "--clearsign",
-        "-o",
+        "--output",
         "InRelease",
         "Release",
       ],
@@ -222,13 +218,13 @@ Future<void> _updateInReleaseFile(String repo) async {
 }
 
 /// Import the private key into the GPG.
-void _importGPGPrivateKey() {
+void _importGpgPrivateKey() {
   log("Importing the GPG Private Key");
-  writeString("._privateKey", gpgPrivateKey.value);
+  writeString("._privateKey", gpgPrivateKey.value as String);
   run(
     "gpg",
     arguments: [
-      for (String arg in gpgArgs) arg,
+      ..._gpgArgs,
       "--passphrase",
       gpgPassphrase.value,
       "--allow-secret-key-import",
@@ -246,7 +242,7 @@ String _deleteGPGKey() {
   return run(
     "gpg",
     arguments: [
-      for (String arg in gpgArgs) arg,
+      ..._gpgArgs,
       "--delete-secret-and-public-key",
       gpgFingerprint.value,
     ],
