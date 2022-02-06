@@ -89,7 +89,7 @@ void addDebianTasks() {
 Future<void> _update() async {
   ensureBuild();
 
-  final String packageName = standaloneName.value + "_" + version.toString();
+  var packageName = standaloneName.value + "_" + version.toString();
   var repo =
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
@@ -227,7 +227,6 @@ void _importGpgPrivateKey() {
       ..._gpgArgs,
       "--passphrase",
       gpgPassphrase.value,
-      "--allow-secret-key-import",
       "--import",
       "._privateKey"
     ],
