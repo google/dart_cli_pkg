@@ -18,15 +18,12 @@ import 'utils.dart';
 final debianRepo = InternalConfigVariable.fn<String>(
     () => fail("pkg.debianRepo must be set to deploy to PPA repository."));
 
-/// The contents of the debian packages's control file.
+/// The path to the control file within the [debianRepo] to use with the new package
+/// version while creating new package.
 ///
-/// By default, it is loaded from `control` at the root of the repository.
-///
-/// `cli_pkg` will automatically update the `version` field when building the package.
-final debianControlData = InternalConfigVariable.fn<String>(() =>
-    File("control").existsSync()
-        ? File("control").readAsStringSync()
-        : fail("pkg.debianControlData must be set to update Debian package."));
+/// If this isn't set, the task will default to read from the file named `control` at
+/// the root of the repo. If there isn't one such file, the task will fail.
+final debianControlPath = InternalConfigVariable.value<String?>(null);
 
 /// The fingerprint for GPG key to use when signing the release.
 ///
@@ -73,7 +70,7 @@ void addDebianTasks() {
 
   freezeSharedVariables();
   debianRepo.freeze();
-  debianControlData.freeze();
+  debianControlPath.freeze();
   gpgFingerprint.freeze();
   gpgPassphrase.freeze();
   gpgPrivateKey.freeze();
@@ -109,8 +106,9 @@ Future<void> _update() async {
 /// Creates a Debian package from the source code.
 Future<void> _createDebianPackage(String repo, String packageName) async {
   var debianDir = await _createPackageDirectory(repo, packageName);
+  var sourceControlData = _readControlData(repo);
 
-  _generateControlFile(debianDir);
+  _generateControlFile(debianDir, sourceControlData);
   _copyExecutableFiles(debianDir);
   // Pack the files into a .deb file
   run("dpkg-deb", arguments: ["--build", packageName], workingDirectory: repo);
@@ -145,17 +143,33 @@ void _copyExecutableFiles(String debianDir) {
   }
 }
 
-/// Generate the control file for the Debian package.
-void _generateControlFile(String debianDir) {
-  var controlFilePath = p.join(debianDir, "DEBIAN", "control");
+/// Returns the path to the source file for control data in [repo].
+String _sourceControlPath(String repo) {
+  var relativePath = "control";
+  if (debianControlPath.value != null) {
+    relativePath = debianControlPath.value!;
+  }
+  return p.join(repo, relativePath);
+}
 
+String _readControlData(String repo) {
+  var sourceControlFile = File(_sourceControlPath(repo));
+  if (!sourceControlFile.existsSync()) {
+    fail("Couldn't find a control file in the repo.");
+  }
+  return sourceControlFile.readAsStringSync();
+}
+
+/// Generate the control file for the Debian package.
+void _generateControlFile(String debianDir, String controlData) {
+  var destinationPath = p.join(debianDir, "DEBIAN", "control");
   var _updatedControlData = replaceFirstMappedMandatory(
-      debianControlData.value,
+      controlData,
       RegExp(r'Version: ([0-9].*)'),
       (match) => 'Version: ${version.toString()}',
       "Couldn't find a version field in the given CONTROL file.");
 
-  writeString(controlFilePath, _updatedControlData);
+  writeString(destinationPath, _updatedControlData);
 }
 
 /// Scan for new .deb packages in the [repo] and update the `Packages` file.
