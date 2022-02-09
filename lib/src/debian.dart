@@ -91,7 +91,7 @@ Future<void> _update() async {
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
   if (gpgPrivateKey.value != null) {
-    _importGpgPrivateKey();
+    await _importGpgPrivateKey();
   } else {
     log("pkg.gpgPrivateKey not set. Assuming GPG key is already imported.");
   }
@@ -232,21 +232,24 @@ Future<void> _updateInReleaseFile(String repo) async {
 }
 
 /// Import the private key into the GPG.
-void _importGpgPrivateKey() {
+Future<void> _importGpgPrivateKey() async {
   log("Importing the GPG Private Key");
-  writeString("._privateKey", gpgPrivateKey.value as String);
-  run(
+  var process = await Process.start(
     "gpg",
-    arguments: [
+    [
       ..._gpgArgs,
       "--passphrase",
       gpgPassphrase.value,
       "--import",
-      "._privateKey"
     ],
-    quiet: true,
   );
-  runAsync("rm", arguments: ["._privateKey"]);
+
+  process.stdin.write(gpgPrivateKey.value);
+  process.stdin.close();
+  var exitCode = await process.exitCode;
+  if (exitCode != 0) {
+    fail("Failed to import the GPG private key.");
+  }
 }
 
 /// Delete the GPG key from the public and secret keyrings.
