@@ -71,7 +71,6 @@ void addDebianTasks() {
   freezeSharedVariables();
   debianRepo.freeze();
   debianControlPath.freeze();
-  gpgFingerprint.freeze();
   gpgPassphrase.freeze();
   gpgPrivateKey.freeze();
 
@@ -231,6 +230,34 @@ Future<void> _updateInReleaseFile(String repo) async {
       workingDirectory: repo);
 }
 
+/// Parse GPG private key fingerprint from the output while importing keys
+/// with the flag `--import-options import-show`.
+bool _parseGpgFingerprint(List<String> outputStream) {
+  for (var streamElement in outputStream) {
+    // We find the line of the following format:
+    // fpr:::::::::<fingerprint>:
+    // First occurence is for the private key and second is for the public key
+    var index = streamElement.indexOf("fpr");
+    var n = streamElement.length;
+    if (index != -1) {
+      index += 3;
+      String fingerprint = '';
+      // Skip colons before the fingerprint
+      while (index < n && streamElement[index] == ':') {
+        index++;
+      }
+      // Read the fingerprint till we reach the first colon
+      while (index < n && streamElement[index] != ':') {
+        fingerprint += streamElement[index];
+        index++;
+      }
+      gpgFingerprint.value = fingerprint;
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Import the private key into the GPG.
 Future<void> _importGpgPrivateKey() async {
   log("Importing the GPG Private Key");
@@ -240,6 +267,9 @@ Future<void> _importGpgPrivateKey() async {
       ..._gpgArgs,
       "--passphrase",
       gpgPassphrase.value,
+      "--import-options",
+      "import-show",
+      "--with-colons",
       "--import",
     ],
   );
@@ -248,7 +278,12 @@ Future<void> _importGpgPrivateKey() async {
   process.stdin.close();
   var exitCode = await process.exitCode;
   if (exitCode != 0) {
-    fail("Failed to import the GPG private key.");
+    fail("Failed to import the GPG private key");
+  }
+
+  var output = await process.stdout.transform(utf8.decoder).toList();
+  if (!_parseGpgFingerprint(output)) {
+    fail("Couldn't find a fingerprint in the GPG output");
   }
 }
 
