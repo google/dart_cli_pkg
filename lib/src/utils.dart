@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -435,4 +434,27 @@ String replaceFirstMappedMandatory(
 
   if (!found) fail(error);
   return result;
+}
+
+/// Returns the binary extension for the given [os].
+String binaryExtension(String os) => os == 'windows' ? '.exe' : '';
+
+/// Downloads and returns the contents of binary executable for the [os] on
+/// [arch] architecture from the [channel].
+Future<List<int>> downloadDartExecutable(
+    String os, String arch, String channel) async {
+  var url = "https://storage.googleapis.com/dart-archive/channels/$channel/"
+      "release/$dartVersion/sdk/dartsdk-$os-$arch-release.zip";
+  log("Downloading $url...");
+  var response = await client.get(Uri.parse(url));
+  if (response.statusCode ~/ 100 != 2) {
+    fail("Failed to download package: ${response.statusCode} "
+        "${response.reasonPhrase}.");
+  }
+
+  var filename = "/bin/dart${binaryExtension(os)}";
+  return ZipDecoder()
+      .decodeBytes(response.bodyBytes)
+      .firstWhere((file) => file.name.endsWith(filename))
+      .content as List<int>;
 }

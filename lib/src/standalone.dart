@@ -222,7 +222,7 @@ Future<void> _buildPackage(String os, String arch) async {
   var useExe = useNative && _useExe;
   if (!useExe) {
     archive.addFile(fileFromBytes(
-        "$standaloneName/src/dart${_binaryExtension(os)}",
+        "$standaloneName/src/dart${binaryExtension(os)}",
         await _dartExecutable(os, arch),
         executable: true));
   }
@@ -273,8 +273,7 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (_useNative(os, arch)) {
-    return File(
-            p.join(sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
+    return File(p.join(sdkDir.path, "bin/dartaotruntime${binaryExtension(os)}"))
         .readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
@@ -283,20 +282,7 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
   }
 
   var channel = isDevSdk ? "dev" : "stable";
-  var url = "https://storage.googleapis.com/dart-archive/channels/$channel/"
-      "release/$dartVersion/sdk/dartsdk-$os-$arch-release.zip";
-  log("Downloading $url...");
-  var response = await client.get(Uri.parse(url));
-  if (response.statusCode ~/ 100 != 2) {
-    fail("Failed to download package: ${response.statusCode} "
-        "${response.reasonPhrase}.");
-  }
-
-  var filename = "/bin/dart${_binaryExtension(os)}";
-  return ZipDecoder()
-      .decodeBytes(response.bodyBytes)
-      .firstWhere((file) => file.name.endsWith(filename))
-      .content as List<int>;
+  return downloadDartExecutable(os, arch, channel);
 }
 
 /// Throws an error if [os] and [arch] aren't a valid combination.
@@ -313,6 +299,3 @@ void _verifyOsAndArch(String os, String arch) {
     fail("Dart doesn't support Windows on ARM!");
   }
 }
-
-/// Returns the binary extension for the given [os].
-String _binaryExtension(String os) => os == 'windows' ? '.exe' : '';
