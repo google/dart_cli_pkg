@@ -10,6 +10,7 @@ import 'config_variable.dart';
 import 'github.dart';
 import 'info.dart';
 import 'utils.dart';
+import 'template.dart';
 
 /// The GitHub repository slug (for example, `username/repo`) of the PPA
 /// repository for this package.
@@ -77,7 +78,7 @@ void addDebianTasks() {
   addTask(GrinderTask('pkg-debian-update',
       taskFunction: () => _update(),
       description: 'Update the Debian package.',
-      depends: ['pkg-standalone-linux-x64']));
+      depends: ['pkg-standalone-linux-x64', 'pkg-standalone-linux-ia32']));
 }
 
 /// Releases the source code in a Debian package and
@@ -85,7 +86,6 @@ void addDebianTasks() {
 Future<void> _update() async {
   ensureBuild();
 
-  var packageName = standaloneName.value + "_" + version.toString();
   var repo =
       await cloneOrPull(url("https://github.com/$debianRepo.git").toString());
 
@@ -95,22 +95,40 @@ Future<void> _update() async {
     log("pkg.gpgPrivateKey not set. Assuming GPG key is already imported.");
   }
 
-  await _createDebianPackage(repo, packageName);
+  await _createDebianPackages(repo, 'ia32');
+  await _createDebianPackages(repo, 'x64');
   await _releaseNewPackage(repo);
   await _gitUpdateAndPush(repo);
 
   if (gpgPrivateKey.value != null) _deleteGPGKey();
 }
 
-/// Creates a Debian package from the source code.
-Future<void> _createDebianPackage(String repo, String packageName) async {
-  var debianDir = await _createPackageDirectory(repo, packageName);
-  var sourceControlData = _readControlData(repo);
+Future<void> _createDebianPackages(String repo, String arch) async {
+  var packageName = standaloneName.value + "-" + version.toString();
+  var debianDir = await _createPackageDirectory(
+      repo, '$packageName-${debianArch(arch)}', arch);
+  var executablesPath = p.join(debianDir, "usr", "local", "bin");
 
-  _generateControlFile(debianDir, sourceControlData);
-  _copyExecutableFiles(debianDir);
-  // Pack the files into a .deb file
-  run("dpkg-deb", arguments: ["--build", packageName], workingDirectory: repo);
+  log('Creating the Package for ${debianArch(arch)}');
+  if (arch == 'ia32') {
+    // Add Dart runtime for AOT snapshots
+    var dartExecutable = await downloadDartExecutable('linux', arch, 'stable');
+    await File(p.join(executablesPath, "src", "dart"))
+        .writeAsBytes(dartExecutable);
+
+    for (var name in executables.value.keys) {
+      var destinationPath = p.join(executablesPath, name);
+      writeString(
+          destinationPath,
+          renderTemplate("standalone/executable.sh",
+              {"name": standaloneName.value, "executable": name}));
+      run("chmod", arguments: ["+x", destinationPath]);
+    }
+  }
+
+  _generateControlFile(debianDir, _readControlData(repo), arch);
+  _copyExecutableFiles(executablesPath, arch);
+  _packDebianArchive('$packageName-${debianArch(arch)}', repo);
   delete(Directory(debianDir));
 }
 
@@ -127,18 +145,30 @@ Future<void> _releaseNewPackage(String repo) async {
 /// debian package.
 ///
 /// Returns the path of created folder.
-Future<String> _createPackageDirectory(String repo, String packageName) async {
+Future<String> _createPackageDirectory(
+    String repo, String packageName, String arch) async {
   var debianDir = p.join(repo, packageName);
   await Directory('$debianDir/DEBIAN').create(recursive: true);
   await Directory('$debianDir/usr/local/bin').create(recursive: true);
+  if (arch == 'ia32') {
+    await Directory('$debianDir/usr/local/bin/src').create(recursive: true);
+  }
   return debianDir;
 }
 
 /// Copy all executable files listed in the map [executables] from the `build` folder
-void _copyExecutableFiles(String debianDir) {
-  var executablePath = p.join(debianDir, "usr", "local", "bin");
+void _copyExecutableFiles(String executablesPath, String arch) {
   for (var name in executables.value.keys) {
-    safeCopy(p.join("build", "$name.native"), p.join(executablePath, name));
+    if (arch == 'ia32') {
+      safeCopy(
+          p.join("build", "$name.snapshot"), p.join(executablesPath, 'src'));
+      run("chmod",
+          arguments: ["+x", p.join(executablesPath, 'src', "$name.snapshot")]);
+    } else {
+      safeCopy(p.join("build", "$name.native"), executablesPath);
+      run("mv",
+          arguments: ["$name.native", name], workingDirectory: executablesPath);
+    }
   }
 }
 
@@ -160,15 +190,29 @@ String _readControlData(String repo) {
 }
 
 /// Generate the control file for the Debian package.
-void _generateControlFile(String debianDir, String controlData) {
+void _generateControlFile(String debianDir, String controlData, String arch) {
   var destinationPath = p.join(debianDir, "DEBIAN", "control");
   var _updatedControlData = replaceFirstMappedMandatory(
       controlData,
-      RegExp(r'Version: ([0-9].*)'),
+      RegExp(r'Version:.+'),
       (match) => 'Version: ${version.toString()}',
       "Couldn't find a version field in the given CONTROL file.");
 
+  _updatedControlData = replaceFirstMappedMandatory(
+      _updatedControlData,
+      RegExp(r'Architecture:.+'),
+      (match) => 'Architecture: ${debianArch(arch)}',
+      "Couldn't find a Architecture field in the given CONTROL file.");
+
   writeString(destinationPath, _updatedControlData);
+}
+
+/// Returns the binary extension for the given [os].
+String debianArch(String arch) => arch == 'x64' ? 'amd64' : 'x32';
+
+/// Pack the Debian archive in the folder `repo/archiveName`.
+void _packDebianArchive(String archiveName, String repo) {
+  run("dpkg-deb", arguments: ["--build", archiveName], workingDirectory: repo);
 }
 
 /// Scan for new .deb packages in the [repo] and update the `Packages` file.
