@@ -254,14 +254,22 @@ void addGithubTasks() {
       description: 'Create a GitHub release, without executables.'));
 
   for (var os in ["linux", "macos", "windows"]) {
+    final dependencies = <String>[];
+    for (var arch in ["ia32", "x64", "arm64"]) {
+      if (!(os == "macos" && arch == "ia32") &&
+          !(os == "windows" && arch == "arm64")) {
+        final name = 'pkg-github-$os-$arch';
+        addTask(GrinderTask(name,
+            taskFunction: () => _uploadExecutables(os, arch),
+            description:
+                'Release ${humanOSName(os)} $arch executables to GitHub.',
+            depends: ['pkg-standalone-$os-$arch']));
+        dependencies.add(name);
+      }
+    }
     addTask(GrinderTask('pkg-github-$os',
-        taskFunction: () => _uploadExecutables(os),
         description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: [
-          // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-          if (os != "macos") 'pkg-standalone-$os-ia32',
-          'pkg-standalone-$os-x64'
-        ]));
+        depends: dependencies));
   }
 
   addTask(GrinderTask('pkg-github-all',
@@ -274,8 +282,8 @@ void addGithubTasks() {
       ]));
 }
 
-/// Upload the 32- and 64-bit executables to the current GitHub release
-Future<void> _uploadExecutables(String os) async {
+/// Upload executables to the current GitHub release
+Future<void> _uploadExecutables(String os, String arch) async {
   var response = await client.get(
       url("https://api.github.com/repos/$githubRepo/releases/tags/" "$version"),
       headers: {"authorization": _authorization});
@@ -290,26 +298,20 @@ Future<void> _uploadExecutables(String os) async {
   // Remove the URL template.
   var uploadUrl = uploadUrlTemplate.replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
-  await Future.wait([
-    // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-    if (os != "macos") "ia32",
-    "x64"
-  ].map((architecture) async {
-    var format = os == "windows" ? "zip" : "tar.gz";
-    var package = "$standaloneName-$version-$os-$architecture.$format";
-    var response = await client.post(Uri.parse("$uploadUrl?name=$package"),
-        headers: {
-          "content-type":
-              os == "windows" ? "application/zip" : "application/gzip",
-          "authorization": _authorization
-        },
-        body: File(p.join("build", package)).readAsBytesSync());
+  var format = os == "windows" ? "zip" : "tar.gz";
+  var package = "$standaloneName-$version-$os-$arch.$format";
+  response = await client.post(Uri.parse("$uploadUrl?name=$package"),
+      headers: {
+        "content-type":
+            os == "windows" ? "application/zip" : "application/gzip",
+        "authorization": _authorization
+      },
+      body: File(p.join("build", package)).readAsBytesSync());
 
-    if (response.statusCode != 201) {
-      fail("${response.statusCode} error uploading $package:\n"
-          "${response.body}");
-    } else {
-      log("Uploaded $package.");
-    }
-  }));
+  if (response.statusCode != 201) {
+    fail("${response.statusCode} error uploading $package:\n"
+        "${response.body}");
+  } else {
+    log("Uploaded $package.");
+  }
 }

@@ -23,11 +23,11 @@ Uses configuration: [`pkg.humanName`][], [`pkg.version`][],
 Creates a GitHub release for the current version of this package, without any
 files uploaded to it.
 
-## `pkg-github-$os`
+## `pkg-github-$os-$arch`
 
-Depends on: [`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`][]
+Depends on: [`pkg-standalone-$os-$arch`][]
 
-[`pkg-standalone-$os-ia32`, `pkg-standalone-$os-x64`]: standalone.md#pkg-standalone-os-arch
+[`pkg-standalone-$os-$arch`]: standalone.md#pkg-standalone-os-arch
 
 Uses configuration: [`pkg.version`][], [`pkg.githubRepo`][],
 [`pkg.githubUser`][], [`pkg.githubPassword`][], [`pkg.githubBearerToken`][],
@@ -35,8 +35,9 @@ Uses configuration: [`pkg.version`][], [`pkg.githubRepo`][],
 
 [`pkg.standaloneName`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/standaloneName.html
 
-Uploads 32- and 64-bit executable packages for the given operating system
-(`linux`, `windows`, or `macos`) to the GitHub release for the current version.
+Uploads executable packages for the given operating system (`linux`, `windows`,
+or `macos`) and architecture (`ia32`, `x64`, or `arm64`) to the GitHub release
+for the current version.
 
 Any OS's packages can be built and uploaded regardless of the OS running the
 task, but if the host OS matches the target OS the 64-bit executable will be
@@ -45,6 +46,15 @@ built as a native executable, which is substantially faster.
 This must be invoked after [`pkg-github-release`][], but it doesn't have a
 built-in dependency so that different OSs' packages can be built in different
 build steps.
+
+## `pkg-github-$os`
+
+Depends on: [`pkg-github-$os-ia32`, `pkg-github-$os-x64`, `pkg-github-$os-arm64`][]
+
+[`pkg-github-$os-ia32`, `pkg-github-$os-x64`, `pkg-github-$os-arm64`]: github.md#pkg-github-os-arch
+
+A utility task for uploading packages for all architectures supported by given
+operating system in the same step.
 
 [`pkg-github-release`]: #pkg-github-release
 
