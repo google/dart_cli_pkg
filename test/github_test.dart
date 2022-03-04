@@ -444,12 +444,34 @@ void main() {
     await server.close();
   });
 
+  test("pkg-github-macos-arm64 uploads standalone Mac OS arm64 archives",
+      () async {
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
+    await _release("my_org/my_app");
+
+    var server = await _assertUploadsPackage("macos", "arm64");
+    await (await grind(["pkg-github-macos-arm64"], server: server))
+        .shouldExit(0);
+    await server.close();
+  });
+
   test("pkg-github-linux-x64 uploads standalone Linux x64 archives", () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
     var server = await _assertUploadsPackage("linux", "x64");
     await (await grind(["pkg-github-linux-x64"], server: server)).shouldExit(0);
+    await server.close();
+  });
+
+  test("pkg-github-linux-arm64 uploads standalone Linux arm64 archives",
+      () async {
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
+    await _release("my_org/my_app");
+
+    var server = await _assertUploadsPackage("linux", "arm64");
+    await (await grind(["pkg-github-linux-arm64"], server: server))
+        .shouldExit(0);
     await server.close();
   });
 
