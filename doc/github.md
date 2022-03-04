@@ -25,7 +25,7 @@ files uploaded to it.
 
 ## `pkg-github-$os-$arch`
 
-Depends on: [`pkg-standalone-$os-$arch`][]
+Depends on: [`pkg-standalone-$os-$arch`]
 
 [`pkg-standalone-$os-$arch`]: standalone.md#pkg-standalone-os-arch
 
@@ -40,8 +40,8 @@ or `macos`) and architecture (`ia32`, `x64`, or `arm64`) to the GitHub release
 for the current version.
 
 Any OS's packages can be built and uploaded regardless of the OS running the
-task, but if the host OS matches the target OS the 64-bit executable will be
-built as a native executable, which is substantially faster.
+task, but if the host OS matches the target OS the executable will be built as a
+native executable, which is substantially faster.
 
 This must be invoked after [`pkg-github-release`][], but it doesn't have a
 built-in dependency so that different OSs' packages can be built in different
@@ -49,12 +49,12 @@ build steps.
 
 ## `pkg-github-$os`
 
-Depends on: [`pkg-github-$os-ia32`, `pkg-github-$os-x64`, `pkg-github-$os-arm64`][]
+Depends on: [`pkg-github-$os-ia32`, `pkg-github-$os-x64`, `pkg-github-$os-arm64`]
 
 [`pkg-github-$os-ia32`, `pkg-github-$os-x64`, `pkg-github-$os-arm64`]: github.md#pkg-github-os-arch
 
-A utility task for uploading packages for all architectures supported by given
-operating system in the same step.
+A utility task for uploading packages for all architectures supported by a
+single operating system in the same step.
 
 [`pkg-github-release`]: #pkg-github-release
 

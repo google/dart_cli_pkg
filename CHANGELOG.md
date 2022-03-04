@@ -3,7 +3,7 @@
 * Add `pkg-github-$os-$arch` tasks, which compile and upload binaries for the
   given operating system and architecture.
 
-* `pkg-github-linux`, `pkg-github-macos`, and`pkg-github-windows` now compile
+* `pkg-github-linux`, `pkg-github-macos`, and `pkg-github-windows` now compile
   and upload binaries for all supported architectures.
 
 # 2.0.3

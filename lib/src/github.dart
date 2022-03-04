@@ -254,22 +254,23 @@ void addGithubTasks() {
       description: 'Create a GitHub release, without executables.'));
 
   for (var os in ["linux", "macos", "windows"]) {
-    final dependencies = <String>[];
-    for (var arch in ["ia32", "x64", "arm64"]) {
-      if (!(os == "macos" && arch == "ia32") &&
-          !(os == "windows" && arch == "arm64")) {
-        final name = 'pkg-github-$os-$arch';
-        addTask(GrinderTask(name,
-            taskFunction: () => _uploadExecutables(os, arch),
-            description:
-                'Release ${humanOSName(os)} $arch executables to GitHub.',
-            depends: ['pkg-standalone-$os-$arch']));
-        dependencies.add(name);
-      }
-    }
+    var archTasks = [
+      for (var arch in ["ia32", "x64", "arm64"])
+        // Dart as of 2.7 doesn't support 32-bit Mac OS executables, and no Dart
+        // version supports Windows ARM executables.
+        if (!(os == "macos" && arch == "ia32") &&
+            !(os == "windows" && arch == "arm64"))
+          GrinderTask('pkg-github-$os-$arch',
+              taskFunction: () => _uploadExecutables(os, arch),
+              description:
+                  'Release ${humanOSName(os)} $arch executables to GitHub.',
+              depends: ['pkg-standalone-$os-$arch'])
+    ];
+    archTasks.forEach(addTask);
+
     addTask(GrinderTask('pkg-github-$os',
         description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: dependencies));
+        depends: archTasks.map((task) => task.name)));
   }
 
   addTask(GrinderTask('pkg-github-all',
@@ -282,10 +283,11 @@ void addGithubTasks() {
       ]));
 }
 
-/// Upload executables to the current GitHub release
+/// Upload an executable for the given [os] and [arch] to the current GitHub
+/// release.
 Future<void> _uploadExecutables(String os, String arch) async {
   var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/releases/tags/" "$version"),
+      url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
   var body = json.decode(response.body);
