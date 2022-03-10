@@ -29,6 +29,18 @@ import 'package:yaml/yaml.dart';
 
 import 'info.dart';
 
+/// The map of os to list of architectures for packaging.
+Map<String, List<String>> pkgOsArch = {
+  for (var os in ["macos", "linux", "windows"])
+    os: [
+      for (var arch in ["ia32", "x64", "arm", "arm64"])
+        if (!(os == "macos" && arch == "ia32") &&
+            !(os == "windows" && arch == "arm64") &&
+            !(os != "linux" && arch == "arm"))
+          arch
+    ]
+};
+
 /// The raw YAML of the pubspec.
 final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: Uri(path: 'pubspec.yaml')) as Map<dynamic, dynamic>;

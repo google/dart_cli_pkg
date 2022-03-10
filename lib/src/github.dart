@@ -253,34 +253,29 @@ void addGithubTasks() {
       taskFunction: _release,
       description: 'Create a GitHub release, without executables.'));
 
-  for (var os in ["linux", "macos", "windows"]) {
-    var archTasks = [
-      for (var arch in ["ia32", "x64", "arm64"])
-        // Dart as of 2.7 doesn't support 32-bit Mac OS executables, and no Dart
-        // version supports Windows ARM executables.
-        if (!(os == "macos" && arch == "ia32") &&
-            !(os == "windows" && arch == "arm64"))
-          GrinderTask('pkg-github-$os-$arch',
-              taskFunction: () => _uploadExecutables(os, arch),
-              description:
-                  'Release ${humanOSName(os)} $arch executables to GitHub.',
-              depends: ['pkg-standalone-$os-$arch'])
-    ];
+  var osTasks = pkgOsArch.entries.map((entry) {
+    var os = entry.key;
+    var archTasks = entry.value
+        .map((arch) => GrinderTask('pkg-github-$os-$arch',
+            taskFunction: () => _uploadExecutables(os, arch),
+            description:
+                'Release ${humanOSName(os)} $arch executables to GitHub.',
+            depends: ['pkg-standalone-$os-$arch']))
+        .toList();
     archTasks.forEach(addTask);
 
-    addTask(GrinderTask('pkg-github-$os',
+    return GrinderTask('pkg-github-$os',
         description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: archTasks.map((task) => task.name)));
-  }
+        depends: archTasks.map((task) => task.name));
+  }).toList();
+  osTasks.forEach(addTask);
+
+  var dependencies = ['pkg-github-release'];
+  dependencies.addAll(osTasks.map((task) => task.name));
 
   addTask(GrinderTask('pkg-github-all',
       description: 'Create a GitHub release with all executables.',
-      depends: [
-        'pkg-github-release',
-        'pkg-github-linux',
-        'pkg-github-macos',
-        'pkg-github-windows'
-      ]));
+      depends: dependencies));
 }
 
 /// Upload an executable for the given [os] and [arch] to the current GitHub

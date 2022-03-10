@@ -14,6 +14,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -24,13 +25,6 @@ import 'config_variable.dart';
 import 'info.dart';
 import 'template.dart';
 import 'utils.dart';
-
-/// The architecture of the current operating system.
-final _architecture = () {
-  if (Platform.version.contains("x64")) return "x64";
-  if (Platform.version.contains("arm64")) return "arm64";
-  return "ia32";
-}();
 
 /// Whether to generate a fully standalone executable that doesn't need a
 /// separate `dartaotruntime` executable to run.
@@ -131,45 +125,23 @@ void addStandaloneTasks() {
       // when dart-lang/sdk#39973 is fixed.
       depends: ['pkg-compile-snapshot-dev']));
 
-  for (var os in ["linux", "macos", "windows"]) {
-    if (os != "macos") {
-      // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-      addTask(GrinderTask('pkg-standalone-$os-ia32',
-          taskFunction: () => _buildPackage(os, 'ia32'),
+  var tasks = pkgOsArch.entries.expand((entry) {
+    var os = entry.key;
+    return entry.value.map((arch) {
+      return GrinderTask('pkg-standalone-$os-$arch',
+          taskFunction: () => _buildPackage(os, arch),
           description:
-              'Build a standalone 32-bit package for ${humanOSName(os)}.',
-          depends: ['pkg-compile-snapshot']));
-    }
-
-    addTask(GrinderTask('pkg-standalone-$os-x64',
-        taskFunction: () => _buildPackage(os, 'x64'),
-        description:
-            'Build a standalone 64-bit package for ${humanOSName(os)}.',
-        depends: _useNative(os, 'x64')
-            ? ['pkg-compile-native']
-            : ['pkg-compile-snapshot']));
-
-    if (os != "windows") {
-      // Dart as of 2.14 only supports ARM on Mac and Linux.
-      addTask(GrinderTask('pkg-standalone-$os-arm64',
-          taskFunction: () => _buildPackage(os, 'arm64'),
-          description:
-              'Build a standalone 64-bit package for ${humanOSName(os)}.',
-          depends: _useNative(os, 'arm64')
+              'Build a standalone $arch package for ${humanOSName(os)}.',
+          depends: _useNative(os, arch)
               ? ['pkg-compile-native']
-              : ['pkg-compile-snapshot']));
-    }
-  }
+              : ['pkg-compile-snapshot']);
+    }).toList();
+  }).toList();
+  tasks.forEach(addTask);
 
   addTask(GrinderTask('pkg-standalone-all',
       description: 'Build all standalone packages.',
-      depends: [
-        for (var os in ["linux", "macos", "windows"])
-          for (var arch in ["ia32", "x64", "arm64"])
-            if (!(os == "macos" && arch == "ia32") &&
-                !(os == "windows" && arch == "arm64"))
-              "pkg-standalone-$os-$arch"
-      ]));
+      depends: tasks.map((task) => task.name)));
 }
 
 /// Returns whether to use the natively-compiled executable for the given [os]
@@ -180,9 +152,7 @@ void addStandaloneTasks() {
 /// (dart-lang/sdk#28617) and only 64-bit Dart SDKs support `dart compile exe`
 /// (dart-lang/sdk#47177).
 bool _useNative(String os, String arch) {
-  _verifyOsAndArch(os, arch);
-  if (os != Platform.operatingSystem) return false;
-  if (arch != _architecture) return false;
+  if ("${os}_$arch" != Abi.current().toString()) return false;
   if (arch == "ia32") return false;
 
   return true;
@@ -214,7 +184,6 @@ Future<void> _buildDev() async {
 
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, String arch) async {
-  _verifyOsAndArch(os, arch);
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
@@ -268,8 +237,6 @@ Future<void> _buildPackage(String os, String arch) async {
 /// Returns the binary contents of the `dart` or `dartaotruntime` exectuable for
 /// the given [os] and architecture.
 Future<List<int>> _dartExecutable(String os, String arch) async {
-  _verifyOsAndArch(os, arch);
-
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (_useNative(os, arch)) {
@@ -297,21 +264,6 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
       .decodeBytes(response.bodyBytes)
       .firstWhere((file) => file.name.endsWith(filename))
       .content as List<int>;
-}
-
-/// Throws an error if [os] and [arch] aren't a valid combination.
-///
-/// This is just intended to guard against programmer error within `cli_pkg`.
-void _verifyOsAndArch(String os, String arch) {
-  if (!["macos", "windows", "linux"].contains(os)) {
-    fail("Unknown operating system $os!");
-  } else if (!["ia32", "x64", "arm64"].contains(arch)) {
-    fail("Unknown architecture $arch!");
-  } else if (os == "macos" && arch == "ia32") {
-    fail("Dart doesn't support 32-bit Mac OS!");
-  } else if (os == "windows" && arch == "arm64") {
-    fail("Dart doesn't support Windows on ARM!");
-  }
 }
 
 /// Returns the binary extension for the given [os].
