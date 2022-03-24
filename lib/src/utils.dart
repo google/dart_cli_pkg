@@ -31,14 +31,9 @@ import 'info.dart';
 
 /// The map of os to list of architectures for packaging.
 final osToArchs = {
-  for (var os in ["macos", "linux", "windows"])
-    os: [
-      for (var arch in ["ia32", "x64", "arm", "arm64"])
-        if (!(os == "macos" && arch == "ia32") &&
-            !(os == "windows" && arch == "arm64") &&
-            !(os != "linux" && arch == "arm"))
-          arch
-    ]
+  'macos': ['x64', 'arm64'],
+  'linux': ['ia32', 'x64', 'arm', 'arm64'],
+  'windows': ['ia32', 'x64'],
 };
 
 /// The raw YAML of the pubspec.
