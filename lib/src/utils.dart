@@ -30,7 +30,7 @@ import 'package:yaml/yaml.dart';
 import 'info.dart';
 
 /// The map of os to list of architectures for packaging.
-Map<String, List<String>> pkgOsArch = {
+final osToArchs = {
   for (var os in ["macos", "linux", "windows"])
     os: [
       for (var arch in ["ia32", "x64", "arm", "arm64"])

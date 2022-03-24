@@ -125,7 +125,7 @@ void addStandaloneTasks() {
       // when dart-lang/sdk#39973 is fixed.
       depends: ['pkg-compile-snapshot-dev']));
 
-  var tasks = pkgOsArch.entries.expand((entry) {
+  var tasks = osToArchs.entries.expand((entry) {
     var os = entry.key;
     return entry.value.map((arch) {
       return GrinderTask('pkg-standalone-$os-$arch',

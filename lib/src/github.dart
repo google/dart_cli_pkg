@@ -253,7 +253,7 @@ void addGithubTasks() {
       taskFunction: _release,
       description: 'Create a GitHub release, without executables.'));
 
-  var osTasks = pkgOsArch.entries.map((entry) {
+  var osTasks = osToArchs.entries.map((entry) {
     var os = entry.key;
     var archTasks = entry.value
         .map((arch) => GrinderTask('pkg-github-$os-$arch',
