@@ -12,8 +12,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: dart-lang/setup-dart@v1.2
     - run: dart --version
-    - run: pub get
-    - run: dartanalyzer --fatal-infos --fatal-warnings .
+    - run: dart pub get
+    - run: dart analyze --fatal-infos --fatal-warnings .
 
   test:
     name: "Tests | Dart ${{ matrix.dart-channel }} | ${{ matrix.os }} | shard ${{ matrix.shard }}"
@@ -41,8 +41,8 @@ jobs:
         git config --global user.email "ci@local"
         git config --global user.name CI
 
-    - run: pub get
-    - run: pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
+    - run: dart pub get
+    - run: dart pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
 
   format:
     name: "Code formatting"
