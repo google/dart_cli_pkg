@@ -66,7 +66,7 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
   return dir(p.basename(appDir), [
     file("pubspec.yaml", json.encode(pubspec)),
 
-    // Use our existing lockfile as a template so that "pub get" is as fast as
+    // Use our existing lockfile as a template so that "dart pub get" is as fast as
     // possible.
     file("pubspec.lock", File("pubspec.lock").readAsStringSync()),
 
