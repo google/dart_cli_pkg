@@ -152,6 +152,7 @@ void addStandaloneTasks() {
 /// (dart-lang/sdk#28617) and only 64-bit Dart SDKs support `dart compile exe`
 /// (dart-lang/sdk#47177).
 bool _useNative(String os, String arch) {
+  _verifyOsAndArch(os, arch);
   if ("${os}_$arch" != Abi.current().toString()) return false;
   if (arch == "ia32") return false;
 
@@ -184,6 +185,7 @@ Future<void> _buildDev() async {
 
 /// Builds a package for the given [os] and architecture.
 Future<void> _buildPackage(String os, String arch) async {
+  _verifyOsAndArch(os, arch);
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
@@ -237,6 +239,8 @@ Future<void> _buildPackage(String os, String arch) async {
 /// Returns the binary contents of the `dart` or `dartaotruntime` exectuable for
 /// the given [os] and architecture.
 Future<List<int>> _dartExecutable(String os, String arch) async {
+  _verifyOsAndArch(os, arch);
+
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (_useNative(os, arch)) {
@@ -264,6 +268,17 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
       .decodeBytes(response.bodyBytes)
       .firstWhere((file) => file.name.endsWith(filename))
       .content as List<int>;
+}
+
+/// Throws an error if [os] and [arch] aren't a valid combination.
+///
+/// This is just intended to guard against programmer error within `cli_pkg`.
+void _verifyOsAndArch(String os, String arch) {
+  if (!osToArchs.containsKey(os)) {
+    fail("Unknown operating system $os!");
+  } else if (!osToArchs[os]!.contains(arch)) {
+    fail("Unknown or unsupperted architecture $arch for ${humanOSName(os)}!");
+  }
 }
 
 /// Returns the binary extension for the given [os].
