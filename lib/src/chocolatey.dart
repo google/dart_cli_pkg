@@ -231,7 +231,7 @@ Future<void> _build() async {
 Write-Host "Fetching Dart dependencies..."
 \$SourceDir = "\$ToolsDir\\source"
 Push-Location -Path \$SourceDir
-pub get --no-precompile | Out-Null
+dart pub get --no-precompile | Out-Null
 Pop-Location
 
 New-Item -Path \$PackageFolder -Name "bin" -ItemType "directory" | Out-Null

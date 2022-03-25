@@ -435,30 +435,54 @@ void main() {
     });
   });
 
-  test("pkg-github-macos uploads standalone Mac OS archives", () async {
+  test("pkg-github-macos-x64 uploads standalone Mac OS x64 archives", () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
-    var server = await _assertUploadsPackage("macos");
-    await (await grind(["pkg-github-macos"], server: server)).shouldExit(0);
+    var server = await _assertUploadsPackage("macos", "x64");
+    await (await grind(["pkg-github-macos-x64"], server: server)).shouldExit(0);
     await server.close();
   });
 
-  test("pkg-github-linux uploads standalone Linux archives", () async {
+  test("pkg-github-macos-arm64 uploads standalone Mac OS arm64 archives",
+      () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
-    var server = await _assertUploadsPackage("linux");
-    await (await grind(["pkg-github-linux"], server: server)).shouldExit(0);
+    var server = await _assertUploadsPackage("macos", "arm64");
+    await (await grind(["pkg-github-macos-arm64"], server: server))
+        .shouldExit(0);
     await server.close();
   });
 
-  test("pkg-github-windows uploads standalone Windows archives", () async {
+  test("pkg-github-linux-x64 uploads standalone Linux x64 archives", () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
 
-    var server = await _assertUploadsPackage("windows");
-    await (await grind(["pkg-github-windows"], server: server)).shouldExit(0);
+    var server = await _assertUploadsPackage("linux", "x64");
+    await (await grind(["pkg-github-linux-x64"], server: server)).shouldExit(0);
+    await server.close();
+  });
+
+  test("pkg-github-linux-arm64 uploads standalone Linux arm64 archives",
+      () async {
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
+    await _release("my_org/my_app");
+
+    var server = await _assertUploadsPackage("linux", "arm64");
+    await (await grind(["pkg-github-linux-arm64"], server: server))
+        .shouldExit(0);
+    await server.close();
+  });
+
+  test("pkg-github-windows-x64 uploads standalone Windows x64 archives",
+      () async {
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
+    await _release("my_org/my_app");
+
+    var server = await _assertUploadsPackage("windows", "x64");
+    await (await grind(["pkg-github-windows-x64"], server: server))
+        .shouldExit(0);
     await server.close();
   }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
 }
@@ -504,8 +528,8 @@ Future<void> _release(String repo,
 }
 
 /// Returns a [ShelfTestServer] with pre-loaded expectations for a series of
-/// requests corresponding to uploading a package for the given [os].
-Future<ShelfTestServer> _assertUploadsPackage(String os) async {
+/// requests corresponding to uploading a package for the given [os] and [arch].
+Future<ShelfTestServer> _assertUploadsPackage(String os, String arch) async {
   var server = await ShelfTestServer.create();
   server.handler.expect("GET", "/repos/my_org/my_app/releases/tags/1.2.3",
       (request) async {
@@ -519,46 +543,28 @@ Future<ShelfTestServer> _assertUploadsPackage(String os) async {
         json.encode({"upload_url": server.url.resolve("/upload").toString()}));
   });
 
-  // TODO(nweiz): Instead of manually collating futures here, just make separate
-  // order-independent assertions for each architecture once
-  // dart-lang/shelf_test_handler#9 is fixed.
-  var urls = FutureGroup<String>();
-  for (var i = 0; i < (os == 'macos' ? 1 : 2); i++) {
-    var completer = Completer<String>();
-    urls.add(completer.future);
+  server.handler.expectAnything(expectAsync1((request) async {
+    expect(request.method, equals("POST"));
 
-    server.handler.expectAnything(expectAsync1((request) async {
-      expect(request.method, equals("POST"));
+    var url = request.url.toString();
+    expect(url, startsWith("upload?name=my_app-1.2.3-$os-"));
+    expect(url, endsWith(os == "windows" ? ".zip" : ".tar.gz"));
 
-      var url = request.url.toString();
-      completer.complete(url);
-      expect(url, startsWith("upload?name=my_app-1.2.3-$os-"));
-      expect(url, endsWith(os == "windows" ? ".zip" : ".tar.gz"));
+    expect(
+        request.headers,
+        containsPair("content-type",
+            os == "windows" ? "application/zip" : "application/gzip"));
+    var archive = os == "windows"
+        ? ZipDecoder().decodeBytes(await collectBytes(request.read()))
+        : TarDecoder().decodeBytes(await collectBytes(
+            // Cast to work around dart-lang/shelf#189.
+            request.read().cast<List<int>>().transform(gzip.decoder)));
 
-      expect(
-          request.headers,
-          containsPair("content-type",
-              os == "windows" ? "application/zip" : "application/gzip"));
-      var archive = os == "windows"
-          ? ZipDecoder().decodeBytes(await collectBytes(request.read()))
-          : TarDecoder().decodeBytes(await collectBytes(
-              // Cast to work around dart-lang/shelf#189.
-              request.read().cast<List<int>>().transform(gzip.decoder)));
+    expect(archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
+        isNotNull);
 
-      expect(archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
-          isNotNull);
-
-      return shelf.Response(201);
-    }));
-  }
-  urls.close();
-  expect(
-      urls.future,
-      completion(containsAll([
-        // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-        if (os != "macos") contains("ia32"),
-        contains("x64")
-      ])));
+    return shelf.Response(201);
+  }));
 
   return server;
 }

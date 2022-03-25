@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -29,6 +28,13 @@ import 'package:pub_semver/pub_semver.dart';
 import 'package:yaml/yaml.dart';
 
 import 'info.dart';
+
+/// The map of os to list of architectures for packaging.
+final osToArchs = {
+  'macos': ['x64', 'arm64'],
+  'linux': ['ia32', 'x64', 'arm', 'arm64'],
+  'windows': ['ia32', 'x64'],
+};
 
 /// The raw YAML of the pubspec.
 final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),

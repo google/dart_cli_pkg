@@ -253,31 +253,36 @@ void addGithubTasks() {
       taskFunction: _release,
       description: 'Create a GitHub release, without executables.'));
 
-  for (var os in ["linux", "macos", "windows"]) {
-    addTask(GrinderTask('pkg-github-$os',
-        taskFunction: () => _uploadExecutables(os),
+  var osTasks = osToArchs.entries.map((entry) {
+    var os = entry.key;
+    var archTasks = entry.value
+        .map((arch) => GrinderTask('pkg-github-$os-$arch',
+            taskFunction: () => _uploadExecutables(os, arch),
+            description:
+                'Release ${humanOSName(os)} $arch executables to GitHub.',
+            depends: ['pkg-standalone-$os-$arch']))
+        .toList();
+    archTasks.forEach(addTask);
+
+    return GrinderTask('pkg-github-$os',
         description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: [
-          // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-          if (os != "macos") 'pkg-standalone-$os-ia32',
-          'pkg-standalone-$os-x64'
-        ]));
-  }
+        depends: archTasks.map((task) => task.name));
+  }).toList();
+  osTasks.forEach(addTask);
+
+  var dependencies = ['pkg-github-release'];
+  dependencies.addAll(osTasks.map((task) => task.name));
 
   addTask(GrinderTask('pkg-github-all',
       description: 'Create a GitHub release with all executables.',
-      depends: [
-        'pkg-github-release',
-        'pkg-github-linux',
-        'pkg-github-macos',
-        'pkg-github-windows'
-      ]));
+      depends: dependencies));
 }
 
-/// Upload the 32- and 64-bit executables to the current GitHub release
-Future<void> _uploadExecutables(String os) async {
+/// Upload an executable for the given [os] and [arch] to the current GitHub
+/// release.
+Future<void> _uploadExecutables(String os, String arch) async {
   var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/releases/tags/" "$version"),
+      url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
   var body = json.decode(response.body);
@@ -290,26 +295,20 @@ Future<void> _uploadExecutables(String os) async {
   // Remove the URL template.
   var uploadUrl = uploadUrlTemplate.replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
-  await Future.wait([
-    // Dart as of 2.7 doesn't support 32-bit Mac OS executables.
-    if (os != "macos") "ia32",
-    "x64"
-  ].map((architecture) async {
-    var format = os == "windows" ? "zip" : "tar.gz";
-    var package = "$standaloneName-$version-$os-$architecture.$format";
-    var response = await client.post(Uri.parse("$uploadUrl?name=$package"),
-        headers: {
-          "content-type":
-              os == "windows" ? "application/zip" : "application/gzip",
-          "authorization": _authorization
-        },
-        body: File(p.join("build", package)).readAsBytesSync());
+  var format = os == "windows" ? "zip" : "tar.gz";
+  var package = "$standaloneName-$version-$os-$arch.$format";
+  response = await client.post(Uri.parse("$uploadUrl?name=$package"),
+      headers: {
+        "content-type":
+            os == "windows" ? "application/zip" : "application/gzip",
+        "authorization": _authorization
+      },
+      body: File(p.join("build", package)).readAsBytesSync());
 
-    if (response.statusCode != 201) {
-      fail("${response.statusCode} error uploading $package:\n"
-          "${response.body}");
-    } else {
-      log("Uploaded $package.");
-    }
-  }));
+  if (response.statusCode != 201) {
+    fail("${response.statusCode} error uploading $package:\n"
+        "${response.body}");
+  } else {
+    log("Uploaded $package.");
+  }
 }

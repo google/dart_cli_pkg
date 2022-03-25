@@ -1,3 +1,14 @@
+# 2.1.0
+
+* Add `pkg-github-$os-$arch` tasks, which compile and upload binaries for the
+  given operating system and architecture.
+
+* `pkg-github-linux`, `pkg-github-macos`, and `pkg-github-windows` now compile
+  and upload binaries for all supported architectures.
+
+* Use `dart pub` commands rather than `pub` for compatibility with the latest
+  Dart releases.
+
 # 2.0.3
 
 * Fix a bug where dynamic calls to `require()` would always be `null` in an npm

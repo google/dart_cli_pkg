@@ -29,7 +29,7 @@ String get appDir => d.path("my_app");
 
 /// Runs [grinder] in the application directory with the given [arguments].
 ///
-/// Runs `pub get` first if necessary.
+/// Runs `dart pub get` first if necessary.
 ///
 /// If [server] is passed, redirectable HTTP requests from the grinder tasks
 /// will be made to it instead of to the default host.
@@ -44,7 +44,8 @@ Future<TestProcess> grind(List<String> arguments,
     await pubGet(forwardStdio: forwardStdio);
   }
 
-  return await TestProcess.start("pub$dotBat", ["run", "grinder", ...arguments],
+  return await TestProcess.start(
+      "dart$dotExe", ["run", "grinder", ...arguments],
       forwardStdio: forwardStdio,
       workingDirectory: appDir,
       environment: {
@@ -54,10 +55,10 @@ Future<TestProcess> grind(List<String> arguments,
       });
 }
 
-/// Runs `pub get` in [appDir].
+/// Runs `dart pub get` in [appDir].
 Future<void> pubGet({bool forwardStdio = false}) async {
   await (await TestProcess.start(
-          "pub$dotBat", ["get", "--offline", "--no-precompile"],
+          "dart$dotExe", ["pub", "get", "--offline", "--no-precompile"],
           forwardStdio: forwardStdio, workingDirectory: appDir))
       .shouldExit(0);
 }
