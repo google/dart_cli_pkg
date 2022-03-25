@@ -42,7 +42,7 @@ jobs:
         git config --global user.name CI
 
     - run: dart pub get
-    - run: dart pub run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
+    - run: dart run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
 
   format:
     name: "Code formatting"

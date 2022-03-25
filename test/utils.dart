@@ -45,7 +45,7 @@ Future<TestProcess> grind(List<String> arguments,
   }
 
   return await TestProcess.start(
-      "dart$dotExe", ["pub", "run", "grinder", ...arguments],
+      "dart$dotExe", ["run", "grinder", ...arguments],
       forwardStdio: forwardStdio,
       workingDirectory: appDir,
       environment: {
