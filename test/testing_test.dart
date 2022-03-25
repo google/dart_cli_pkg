@@ -394,10 +394,10 @@ d.FileDescriptor _testCase(String code) {
   """);
 }
 
-/// Starts a [TestProcess] running `pub run test` on the `test.dart` file in the
+/// Starts a [TestProcess] running `dart pub run test` on the `test.dart` file in the
 /// sandbox app.
 Future<TestProcess> _test() =>
-    TestProcess.start("pub$dotBat", ["run", "test", "test.dart"],
+    TestProcess.start("dart$dotExe", ["pub", "run", "test", "test.dart"],
         workingDirectory: appDir);
 
 /// Updates the modification time of the file at [path], within [d.sandbox].
