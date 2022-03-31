@@ -1,3 +1,7 @@
+# 2.1.1
+
+* Narrow the SDK constraint to reflect the use of a new API.
+
 # 2.1.0
 
 * Add `pkg-github-$os-$arch` tasks, which compile and upload binaries for the
