@@ -62,10 +62,10 @@ Future<void> _deploy() async {
     ..writeStringSync(pubCredentials.value)
     ..closeSync();
 
-  log("pub publish");
+  log("dart pub publish");
   var process = await Process.start(
-      p.join(sdkDir.path, "bin/pub$dotBat"), ["publish", "--force"]);
+      p.join(sdkDir.path, "bin/dart$dotExe"), ["pub", "publish", "--force"]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
-  if (await process.exitCode != 0) fail("pub publish failed");
+  if (await process.exitCode != 0) fail("dart pub publish failed");
 }
