@@ -1,3 +1,8 @@
+# 2.1.2
+
+* Use `dart pub` commands rather than `pub` for compatibility with the latest
+  Dart releases.
+
 # 2.1.1
 
 * Narrow the SDK constraint to reflect the use of a new API.
