@@ -15,14 +15,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:charcode/charcode.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
-import 'package:string_scanner/string_scanner.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
 import 'standalone.dart';
+import 'last_changelog_section.dart';
 import 'utils.dart';
 
 /// The GitHub repository slug (for example, `username/repo`) to which to upload
@@ -145,7 +144,8 @@ String get _authorization {
 final githubReleaseNotes = InternalConfigVariable.fn<String?>(() {
   if (!File("CHANGELOG.md").existsSync()) return null;
 
-  return _lastChangelogSection() +
+  return lastChangelogSection(File("CHANGELOG.md").readAsStringSync(), version,
+          sourceUrl: "CHANGELOG.md") +
       "\n\n"
           "See the [full changelog](https://github.com/$githubRepo/blob/"
           "master/CHANGELOG.md#${version.toString().replaceAll(".", "")}) "
@@ -176,60 +176,6 @@ Future<void> _release() async {
   } else {
     log("Released $humanName $version to GitHub.");
   }
-}
-
-/// A regular expression that matches a Markdown code block.
-final _codeBlock = RegExp(" *```");
-
-/// A regular expression that matches a Markdown link reference definition..
-final _linkReferenceDefinition = RegExp(r" *\[([^\]\\]|\\[\]\\])+\]:");
-
-/// Returns the most recent section in the CHANGELOG, reformatted to remove line
-/// breaks that will show up on GitHub.
-String _lastChangelogSection() {
-  var scanner = StringScanner(File("CHANGELOG.md").readAsStringSync(),
-      sourceUrl: "CHANGELOG.md");
-
-  // Scans the remainder of the current line and returns it. This consumes the
-  // trailing newline but doesn't return it.
-  String scanLine() {
-    var buffer = StringBuffer();
-    while (!scanner.isDone && scanner.peekChar() != $lf) {
-      buffer.writeCharCode(scanner.readChar());
-    }
-    scanner.scanChar($lf);
-    return buffer.toString();
-  }
-
-  if (!scanner.scan(RegExp("## ${RegExp.escape(version.toString())}\r?\n"))) {
-    fail("Failed to extract GitHub release notes from CHANGELOG.md.\n"
-        'Expected it to start with "## $version".\n'
-        "Set pkg.githubReleaseNotes to explicitly declare release notes.");
-  }
-
-  var buffer = StringBuffer();
-  var inParagraph = false;
-  while (!scanner.isDone && !scanner.matches("## ")) {
-    if (scanner.matches(_codeBlock)) {
-      do {
-        buffer.writeln(scanLine());
-      } while (!scanner.matches(_codeBlock));
-      buffer.writeln(scanLine());
-      inParagraph = false;
-    } else if (!inParagraph && scanner.matches(_linkReferenceDefinition)) {
-      buffer.writeln(scanLine());
-    } else if (scanner.matches(RegExp(" *\n"))) {
-      if (inParagraph) buffer.writeln();
-      buffer.writeln(scanLine());
-      inParagraph = false;
-    } else {
-      if (inParagraph) buffer.writeCharCode($space);
-      buffer.write(scanLine());
-      inParagraph = true;
-    }
-  }
-
-  return buffer.toString().trim();
 }
 
 /// Whether [addGithubTasks] has been called yet.

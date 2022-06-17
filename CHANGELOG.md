@@ -1,3 +1,8 @@
+# 2.1.3
+
+* Don't mangle lists in automatically-extracted CHANGELOG entries for GitHub
+  releases.
+
 # 2.1.2
 
 * Use `dart pub` commands rather than `pub` for compatibility with the latest
