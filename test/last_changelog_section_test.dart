@@ -118,37 +118,37 @@ void main() {
   });
 
   group("leaves groups of link reference definitions as-is", () {
-      test("at the top level", () {
-    assertReleaseNotesFromChangelog(
-        "## 1.2.3\n"
-        "\n"
-        "[a], [b], [c]\n"
-        "\n"
-        "[a]: http://a.com\n"
-        "[b]: http://b.org\n"
-        "[c]: http://c.net\n",
-        startsWith("[a], [b], [c]\n"
-            "\n"
-            "[a]: http://a.com\n"
-            "[b]: http://b.org\n"
-            "[c]: http://c.net"));
-      });
+    test("at the top level", () {
+      assertReleaseNotesFromChangelog(
+          "## 1.2.3\n"
+          "\n"
+          "[a], [b], [c]\n"
+          "\n"
+          "[a]: http://a.com\n"
+          "[b]: http://b.org\n"
+          "[c]: http://c.net\n",
+          startsWith("[a], [b], [c]\n"
+              "\n"
+              "[a]: http://a.com\n"
+              "[b]: http://b.org\n"
+              "[c]: http://c.net"));
+    });
 
-test("in a list", () {
-    assertReleaseNotesFromChangelog(
-        "## 1.2.3\n"
-        "\n"
-        "* [a], [b], [c]\n"
-        "\n"
-        "  [a]: http://a.com\n"
-        "  [b]: http://b.org\n"
-        "  [c]: http://c.net\n",
-        startsWith("* [a], [b], [c]\n"
-            "\n"
-            "  [a]: http://a.com\n"
-            "  [b]: http://b.org\n"
-            "  [c]: http://c.net"));
-      });
+    test("in a list", () {
+      assertReleaseNotesFromChangelog(
+          "## 1.2.3\n"
+          "\n"
+          "* [a], [b], [c]\n"
+          "\n"
+          "  [a]: http://a.com\n"
+          "  [b]: http://b.org\n"
+          "  [c]: http://c.net\n",
+          startsWith("* [a], [b], [c]\n"
+              "\n"
+              "  [a]: http://a.com\n"
+              "  [b]: http://b.org\n"
+              "  [c]: http://c.net"));
+    });
   });
 
   group("leaves lists as-is", () {
