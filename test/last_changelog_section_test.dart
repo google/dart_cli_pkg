@@ -12,18 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:io';
-import 'dart:convert';
-
-import 'package:archive/archive.dart';
 import 'package:pub_semver/pub_semver.dart';
-import 'package:shelf/shelf.dart' as shelf;
-import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test/test.dart';
-import 'package:tuple/tuple.dart';
 import 'package:cli_pkg/src/last_changelog_section.dart';
-
-import 'utils.dart';
 
 void main() {
   void assertReleaseNotesFromChangelog(String changelog, Object matcher) {
