@@ -1,3 +1,9 @@
+# 2.1.4
+
+* Now merges `"exports"` **objects** declared in the original `package.json`
+  when using `JsRequires` with a target other than `all`. Note that string and
+  array values will still be overwritten.
+
 # 2.1.3
 
 * Don't mangle lists in automatically-extracted CHANGELOG entries for GitHub
