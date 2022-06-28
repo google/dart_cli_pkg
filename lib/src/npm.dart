@@ -445,6 +445,8 @@ Future<void> _buildPackage() async {
           "main": "$_npmName${_needsRequireWrapper ? '.default' : ''}.dart.js",
         if (_needsRequireWrapper)
           "exports": {
+            if (npmPackageJson.value["exports"] is Map)
+              ...npmPackageJson.value["exports"],
             if (nodeRequires.isNotEmpty) "node": "./$_npmName.node.dart.js",
             if (browserRequires.isNotEmpty)
               "browser": "./$_npmName.browser.dart.js",

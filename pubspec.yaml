@@ -1,5 +1,5 @@
 name: cli_pkg
-version: 2.1.3
+version: 2.1.4
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
