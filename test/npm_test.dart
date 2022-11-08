@@ -540,6 +540,148 @@ void main() {
     });
   });
 
+  group("exports", () {
+    const _grindDotDart = """
+      void main(List<String> args) {
+        pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+        pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.cli)];
+
+        pkg.addNpmTasks();
+        grind(args);
+      }
+    """;
+
+    test("automatically adds main JS file as 'default'", () async {
+      await d.package(pubspec, _grindDotDart, [
+        _packageJson,
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "default": "./my_app.default.dart.js",
+                  })))
+          .validate();
+    });
+
+    test("overwrite existing string value", () async {
+      await d.package(pubspec, _grindDotDart, [
+        d.file(
+            "package.json",
+            jsonEncode({
+              "name": "my_app",
+              "exports": "./foo",
+            })),
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "default": "./my_app.default.dart.js",
+                  })))
+          .validate();
+    });
+
+    test("overwrite existing array value", () async {
+      await d.package(pubspec, _grindDotDart, [
+        d.file(
+            "package.json",
+            jsonEncode({
+              "name": "my_app",
+              "exports": ["./foo", "./bar"],
+            })),
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "default": "./my_app.default.dart.js",
+                  })))
+          .validate();
+    });
+
+    test("merges with existing map/JSON values - default only", () async {
+      await d.package(pubspec, _grindDotDart, [
+        d.file(
+            "package.json",
+            jsonEncode({
+              "name": "my_app",
+              "exports": {
+                "types": "./foo",
+                "node": "./bar",
+                "default": "./baz",
+              },
+            })),
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "types": "./foo",
+                    "node": "./bar",
+                    "default": "./my_app.default.dart.js",
+                  })))
+          .validate();
+    });
+
+    test("merges with existing map/JSON values - node target only", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+          pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.node)];
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        d.file(
+            "package.json",
+            jsonEncode({
+              "name": "my_app",
+              "exports": {
+                "types": "./foo",
+                "node": "./bar",
+                "default": "./baz",
+              },
+            })),
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "types": "./foo",
+                    "node": "./my_app.node.dart.js",
+                    "default": "./my_app.default.dart.js",
+                  })))
+          .validate();
+    });
+  });
+
   group("npmDistTag", () {
     test('defaults to "latest" for a non-prerelease', () async {
       await d.package(pubspec, """

@@ -1,4 +1,4 @@
-# 2.1.4
+## 2.1.5
 
 * **Potentially breaking bug fix:** The `pkg-homebrew-update` task must now
   downloads a repository archive from GitHub in order to generate the sha256
@@ -8,6 +8,12 @@
 
   This is only a breaking change if you were relying on running
   `pkg-homebrew-update` *before* pushing the tag in question to GitHub.
+
+# 2.1.4
+
+* Now merges `"exports"` **objects** declared in the original `package.json`
+  when using `JsRequires` with a target other than `all`. Note that string and
+  array values will still be overwritten.
 
 # 2.1.3
 
