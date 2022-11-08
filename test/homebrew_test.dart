@@ -34,12 +34,14 @@ void main() {
 
     await _createHomebrewRepo();
 
-    var process = await _homebrewUpdate();
+    var server = await _serveArchive();
+    var process = await _homebrewUpdate(server);
     expect(
         process.stdout,
         emitsThrough(
             contains("pkg.homebrewRepo must be set to deploy to Homebrew.")));
     await process.shouldExit(1);
+    await server.close();
   });
 
   test("throws an error if url doesn't exist", () async {
@@ -56,12 +58,14 @@ void main() {
     ]).create();
     await _makeRepo("me/homebrew.git");
 
-    var process = await _homebrewUpdate();
+    var server = await _serveArchive();
+    var process = await _homebrewUpdate(server);
     expect(
         process.stdout,
         emitsThrough(contains("Couldn't find a url field in "
             "${p.join('build', 'homebrew', 'my_app.rb')}.")));
     await process.shouldExit(1);
+    await server.close();
   });
 
   test("throws an error if sha256 doesn't exist", () async {
@@ -78,12 +82,14 @@ void main() {
     ]).create();
     await _makeRepo("me/homebrew.git");
 
-    var process = await _homebrewUpdate();
+    var server = await _serveArchive();
+    var process = await _homebrewUpdate(server);
     expect(
         process.stdout,
         emitsThrough(contains("Couldn't find a sha256 field in "
             "${p.join('build', 'homebrew', 'my_app.rb')}.")));
     await process.shouldExit(1);
+    await server.close();
   });
 
   test("updates a Homebrew formula with default settings", () async {
@@ -114,7 +120,7 @@ void main() {
     await git(["tag", "1.2.3-beta.1"]);
 
     await _createHomebrewRepo();
-    var server = await _serveArchive();
+    var server = await _serveArchive("1.2.3-beta.1");
     await (await _homebrewUpdate(server)).shouldExit(0);
     await server.close();
 
@@ -138,7 +144,7 @@ void main() {
       await git(["tag", "1.2.3-beta.1"]);
 
       await _createHomebrewRepo();
-      var server = await _serveArchive();
+      var server = await _serveArchive("1.2.3-beta.1");
       await (await _homebrewUpdate(server)).shouldExit(0);
       await server.close();
 
@@ -202,7 +208,7 @@ void main() {
       await git(["tag", "1.2.3+foo.1"]);
 
       await _createHomebrewRepo();
-      var server = await _serveArchive();
+      var server = await _serveArchive("1.2.3+foo.1");
       await (await _homebrewUpdate(server)).shouldExit(0);
       await server.close();
 
@@ -250,7 +256,7 @@ void main() {
     await git(["tag", "v1.2.3"]);
 
     await _createHomebrewRepo();
-    var server = await _serveArchive();
+    var server = await _serveArchive("v1.2.3");
     await (await _homebrewUpdate(server)).shouldExit(0);
     await server.close();
 
@@ -348,13 +354,15 @@ void main() {
         await d.file("me/homebrew.git/other_app.rb").create();
         await _commitAll("me/homebrew.git", "Add another formula");
 
-        var process = await _homebrewUpdate();
+        var server = await _serveArchive();
+        var process = await _homebrewUpdate(server);
         expect(
             process.stdout,
             emitsThrough(
                 contains("Multiple formulas found in the repo, please set "
                     "pkg.homebrewFormula.")));
         await process.shouldExit(1);
+        await server.close();
       });
 
       test("there are no formulas", () async {
@@ -366,12 +374,14 @@ void main() {
         File(d.path("me/homebrew.git/my_app.rb")).deleteSync();
         await _commitAll("me/homebrew.git", "Remove the formula");
 
-        var process = await _homebrewUpdate();
+        var server = await _serveArchive();
+        var process = await _homebrewUpdate(server);
         expect(
             process.stdout,
             emitsThrough(contains("No formulas found in the repo, please set "
                 "pkg.homebrewFormula.")));
         await process.shouldExit(1);
+        await server.close();
       });
 
       test("the only formula is versioned", () async {
@@ -384,12 +394,14 @@ void main() {
             .renameSync(d.path("me/homebrew.git/my_app@1.0.0.rb"));
         await _commitAll("me/homebrew.git", "Rename the formula");
 
-        var process = await _homebrewUpdate();
+        var server = await _serveArchive();
+        var process = await _homebrewUpdate(server);
         expect(
             process.stdout,
             emitsThrough(contains("No formulas found in the repo, please set "
                 "pkg.homebrewFormula.")));
         await process.shouldExit(1);
+        await server.close();
       });
     });
   });
@@ -446,16 +458,16 @@ Future<void> _commitAll(String path, String message) async {
 
 /// Returns a [ShelfTestServer] with a pre-loaded expectation that grinder will
 /// request an archive for `my_org/my_app` 1.2.3.
-Future<ShelfTestServer> _serveArchive() async {
+Future<ShelfTestServer> _serveArchive([String tag = "1.2.3"]) async {
   var server = await ShelfTestServer.create();
-  server.handler.expect("GET", "/me/app/archive/1.2.3.tar.gz", (request) async {
+  server.handler.expect("GET", "/me/app/archive/$tag.tar.gz", (request) async {
     var process = await Process.start(
-        "git", ["archive", "--prefix=app-1.2.3/", "--format=tar.gz", "1.2.3"],
+        "git", ["archive", "--prefix=app-$tag/", "--format=tar.gz", tag],
         workingDirectory: appDir);
 
     process.exitCode.then((exitCode) async {
       if (exitCode != 0) {
-        fail('git archive 1.2.3 failed:\n' +
+        fail('git archive $tag failed:\n' +
             await utf8.decodeStream(process.stderr));
       }
     });
@@ -468,7 +480,7 @@ Future<ShelfTestServer> _serveArchive() async {
 
 /// Run Grinders `pkg-homebrew-update` task with the test host set so that it
 /// will treat `me/homebrew.git` as the Homebrew repository.
-Future<TestProcess> _homebrewUpdate([ShelfTestServer? server]) => grind([
+Future<TestProcess> _homebrewUpdate(ShelfTestServer server) => grind([
       "pkg-homebrew-update"
     ], environment: {
       // Trick Git into cloning from and pushing to a local path rather than an
