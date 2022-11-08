@@ -541,7 +541,7 @@ void main() {
   });
 
   group("exports", () {
-    const _grindDotDart = """
+    const grindDotDart = """
       void main(List<String> args) {
         pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
         pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.cli)];
@@ -552,7 +552,7 @@ void main() {
     """;
 
     test("automatically adds main JS file as 'default'", () async {
-      await d.package(pubspec, _grindDotDart, [
+      await d.package(pubspec, grindDotDart, [
         _packageJson,
         d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
       ]).create();
@@ -570,7 +570,7 @@ void main() {
     });
 
     test("overwrite existing string value", () async {
-      await d.package(pubspec, _grindDotDart, [
+      await d.package(pubspec, grindDotDart, [
         d.file(
             "package.json",
             jsonEncode({
@@ -593,7 +593,7 @@ void main() {
     });
 
     test("overwrite existing array value", () async {
-      await d.package(pubspec, _grindDotDart, [
+      await d.package(pubspec, grindDotDart, [
         d.file(
             "package.json",
             jsonEncode({
@@ -616,7 +616,7 @@ void main() {
     });
 
     test("merges with existing map/JSON values - default only", () async {
-      await d.package(pubspec, _grindDotDart, [
+      await d.package(pubspec, grindDotDart, [
         d.file(
             "package.json",
             jsonEncode({
