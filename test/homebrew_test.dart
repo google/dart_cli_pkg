@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:shelf/shelf.dart' as shelf;
+import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
@@ -89,7 +92,9 @@ void main() {
     await git(["tag", "1.2.3"]);
 
     await _createHomebrewRepo();
-    await (await _homebrewUpdate()).shouldExit(0);
+    var server = await _serveArchive();
+    await (await _homebrewUpdate(server)).shouldExit(0);
+    await server.close();
 
     await _assertFormula(allOf([
       contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
@@ -109,7 +114,9 @@ void main() {
     await git(["tag", "1.2.3-beta.1"]);
 
     await _createHomebrewRepo();
-    await (await _homebrewUpdate()).shouldExit(0);
+    var server = await _serveArchive();
+    await (await _homebrewUpdate(server)).shouldExit(0);
+    await server.close();
 
     await _assertFormula(allOf([
       contains('url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
@@ -131,7 +138,9 @@ void main() {
       await git(["tag", "1.2.3-beta.1"]);
 
       await _createHomebrewRepo();
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(allOf([
         contains('url "original url"'),
@@ -162,7 +171,9 @@ void main() {
       await git(["tag", "1.2.3"]);
 
       await _createHomebrewRepo();
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(allOf([
         contains('url "original url"'),
@@ -191,7 +202,9 @@ void main() {
       await git(["tag", "1.2.3+foo.1"]);
 
       await _createHomebrewRepo();
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(allOf([
         contains('url "original url"'),
@@ -221,7 +234,9 @@ void main() {
     await git(["tag", "1.2.3"]);
 
     await _createHomebrewRepo();
-    await (await _homebrewUpdate()).shouldExit(0);
+    var server = await _serveArchive();
+    await (await _homebrewUpdate(server)).shouldExit(0);
+    await server.close();
 
     expect(await _lastCommitMessage(), equals("Update My App to 1.2.3"));
   });
@@ -235,7 +250,9 @@ void main() {
     await git(["tag", "v1.2.3"]);
 
     await _createHomebrewRepo();
-    await (await _homebrewUpdate()).shouldExit(0);
+    var server = await _serveArchive();
+    await (await _homebrewUpdate(server)).shouldExit(0);
+    await server.close();
 
     await _assertFormula(
         contains('url "https://github.com/me/app/archive/v1.2.3.tar.gz"'));
@@ -258,7 +275,9 @@ void main() {
           .create();
       await _commitAll("me/homebrew.git", "Add other formula versions");
 
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(
           contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
@@ -280,7 +299,9 @@ void main() {
       await d.file("me/homebrew.git/my_app.py", "my_app.py original").create();
       await _commitAll("me/homebrew.git", "Add non-formula files");
 
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(
           contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
@@ -306,7 +327,9 @@ void main() {
           .create();
       await _commitAll("me/homebrew.git", "Add another formula");
 
-      await (await _homebrewUpdate()).shouldExit(0);
+      var server = await _serveArchive();
+      await (await _homebrewUpdate(server)).shouldExit(0);
+      await server.close();
 
       await _assertFormula(
           contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
@@ -421,15 +444,37 @@ Future<void> _commitAll(String path, String message) async {
   await git(["commit", "-m", message], workingDirectory: path);
 }
 
+/// Returns a [ShelfTestServer] with a pre-loaded expectation that grinder will
+/// request an archive for `my_org/my_app` 1.2.3.
+Future<ShelfTestServer> _serveArchive() async {
+  var server = await ShelfTestServer.create();
+  server.handler.expect("GET", "/me/app/archive/1.2.3.tar.gz", (request) async {
+    var process = await Process.start(
+        "git", ["archive", "--prefix=app-1.2.3/", "--format=tar.gz", "1.2.3"],
+        workingDirectory: appDir);
+
+    process.exitCode.then((exitCode) async {
+      if (exitCode != 0) {
+        fail('git archive 1.2.3 failed:\n' +
+            await utf8.decodeStream(process.stderr));
+      }
+    });
+
+    return shelf.Response.ok(process.stdout,
+        headers: {"content-type": "application/x-gzip"});
+  });
+  return server;
+}
+
 /// Run Grinders `pkg-homebrew-update` task with the test host set so that it
 /// will treat `me/homebrew.git` as the Homebrew repository.
-Future<TestProcess> _homebrewUpdate() => grind([
+Future<TestProcess> _homebrewUpdate([ShelfTestServer? server]) => grind([
       "pkg-homebrew-update"
     ], environment: {
       // Trick Git into cloning from and pushing to a local path rather than an
       // SSH URL.
-      "_CLI_PKG_TEST_HOST": p.toUri(d.sandbox).toString()
-    });
+      "_CLI_PKG_TEST_GIT_HOST": p.toUri(d.sandbox).toString()
+    }, server: server);
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
 /// reset to the new `HEAD` state.

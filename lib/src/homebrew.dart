@@ -66,7 +66,7 @@ Future<void> _update() async {
   ensureBuild();
 
   var digest = sha256.convert(await client.readBytes(
-      url("https://github.com/sass/dart-sass/archive/$homebrewTag.tar.gz")));
+      url("https://github.com/$githubRepo/archive/$homebrewTag.tar.gz")));
 
   var repo =
       await cloneOrPull(url("https://github.com/$homebrewRepo.git").toString());

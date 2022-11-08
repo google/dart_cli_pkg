@@ -184,11 +184,23 @@ ArchiveFile file(String target, String source, {bool executable = false}) =>
     fileFromBytes(target, File(source).readAsBytesSync(),
         executable: executable);
 
-/// Parses [url], replacing its hostname with the `_CLI_PKG_TEST_HOST`
-/// environment variable if it's set.
+/// Parses [url], replacing its hostname with a faked testing value if
+/// necessary.
+///
+/// This respects two environment variables:
+///
+/// * `_CLI_PKG_TEST_GIT_HOST` will replace the hostname *only* for URLs ending
+///   with `.git`. This allows Git repos to be cloned directly from the
+///   filesystem.
+///
+/// * `_CLI_PKG_TEST_HOST` will replace the hostname for any URLs not otherwise
+///   replaced. This allows a local server to take the place of a remote API.
 Uri url(String url) {
   var parsed = Uri.parse(url);
-  var host = Platform.environment["_CLI_PKG_TEST_HOST"];
+  var host = (url.endsWith(".git")
+          ? Platform.environment["_CLI_PKG_TEST_GIT_HOST"]
+          : null) ??
+      Platform.environment["_CLI_PKG_TEST_HOST"];
   if (host == null) return parsed;
 
   var parsedHost = Uri.parse(host);
