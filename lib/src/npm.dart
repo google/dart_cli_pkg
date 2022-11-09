@@ -297,7 +297,7 @@ void _js({required bool release}) {
 
 /// A map from executable names in [executables] to JS- and Dart-safe
 /// identifiers to use to identify those modules.
-late final Map<String, String> _executableIdentifiers = () {
+final Map<String, String> _executableIdentifiers = () {
   var i = 0;
   return {
     // Add a trailing underscore to indicate that the name is intended to be

@@ -2,7 +2,6 @@
 // MIT-style license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -66,17 +65,8 @@ void addHomebrewTasks() {
 Future<void> _update() async {
   ensureBuild();
 
-  var process = await Process.start("git", [
-    "archive",
-    "--prefix=${githubRepo.value.split("/").last}-$homebrewTag/",
-    "--format=tar.gz",
-    homebrewTag.value
-  ]);
-  var digest = await sha256.bind(process.stdout).first;
-  var stderr = await utf8.decodeStream(process.stderr);
-  if ((await process.exitCode) != 0) {
-    fail('git archive "$homebrewTag" failed:\n$stderr');
-  }
+  var digest = sha256.convert(await client.readBytes(
+      url("https://github.com/$githubRepo/archive/$homebrewTag.tar.gz")));
 
   var repo =
       await cloneOrPull(url("https://github.com/$homebrewRepo.git").toString());
