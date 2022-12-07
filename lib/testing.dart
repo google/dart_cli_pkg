@@ -29,7 +29,7 @@ final _executableUpToDateCache = p.PathSet();
 
 /// Whether this package has any path dependencies.
 ///
-/// When a package has path dependencies, `dart pub run` updates the
+/// When a package has path dependencies, `dart run` updates the
 /// modification time on the `pubspec.lock` file after every run, which means
 /// [ensureUpToDate] can't reliably use it for freshness checking.
 final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
