@@ -1,3 +1,8 @@
+## 2.1.6
+
+* Use `dart run` commands rather than `dart pub run` for compatibility with the
+  latest Dart releases.
+
 ## 2.1.5
 
 * **Potentially breaking bug fix:** The `pkg-homebrew-update` task must now

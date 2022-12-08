@@ -29,7 +29,7 @@ final _executableUpToDateCache = p.PathSet();
 
 /// Whether this package has any path dependencies.
 ///
-/// When a package has path dependencies, `dart pub run` updates the
+/// When a package has path dependencies, `dart run` updates the
 /// modification time on the `pubspec.lock` file after every run, which means
 /// [ensureUpToDate] can't reliably use it for freshness checking.
 final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
@@ -179,7 +179,7 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
 
   if (!_executableUpToDateCache.contains(path)) {
     ensureUpToDate(
-        path, "dart pub run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
+        path, "dart run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
         dependencies: [executables.value[executable]]);
 
     // Only add this after ensuring that the executable is up-to-date, so that
