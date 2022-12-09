@@ -1,7 +1,12 @@
 ## 2.1.7
 
 * **Important security bug fix:** Fix incorrect file permissions in the
-  standalone archives.
+  standalone `.tar.gz` archives. Previously, files in these archives were
+  incorrectly marked as world-writable in the archive metadata. While this
+  metadata is ignored under most circumstances, users on multi-user systems who
+  explicitly pass `--preserve-permissions` or who extract the archives as root
+  would end up with an executable that another user on the same system could
+  overwrite with malicious code.
 
 ## 2.1.6
 
