@@ -227,7 +227,7 @@ void addGithubTasks() {
 
   addTask(GrinderTask('pkg-github-fix-permissions',
       description: 'Fix insecure permissions for older GitHub releases.\n'
-      'See https://sass-lang.com/blog/security-alert-tar-permissions',
+          'See https://sass-lang.com/blog/security-alert-tar-permissions',
       taskFunction: _fixPermissions));
 }
 
