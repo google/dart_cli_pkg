@@ -275,7 +275,7 @@ void main() {
             json.encode({
               "name": "direct_dep",
               "version": "1.0.0",
-              "environment": {"sdk": ">=2.0.0 <3.0.0"},
+              "environment": {"sdk": ">=2.0.0 <4.0.0"},
               "dependencies": {
                 "indirect_dep": {"path": "../indirect_dep"}
               }
@@ -289,7 +289,7 @@ void main() {
             json.encode({
               "name": "indirect_dep",
               "version": "1.0.0",
-              "environment": {"sdk": ">=2.0.0 <3.0.0"}
+              "environment": {"sdk": ">=2.0.0 <4.0.0"}
             })),
         d.file("COPYING", "Indirect dependency license")
       ]).create();
