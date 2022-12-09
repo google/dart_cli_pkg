@@ -166,7 +166,7 @@ void ensureBuild() {
 ArchiveFile fileFromBytes(String path, List<int> data,
         {bool executable = false}) =>
     ArchiveFile(path, data.length, data)
-      ..mode = executable ? 495 : 428
+      ..mode = executable ? 493 : 420
       ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
 /// Creates a UTF-8-encoded [ArchiveFile] with the given [path] and [contents].
