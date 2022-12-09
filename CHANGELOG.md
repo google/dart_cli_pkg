@@ -1,3 +1,8 @@
+## 2.1.7
+
+* **Important security bug fix:** Fix incorrect file permissions in the
+  standalone archives.
+
 ## 2.1.6
 
 * Use `dart run` commands rather than `dart pub run` for compatibility with the
