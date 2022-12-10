@@ -18,6 +18,7 @@ import 'dart:convert';
 
 import 'package:archive/archive.dart';
 import 'package:async/async.dart';
+import 'package:cli_pkg/src/utils.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test/test.dart';
@@ -407,6 +408,70 @@ void main() {
         .shouldExit(0);
     await server.close();
   }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+
+  test(
+      "pkg-github-fix-permissions updates an archive to remove "
+      "world-writeability", () async {
+    await d.package(pubspecWithHomepage, _enableGithub()).create();
+    await _release("my_org/my_app");
+
+    var server = await ShelfTestServer.create();
+    server.handler.expect("GET", "/repos/my_org/my_app/releases", (request) {
+      var authorization = _getAuthorization(request);
+      expect(authorization.item1, equals("usr"));
+      expect(authorization.item2, equals("pwd"));
+
+      // These aren't the real GitHub URLs, but we want to verify that we use
+      // the links rather than hard-coding.
+      return shelf.Response.ok(json.encode([
+        {
+          "assets": [
+            // A zip file should be ignored.
+            {
+              "name": "foo.zip",
+              "url": "/assets/2",
+              "browser_download_url": "/assets/1/download/zip"
+            },
+            {
+              "name": "foo.tar.gz",
+              "url": "/assets/1",
+              "browser_download_url": "/assets/1/download/tar"
+            }
+          ]
+        }
+      ]));
+    });
+
+    server.handler.expect(
+        "GET",
+        "/assets/1/download/tar",
+        (request) =>
+            shelf.Response.ok(GZipEncoder().encode(TarEncoder().encode(Archive()
+              ..addFile(fileFromString("foo", "foo contents")..mode = 495)
+              ..addFile(fileFromString("bar", "bar contents")..mode = 506)))));
+
+    server.handler.expect("PATCH", "/assets/1", (request) async {
+      var archive = TarDecoder().decodeBytes(
+          GZipDecoder().decodeBytes(await collectBytes(request.read())));
+      expect(archive.files, hasLength(2));
+
+      var foo = archive.files.first;
+      expect(foo.name, equals("foo"));
+      expect(foo.content, equals(utf8.encode("foo contents")));
+      expect(foo.mode, equals(493));
+
+      var bar = archive.files.last;
+      expect(bar.name, equals("bar"));
+      expect(bar.content, equals(utf8.encode("bar contents")));
+      expect(bar.mode, equals(488));
+
+      return shelf.Response.ok("");
+    });
+
+    await (await grind(["pkg-github-fix-permissions"], server: server))
+        .shouldExit(0);
+    await server.close();
+  });
 }
 
 /// The contents of a `grind.dart` file that just enables GitHub tasks.

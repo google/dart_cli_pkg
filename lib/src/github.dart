@@ -15,8 +15,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pool/pool.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
@@ -222,6 +224,11 @@ void addGithubTasks() {
   addTask(GrinderTask('pkg-github-all',
       description: 'Create a GitHub release with all executables.',
       depends: dependencies));
+
+  addTask(GrinderTask('pkg-github-fix-permissions',
+      description: 'Fix insecure permissions for older GitHub releases.\n'
+          'See https://sass-lang.com/blog/security-alert-tar-permissions',
+      taskFunction: _fixPermissions));
 }
 
 /// Upload an executable for the given [os] and [arch] to the current GitHub
@@ -257,4 +264,44 @@ Future<void> _uploadExecutables(String os, String arch) async {
   } else {
     log("Uploaded $package.");
   }
+}
+
+/// Update permissions of old releases to ensure that they aren't listed as
+/// group/all writeable.
+Future<void> _fixPermissions() async {
+  var response = await client.get(
+      url("https://api.github.com/repos/$githubRepo/releases"),
+      headers: {"authorization": _authorization});
+
+  var pool = Pool(5);
+  var count = 0;
+  var body = (json.decode(response.body) as List<dynamic>)
+      .cast<Map<String, dynamic>>();
+  await Future.wait(body.map((release) async {
+    var assets =
+        (release["assets"] as List<dynamic>).cast<Map<String, dynamic>>();
+    await Future.wait(assets.map((asset) async {
+      if (!(asset["name"] as String).endsWith(".tar.gz")) return;
+
+      await pool.withResource(() async {
+        var assetResponse = await client.get(
+            url(asset["browser_download_url"] as String),
+            headers: {"authorization": _authorization});
+        var archive = TarDecoder()
+            .decodeBytes(GZipDecoder().decodeBytes(assetResponse.bodyBytes));
+        for (var file in archive.files) {
+          // 0o755: ensure that the write permission bits aren't set for
+          // non-owners.
+          file.mode &= 493;
+        }
+        await client.patch(url(asset["url"] as String),
+            headers: {"authorization": _authorization},
+            body: GZipEncoder().encode(TarEncoder().encode(archive)));
+
+        count++;
+        stdout.write("\rUpdated archives: $count");
+      });
+    }));
+  }));
+  stdout.writeln();
 }

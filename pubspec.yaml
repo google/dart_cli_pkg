@@ -20,6 +20,7 @@ dependencies:
   node_preamble: ^2.0.0
   package_config: ^2.0.0
   path: ^1.8.0
+  pool: ^1.5.0
   pub_semver: ^2.0.0
   pubspec_parse: ^1.0.0
   string_scanner: ^1.1.0
