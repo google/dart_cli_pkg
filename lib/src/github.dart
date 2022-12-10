@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:async/async.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pool/pool.dart';
@@ -36,6 +37,13 @@ final githubRepo = InternalConfigVariable.fn<String>(() =>
     _repoFromOrigin() ??
     _parseHttp(pubspec.homepage ?? '') ??
     fail("pkg.githubRepo must be set to deploy to GitHub."));
+
+/// A regular expression for finding the next link in a paginated list of
+/// results.
+///
+/// As suggested by https://docs.github.com/en/rest/guides/using-pagination-in-the-rest-api?apiVersion=2022-11-28.
+final _nextLink =
+    RegExp(r'(?<=<)([\S]*)(?=>; rel="next")', caseSensitive: false);
 
 /// Returns the GitHub repo name from the Git configuration's
 /// `remote.origin.url` field.
@@ -269,21 +277,17 @@ Future<void> _uploadExecutables(String os, String arch) async {
 /// Update permissions of old releases to ensure that they aren't listed as
 /// group/all writeable.
 Future<void> _fixPermissions() async {
-  var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/releases"),
-      headers: {"authorization": _authorization});
-
   var pool = Pool(5);
+  var group = FutureGroup<void>();
   var count = 0;
-  var body = (json.decode(response.body) as List<dynamic>)
-      .cast<Map<String, dynamic>>();
-  await Future.wait(body.map((release) async {
+  await for (var release
+      in _getPaginated("https://api.github.com/repos/$githubRepo/releases")) {
     var assets =
         (release["assets"] as List<dynamic>).cast<Map<String, dynamic>>();
-    await Future.wait(assets.map((asset) async {
-      if (!(asset["name"] as String).endsWith(".tar.gz")) return;
+    for (var asset in assets) {
+      if (!(asset["name"] as String).endsWith(".tar.gz")) continue;
 
-      await pool.withResource(() async {
+      group.add(pool.withResource(() async {
         var assetResponse = await client.get(
             url(asset["browser_download_url"] as String),
             headers: {"authorization": _authorization});
@@ -300,8 +304,33 @@ Future<void> _fixPermissions() async {
 
         count++;
         stdout.write("\rUpdated archives: $count");
-      });
-    }));
-  }));
+      }));
+    }
+  }
+
+  group.close();
+  await group.future;
   stdout.writeln();
+}
+
+/// Makes a GET request to [url] and returns the parsed JSON results,
+/// potentially across multiple pages.
+Stream<Map<String, dynamic>> _getPaginated(String firstUrl) async* {
+  var nextUrl = url(firstUrl);
+
+  while (true) {
+    var response =
+        await client.get(nextUrl, headers: {"authorization": _authorization});
+    for (var result in json.decode(response.body) as List<dynamic>) {
+      yield result as Map<String, dynamic>;
+    }
+
+    var link = response.headers["link"];
+    if (link == null) return;
+
+    var match = _nextLink.firstMatch(link);
+    if (match == null) return;
+
+    nextUrl = url(match[1]!);
+  }
 }

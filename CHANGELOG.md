@@ -1,3 +1,8 @@
+## 2.1.8
+
+* Properly follow GitHub API pagination links in `pkg-github-fix-permissions` so
+  that it fixes all targets, not just the first page of results.
+
 ## 2.1.7
 
 * **Important security bug fix:** Fix incorrect file permissions in the
@@ -7,6 +12,9 @@
   explicitly pass `--preserve-permissions` or who extract the archives as root
   would end up with an executable that another user on the same system could
   overwrite with malicious code.
+
+* Add a `pkg-github-fix-permissions` task which fixes this security issue in all
+  archives which were uploaded to GitHub releases for the current package.
 
 ## 2.1.6
 
