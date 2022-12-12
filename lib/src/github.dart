@@ -327,7 +327,7 @@ Future<void> _fixPermissions() async {
 
   group.close();
   await group.future;
-  stdout.writeln();
+  client.close();
 }
 
 /// Makes a GET request to [url] and returns the parsed JSON results,
