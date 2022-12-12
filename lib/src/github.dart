@@ -20,6 +20,7 @@ import 'package:async/async.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pool/pool.dart';
+import 'package:retry/retry.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
@@ -289,38 +290,51 @@ Future<void> _fixPermissions() async {
     var assets =
         (release["assets"] as List<dynamic>).cast<Map<String, dynamic>>();
     for (var asset in assets) {
+      var archiveName = asset["name"] as String;
       if (!(asset["name"] as String).endsWith(".tar.gz")) continue;
 
-      group.add(pool.withResource(() async {
-        var urlString = asset["browser_download_url"] as String;
-        var archiveName = p.url.basename(urlString);
-        var getResponse = await client
-            .get(url(urlString), headers: {"authorization": _authorization});
-        if (getResponse.statusCode != 200) {
-          fail("${getResponse.statusCode} ${getResponse.reasonPhrase} fetching "
-              "$archiveName:\n"
-              "${getResponse.body}");
-        }
+      group.add(pool.withResource(() {
+        return retry(() async {
+          var getResponse = await client.get(
+              url(asset["browser_download_url"] as String),
+              headers: {"authorization": _authorization});
+          if (getResponse.statusCode != 200) {
+            fail(
+                "${getResponse.statusCode} ${getResponse.reasonPhrase} "
+                "fetching $archiveName:\n"
+                "${getResponse.body}");
+          }
 
-        var archive = TarDecoder()
-            .decodeBytes(GZipDecoder().decodeBytes(getResponse.bodyBytes));
-        for (var file in archive.files) {
-          // 0o755: ensure that the write permission bits aren't set for
-          // non-owners.
-          file.mode &= 493;
-        }
+          var archive = TarDecoder()
+              .decodeBytes(GZipDecoder().decodeBytes(getResponse.bodyBytes));
+          for (var file in archive.files) {
+            // 0o755: ensure that the write permission bits aren't set for
+            // non-owners.
+            file.mode &= 493;
+          }
 
-        var deleteResponse = await client.delete(url(asset["url"] as String),
-            headers: {"authorization": _authorization});
-        if (deleteResponse.statusCode != 204) {
-          fail("${deleteResponse.statusCode} ${deleteResponse.reasonPhrase} "
-              "deleting old $archiveName:\n"
-              "${deleteResponse.body}");
-        }
+          var deleteResponse = await client.delete(url(asset["url"] as String),
+              headers: {"authorization": _authorization});
+          if (deleteResponse.statusCode != 204) {
+            // GitHub sometimes returns a 502 Bad Gateway response for deletions
+            // that succeed, so we check to see if the asset still exists before
+            // throwing an error.
+            if (deleteResponse.statusCode != 502 ||
+                (await client.head(url(asset["url"] as String),
+                            headers: {"authorization": _authorization}))
+                        .statusCode ==
+                    404) {
+              fail(
+                  "${deleteResponse.statusCode} ${deleteResponse.reasonPhrase} "
+                  "deleting old $archiveName:\n"
+                  "${deleteResponse.body}");
+            }
+          }
 
-        await _uploadToRelease(release, archiveName,
-            GZipEncoder().encode(TarEncoder().encode(archive))!);
-        print("Fixed $archiveName");
+          await _uploadToRelease(release, archiveName,
+              GZipEncoder().encode(TarEncoder().encode(archive))!);
+          print("Fixed $archiveName");
+        }, retryIf: (e) => e is GrinderException, maxAttempts: 3);
       }));
     }
   }

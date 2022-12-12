@@ -425,12 +425,13 @@ void main() {
       // the links rather than hard-coding.
       return shelf.Response.ok(json.encode([
         {
+          "upload_url": server.url.resolve("/upload").toString(),
           "assets": [
             // A zip file should be ignored.
             {
               "name": "foo.zip",
               "url": "/assets/2",
-              "browser_download_url": "/assets/1/download/zip"
+              "browser_download_url": "/assets/2/download/zip"
             },
             {
               "name": "foo.tar.gz",
@@ -450,7 +451,11 @@ void main() {
               ..addFile(fileFromString("foo", "foo contents")..mode = 495)
               ..addFile(fileFromString("bar", "bar contents")..mode = 506)))));
 
-    server.handler.expect("PATCH", "/assets/1", (request) async {
+    server.handler.expect("DELETE", "/assets/1", (request) async {
+      return shelf.Response(204);
+    });
+
+    server.handler.expect("POST", "/upload", (request) async {
       var archive = TarDecoder().decodeBytes(
           GZipDecoder().decodeBytes(await collectBytes(request.read())));
       expect(archive.files, hasLength(2));
@@ -465,7 +470,7 @@ void main() {
       expect(bar.content, equals(utf8.encode("bar contents")));
       expect(bar.mode, equals(488));
 
-      return shelf.Response.ok("");
+      return shelf.Response(201);
     });
 
     await (await grind(["pkg-github-fix-permissions"], server: server))
