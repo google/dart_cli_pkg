@@ -279,7 +279,6 @@ Future<void> _uploadExecutables(String os, String arch) async {
 Future<void> _fixPermissions() async {
   var pool = Pool(5);
   var group = FutureGroup<void>();
-  var count = 0;
   await for (var release
       in _getPaginated("https://api.github.com/repos/$githubRepo/releases")) {
     var assets =
@@ -288,22 +287,34 @@ Future<void> _fixPermissions() async {
       if (!(asset["name"] as String).endsWith(".tar.gz")) continue;
 
       group.add(pool.withResource(() async {
-        var assetResponse = await client.get(
-            url(asset["browser_download_url"] as String),
-            headers: {"authorization": _authorization});
+        var urlString = asset["browser_download_url"] as String;
+        var archiveName = p.url.basename(urlString);
+        var response = await client
+            .get(url(urlString), headers: {"authorization": _authorization});
+        if (response.statusCode != 200) {
+          fail("${response.statusCode} ${response.reasonPhrase} fetching "
+              "$archiveName:\n"
+              "${response.body}");
+        }
+
         var archive = TarDecoder()
-            .decodeBytes(GZipDecoder().decodeBytes(assetResponse.bodyBytes));
+            .decodeBytes(GZipDecoder().decodeBytes(response.bodyBytes));
         for (var file in archive.files) {
           // 0o755: ensure that the write permission bits aren't set for
           // non-owners.
           file.mode &= 493;
         }
-        await client.patch(url(asset["url"] as String),
+
+        var patchResponse = await client.patch(url(asset["url"] as String),
             headers: {"authorization": _authorization},
             body: GZipEncoder().encode(TarEncoder().encode(archive)));
+        if (patchResponse.statusCode != 200) {
+          fail("${patchResponse.statusCode} ${patchResponse.reasonPhrase} "
+              "updating $archiveName:\n"
+              "${patchResponse.body}");
+        }
 
-        count++;
-        stdout.write("\rUpdated archives: $count");
+        print("Fixed $archiveName");
       }));
     }
   }
@@ -321,6 +332,12 @@ Stream<Map<String, dynamic>> _getPaginated(String firstUrl) async* {
   while (true) {
     var response =
         await client.get(nextUrl, headers: {"authorization": _authorization});
+    if (response.statusCode != 200) {
+      fail("${response.statusCode} ${response.reasonPhrase} fetching "
+          "$firstUrl:\n"
+          "${response.body}");
+    }
+
     for (var result in json.decode(response.body) as List<dynamic>) {
       yield result as Map<String, dynamic>;
     }
