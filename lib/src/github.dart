@@ -246,31 +246,36 @@ Future<void> _uploadExecutables(String os, String arch) async {
       url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
-  var body = json.decode(response.body);
-  var uploadUrlTemplate = body["upload_url"];
+  var format = os == "windows" ? "zip" : "tar.gz";
+  var package = "$standaloneName-$version-$os-$arch.$format";
+  await _uploadToRelease(json.decode(response.body) as Map<String, dynamic>,
+      package, File(p.join("build", package)).readAsBytesSync());
+  log("Uploaded $package.");
+}
+
+/// Uploads [contents] as an asset named [name] to [release], which should be a
+/// JSON representation of a GitHub release.
+Future<void> _uploadToRelease(
+    Map<String, dynamic> release, String name, List<int> contents) async {
+  var uploadUrlTemplate = release["upload_url"];
   if (uploadUrlTemplate == null) {
     throw 'Unexpected GitHub response, expected "upload_url" field:\n' +
-        JsonEncoder.withIndent("  ").convert(body);
+        JsonEncoder.withIndent("  ").convert(release);
   }
 
   // Remove the URL template.
   var uploadUrl = uploadUrlTemplate.replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
-  var format = os == "windows" ? "zip" : "tar.gz";
-  var package = "$standaloneName-$version-$os-$arch.$format";
-  response = await client.post(Uri.parse("$uploadUrl?name=$package"),
+  var response = await client.post(Uri.parse("$uploadUrl?name=$name"),
       headers: {
         "content-type":
-            os == "windows" ? "application/zip" : "application/gzip",
+            name.endsWith(".zip") ? "application/zip" : "application/gzip",
         "authorization": _authorization
       },
-      body: File(p.join("build", package)).readAsBytesSync());
+      body: contents);
 
   if (response.statusCode != 201) {
-    fail("${response.statusCode} error uploading $package:\n"
-        "${response.body}");
-  } else {
-    log("Uploaded $package.");
+    fail("${response.statusCode} error uploading $name:\n${response.body}");
   }
 }
 
@@ -289,31 +294,32 @@ Future<void> _fixPermissions() async {
       group.add(pool.withResource(() async {
         var urlString = asset["browser_download_url"] as String;
         var archiveName = p.url.basename(urlString);
-        var response = await client
+        var getResponse = await client
             .get(url(urlString), headers: {"authorization": _authorization});
-        if (response.statusCode != 200) {
-          fail("${response.statusCode} ${response.reasonPhrase} fetching "
+        if (getResponse.statusCode != 200) {
+          fail("${getResponse.statusCode} ${getResponse.reasonPhrase} fetching "
               "$archiveName:\n"
-              "${response.body}");
+              "${getResponse.body}");
         }
 
         var archive = TarDecoder()
-            .decodeBytes(GZipDecoder().decodeBytes(response.bodyBytes));
+            .decodeBytes(GZipDecoder().decodeBytes(getResponse.bodyBytes));
         for (var file in archive.files) {
           // 0o755: ensure that the write permission bits aren't set for
           // non-owners.
           file.mode &= 493;
         }
 
-        var patchResponse = await client.patch(url(asset["url"] as String),
-            headers: {"authorization": _authorization},
-            body: GZipEncoder().encode(TarEncoder().encode(archive)));
-        if (patchResponse.statusCode != 200) {
-          fail("${patchResponse.statusCode} ${patchResponse.reasonPhrase} "
-              "updating $archiveName:\n"
-              "${patchResponse.body}");
+        var deleteResponse = await client.delete(url(asset["url"] as String),
+            headers: {"authorization": _authorization});
+        if (deleteResponse.statusCode != 204) {
+          fail("${deleteResponse.statusCode} ${deleteResponse.reasonPhrase} "
+              "deleting old $archiveName:\n"
+              "${deleteResponse.body}");
         }
 
+        await _uploadToRelease(release, archiveName,
+            GZipEncoder().encode(TarEncoder().encode(archive))!);
         print("Fixed $archiveName");
       }));
     }
