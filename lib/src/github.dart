@@ -16,9 +16,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:async/async.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pool/pool.dart';
+import 'package:retry/retry.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
@@ -36,6 +38,13 @@ final githubRepo = InternalConfigVariable.fn<String>(() =>
     _repoFromOrigin() ??
     _parseHttp(pubspec.homepage ?? '') ??
     fail("pkg.githubRepo must be set to deploy to GitHub."));
+
+/// A regular expression for finding the next link in a paginated list of
+/// results.
+///
+/// As suggested by https://docs.github.com/en/rest/guides/using-pagination-in-the-rest-api?apiVersion=2022-11-28.
+final _nextLink =
+    RegExp(r'(?<=<)([\S]*)(?=>; rel="next")', caseSensitive: false);
 
 /// Returns the GitHub repo name from the Git configuration's
 /// `remote.origin.url` field.
@@ -238,70 +247,126 @@ Future<void> _uploadExecutables(String os, String arch) async {
       url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
-  var body = json.decode(response.body);
-  var uploadUrlTemplate = body["upload_url"];
+  var format = os == "windows" ? "zip" : "tar.gz";
+  var package = "$standaloneName-$version-$os-$arch.$format";
+  await _uploadToRelease(json.decode(response.body) as Map<String, dynamic>,
+      package, File(p.join("build", package)).readAsBytesSync());
+  log("Uploaded $package.");
+}
+
+/// Uploads [contents] as an asset named [name] to [release], which should be a
+/// JSON representation of a GitHub release.
+Future<void> _uploadToRelease(
+    Map<String, dynamic> release, String name, List<int> contents) async {
+  var uploadUrlTemplate = release["upload_url"];
   if (uploadUrlTemplate == null) {
     throw 'Unexpected GitHub response, expected "upload_url" field:\n' +
-        JsonEncoder.withIndent("  ").convert(body);
+        JsonEncoder.withIndent("  ").convert(release);
   }
 
   // Remove the URL template.
   var uploadUrl = uploadUrlTemplate.replaceFirst(RegExp(r"\{[^}]+\}$"), "");
 
-  var format = os == "windows" ? "zip" : "tar.gz";
-  var package = "$standaloneName-$version-$os-$arch.$format";
-  response = await client.post(Uri.parse("$uploadUrl?name=$package"),
+  var response = await client.post(Uri.parse("$uploadUrl?name=$name"),
       headers: {
         "content-type":
-            os == "windows" ? "application/zip" : "application/gzip",
+            name.endsWith(".zip") ? "application/zip" : "application/gzip",
         "authorization": _authorization
       },
-      body: File(p.join("build", package)).readAsBytesSync());
+      body: contents);
 
   if (response.statusCode != 201) {
-    fail("${response.statusCode} error uploading $package:\n"
-        "${response.body}");
-  } else {
-    log("Uploaded $package.");
+    fail("${response.statusCode} error uploading $name:\n${response.body}");
   }
 }
 
 /// Update permissions of old releases to ensure that they aren't listed as
 /// group/all writeable.
 Future<void> _fixPermissions() async {
-  var response = await client.get(
-      url("https://api.github.com/repos/$githubRepo/releases"),
-      headers: {"authorization": _authorization});
-
   var pool = Pool(5);
-  var count = 0;
-  var body = (json.decode(response.body) as List<dynamic>)
-      .cast<Map<String, dynamic>>();
-  await Future.wait(body.map((release) async {
+  var group = FutureGroup<void>();
+  await for (var release
+      in _getPaginated("https://api.github.com/repos/$githubRepo/releases")) {
     var assets =
         (release["assets"] as List<dynamic>).cast<Map<String, dynamic>>();
-    await Future.wait(assets.map((asset) async {
-      if (!(asset["name"] as String).endsWith(".tar.gz")) return;
+    for (var asset in assets) {
+      var archiveName = asset["name"] as String;
+      if (!(asset["name"] as String).endsWith(".tar.gz")) continue;
 
-      await pool.withResource(() async {
-        var assetResponse = await client.get(
-            url(asset["browser_download_url"] as String),
-            headers: {"authorization": _authorization});
-        var archive = TarDecoder()
-            .decodeBytes(GZipDecoder().decodeBytes(assetResponse.bodyBytes));
-        for (var file in archive.files) {
-          // 0o755: ensure that the write permission bits aren't set for
-          // non-owners.
-          file.mode &= 493;
-        }
-        await client.patch(url(asset["url"] as String),
-            headers: {"authorization": _authorization},
-            body: GZipEncoder().encode(TarEncoder().encode(archive)));
+      group.add(pool.withResource(() {
+        return retry(() async {
+          var getResponse = await client.get(
+              url(asset["browser_download_url"] as String),
+              headers: {"authorization": _authorization});
+          if (getResponse.statusCode != 200) {
+            fail("${getResponse.statusCode} ${getResponse.reasonPhrase} "
+                "fetching $archiveName:\n"
+                "${getResponse.body}");
+          }
 
-        count++;
-        stdout.write("\rUpdated archives: $count");
-      });
-    }));
-  }));
-  stdout.writeln();
+          var archive = TarDecoder()
+              .decodeBytes(GZipDecoder().decodeBytes(getResponse.bodyBytes));
+          for (var file in archive.files) {
+            // 0o755: ensure that the write permission bits aren't set for
+            // non-owners.
+            file.mode &= 493;
+          }
+
+          var deleteResponse = await client.delete(url(asset["url"] as String),
+              headers: {"authorization": _authorization});
+          if (deleteResponse.statusCode != 204) {
+            // GitHub sometimes returns a 502 Bad Gateway response for deletions
+            // that succeed, so we check to see if the asset still exists before
+            // throwing an error.
+            if (deleteResponse.statusCode != 502 ||
+                (await client.head(url(asset["url"] as String),
+                            headers: {"authorization": _authorization}))
+                        .statusCode ==
+                    404) {
+              fail(
+                  "${deleteResponse.statusCode} ${deleteResponse.reasonPhrase} "
+                  "deleting old $archiveName:\n"
+                  "${deleteResponse.body}");
+            }
+          }
+
+          await _uploadToRelease(release, archiveName,
+              GZipEncoder().encode(TarEncoder().encode(archive))!);
+          print("Fixed $archiveName");
+        }, retryIf: (e) => e is GrinderException, maxAttempts: 3);
+      }));
+    }
+  }
+
+  group.close();
+  await group.future;
+  client.close();
+}
+
+/// Makes a GET request to [url] and returns the parsed JSON results,
+/// potentially across multiple pages.
+Stream<Map<String, dynamic>> _getPaginated(String firstUrl) async* {
+  var nextUrl = url(firstUrl);
+
+  while (true) {
+    var response =
+        await client.get(nextUrl, headers: {"authorization": _authorization});
+    if (response.statusCode != 200) {
+      fail("${response.statusCode} ${response.reasonPhrase} fetching "
+          "$firstUrl:\n"
+          "${response.body}");
+    }
+
+    for (var result in json.decode(response.body) as List<dynamic>) {
+      yield result as Map<String, dynamic>;
+    }
+
+    var link = response.headers["link"];
+    if (link == null) return;
+
+    var match = _nextLink.firstMatch(link);
+    if (match == null) return;
+
+    nextUrl = url(match[1]!);
+  }
 }
