@@ -299,8 +299,7 @@ Future<void> _fixPermissions() async {
               url(asset["browser_download_url"] as String),
               headers: {"authorization": _authorization});
           if (getResponse.statusCode != 200) {
-            fail(
-                "${getResponse.statusCode} ${getResponse.reasonPhrase} "
+            fail("${getResponse.statusCode} ${getResponse.reasonPhrase} "
                 "fetching $archiveName:\n"
                 "${getResponse.body}");
           }
