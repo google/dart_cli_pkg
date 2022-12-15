@@ -1,3 +1,9 @@
+## 2.1.9
+
+* Use `readlink -f` in standalone scripts that wrap snapshots on operating
+  systems where it's available. This ensures that the path resolution for those
+  scripts is accurate even in the presence of complex symlinks.
+
 ## 2.1.8
 
 * Properly follow GitHub API pagination links in `pkg-github-fix-permissions` so
