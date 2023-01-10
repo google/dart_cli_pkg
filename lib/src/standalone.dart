@@ -32,9 +32,13 @@ import 'utils.dart';
 /// generated for the current operating system in 64-bit mode, so [_useNative]
 /// should be checked as well.
 ///
-/// This is currently only enabled on Linux because Windows and OS X generate
+/// This is currently disabled on Windows and OS X because they generate
 /// annoying warnings when running unsigned executables. See #67 for details.
-final _useExe = Platform.operatingSystem == "linux";
+///
+/// This is currently disabled on Linux because the self-contained executable
+/// can be broken due to the way trailing snapshot in ELF is handled.
+/// See https://github.com/dart-lang/sdk/issues/50926 for details.
+final _useExe = false;
 
 /// The name of the standalone package.
 ///

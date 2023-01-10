@@ -1,3 +1,7 @@
+## 2.2.0
+
+* Generate a native snapshot rather than a self-contained executable on Linux.
+
 ## 2.1.9
 
 * Use `readlink -f` in standalone scripts that wrap snapshots on operating
