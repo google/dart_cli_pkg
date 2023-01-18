@@ -1,3 +1,8 @@
+## 2.2.1
+
+* Use current SDK's `dart` executable to build standalone snapshot for current
+  architecture.
+
 ## 2.2.0
 
 * Generate a native snapshot rather than a self-contained executable on Linux.

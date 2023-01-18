@@ -156,10 +156,15 @@ void addStandaloneTasks() {
 /// (dart-lang/sdk#47177).
 bool _useNative(String os, String arch) {
   _verifyOsAndArch(os, arch);
-  if ("${os}_$arch" != Abi.current().toString()) return false;
+  if (!_isCurrentOsAndArch(os, arch)) return false;
   if (arch == "ia32") return false;
 
   return true;
+}
+
+/// Returns whether currently running SDK matches [os] and [arch] combination.
+bool _isCurrentOsAndArch(String os, String arch) {
+  return "${os}_$arch" == Abi.current().toString();
 }
 
 /// Builds scripts for testing each executable on the current OS and
@@ -249,6 +254,9 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
   if (_useNative(os, arch)) {
     return File(
             p.join(sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
+        .readAsBytesSync();
+  } else if (_isCurrentOsAndArch(os, arch)) {
+    return File(p.join(sdkDir.path, "bin/dart${_binaryExtension(os)}"))
         .readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
