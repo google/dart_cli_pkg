@@ -12,35 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'npm.dart';
+
 /// An enumeration of possible targets in which to include the require.
-class JSRequireTarget {
-  /// The require is available for all targets.
-  static const all = JSRequireTarget._("all");
+enum JSRequireTarget {
+  /// The require is available for all targets that any other [JSRequire] uses.
+  ///
+  /// This target is _always_ loaded for the CLI, and if [jsModuleMainLibrary]
+  /// is set it's always for the `"default"` [conditional export] in
+  /// package.json.
+  ///
+  /// [conditional export]: https://nodejs.org/api/packages.html#packages_conditional_exports
+  all,
 
   /// The require is available for all command-line executables, but not for the
   /// the standalone library.
-  static const cli = JSRequireTarget._("cli");
+  cli,
 
   /// The require is available only when loaded by Node.js.
   ///
-  /// This uses [conditional exports] to only include `require()`s for Node.
+  /// This corresponds to the `"node"` [conditional export] in package.json.
   /// Note that all Node requires are also available for CLI targets.
   ///
-  /// [conditional exports]: https://nodejs.org/api/packages.html#packages_conditional_exports
-  static const node = JSRequireTarget._("node");
+  /// [conditional export]: https://nodejs.org/api/packages.html#packages_conditional_exports
+  node,
 
   /// The require is available only when loaded in a browser.
   ///
-  /// This uses [conditional exports] to only include `require()`s on the
-  /// browser.
+  /// This corresponds to the `"browser"` [conditional export] in package.json.
   ///
-  /// [conditional exports]: https://webpack.js.org/guides/package-exports/#target-environment
-  static const browser = JSRequireTarget._("browser");
+  /// [conditional export]: https://nodejs.org/api/packages.html#community-conditions-definitions
+  browser,
 
-  /// The name of the target, for debugging and const-separation purposes.
-  final String _name;
-
-  const JSRequireTarget._(this._name);
-
-  String toString() => _name;
+  /// The require is available when loaded by the default target.
+  ///
+  /// This corresponds to the `"default"` [conditional export] in package.json.
+  /// These requires will be used by any platform for which no other requires
+  /// are specified. For example, Node.js will use these requires if and only if
+  /// there are no requires explicitly specified for [node].
+  ///
+  /// [conditional export]: https://nodejs.org/api/packages.html#packages_conditional_exports
+  defaultTarget,
 }

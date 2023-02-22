@@ -113,10 +113,10 @@ Future<List<T>> waitAndReportErrors<T>(Iterable<Future<T>> futures) {
     return future.catchError((Object error, StackTrace stackTrace) {
       if (!errored) {
         errored = true;
-        throw error; // ignore: only_throw_errors
       } else {
         registerException(error, stackTrace);
       }
+      throw error; // ignore: only_throw_errors
     });
   }));
 }

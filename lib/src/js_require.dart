@@ -19,6 +19,9 @@ import 'js_require_target.dart';
 ///
 /// This allows each individual dependency to be configured to avoid loading it
 /// when it's not necessary.
+///
+/// Note that if [jsEsmExports] is set, ESM files with `import`s are generated
+/// in addition to CJS files with `require()`.
 class JSRequire {
   /// The argument to the `require()` function.
   final String package;
@@ -39,4 +42,6 @@ class JSRequire {
                 .replaceFirst(RegExp(r'^@'), '')
                 .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_'),
         target = target ?? JSRequireTarget.all;
+
+  String toString() => "const $identifier = require('$package') on $target";
 }

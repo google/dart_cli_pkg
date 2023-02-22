@@ -1,0 +1,11 @@
+name: cli_pkg_test
+version: 0.0.0
+
+environment:
+  sdk: '>=2.16.0 <3.0.0'
+
+dependencies:
+  js: ^0.6.3
+  grinder: ^0.9.0
+  cli_pkg: {path: ..}
+  test: ^1.16.7
