@@ -44,6 +44,43 @@ jobs:
     - run: dart pub get
     - run: dart run test -r expanded --total-shards 3 --shard-index ${{ matrix.shard }}
 
+  browser-test:
+    name: "Browser Tests | Dart ${{ matrix.dart-channel }}"
+
+    strategy:
+      matrix:
+        dart-channel: [stable, dev]
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: browser-actions/setup-chrome@v1
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+    - run: node --version
+
+    - uses: dart-lang/setup-dart@v1.2
+      with:
+        sdk: ${{ matrix.dart-channel }}
+    - run: dart --version
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "ci@local"
+        git config --global user.name CI
+    
+    - run: dart pub get
+      working-directory: ./browser_library_test
+
+    - run: dart run grinder before-test
+      working-directory: ./browser_library_test
+
+    - run: google-chrome --version
+
+    - run: dart run test --platform chrome --exclude-tags not-on-gh-actions
+      working-directory: ./browser_library_test
+      env: {CHROME_EXECUTABLE: chrome}
+
   format:
     name: "Code formatting"
 

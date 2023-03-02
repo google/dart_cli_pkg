@@ -23,6 +23,8 @@ import 'package:cli_pkg/src/utils.dart';
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
+import 'dart:async';
+
 /// The contents of a `grind.dart` file that just enables npm tasks.
 final _enableNpm = """
   void main(List<String> args) {
@@ -69,19 +71,9 @@ void main() {
 
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
-      // Test that the only occurrence of `require("fs")` is the one assigning
-      // it to a global variable.
       await d
-          .file(
-              "my_app/build/my_app.dart.js",
-              allOf([
-                contains('self.fs = require("fs");'),
-                predicate((string) =>
-                    RegExp(r'require\("fs"\);')
-                        .allMatches(string as String)
-                        .length ==
-                    1)
-              ]))
+          .file("my_app/build/npm/my_app.dart.js",
+              isNot(contains('require("fs")')))
           .validate();
 
       // Test that running the executable still works.
@@ -94,20 +86,20 @@ void main() {
 
     test("includes a source map comment in dev mode", () async {
       await d.package(pubspec, _enableNpm, [_packageJson]).create();
-      await (await grind(["pkg-js-dev"])).shouldExit();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
 
       await d
-          .file("my_app/build/my_app.dart.js",
+          .file("my_app/build/npm/my_app.dart.js",
               contains("\n//# sourceMappingURL="))
           .validate();
     });
 
     test("doesn't include a source map comment in release mode", () async {
       await d.package(pubspec, _enableNpm, [_packageJson]).create();
-      await (await grind(["pkg-js-release"])).shouldExit();
+      await (await grind(["pkg-npm-release"])).shouldExit();
 
       await d
-          .file("my_app/build/my_app.dart.js",
+          .file("my_app/build/npm/my_app.dart.js",
               isNot(contains("\n//# sourceMappingURL=")))
           .validate();
     });
@@ -126,10 +118,10 @@ void main() {
           d.dir("lib/src", [_exportsHello('"Hi, there!"')])
         ]).create();
 
-        await (await grind(["pkg-js-dev"])).shouldExit();
+        await (await grind(["pkg-npm-dev"])).shouldExit();
 
         await d.file("test.js", """
-          var my_app = require("./my_app/build/my_app.dart.js");
+          var my_app = require("./my_app/build/npm");
 
           console.log(my_app.hello);
         """).create();
@@ -142,11 +134,11 @@ void main() {
 
       /// Determines whether a package that declares a `pkg.JSRequire` on the
       /// `os` package has access to that package when loaded as a Node library.
-      Future<bool> hasAccessToRequire(String requireDeclaration) async {
+      Future<bool> hasAccessToRequire(String requireDeclarations) async {
         await d.package(pubspec, """
           void main(List<String> args) {
             pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-            pkg.jsRequires.value.add($requireDeclaration);
+            pkg.jsRequires.value = [$requireDeclarations];
 
             pkg.addNpmTasks();
             grind(args);
@@ -183,7 +175,10 @@ void main() {
       }
 
       test("have access to global requires", () async {
-        expect(hasAccessToRequire("pkg.JSRequire('os')"), completion(isTrue));
+        expect(
+            hasAccessToRequire(
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.all)"),
+            completion(isTrue));
       });
 
       test("have access to node requires", () async {
@@ -205,6 +200,21 @@ void main() {
             hasAccessToRequire(
                 "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)"),
             completion(isFalse));
+      });
+
+      test("has access to default requires without a node target", () async {
+        expect(
+            hasAccessToRequire(
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)"),
+            completion(isTrue));
+      });
+
+      test("doesn't have access to default requires with a node target",
+          () async {
+        expect(hasAccessToRequire("""
+          pkg.JSRequire('http', target: pkg.JSRequireTarget.node),
+          pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget),
+        """), completion(isFalse));
       });
     });
 
@@ -308,6 +318,13 @@ void main() {
       expect(
           hasAccessToRequire(
               "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)"),
+          completion(isFalse));
+    });
+
+    test("without access to default requires", () async {
+      expect(
+          hasAccessToRequire(
+              "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)"),
           completion(isFalse));
     });
 
@@ -535,7 +552,7 @@ void main() {
 
       await d
           .file("my_app/build/npm/package.json",
-              after(jsonDecode, containsPair("main", "my_app.dart.js")))
+              after(jsonDecode, containsPair("main", "my_app.default.js")))
           .validate();
     });
   });
@@ -551,8 +568,34 @@ void main() {
       }
     """;
 
-    test("automatically adds main JS file as 'default'", () async {
+    const grindDotDartWithExports = """
+      void main(List<String> args) {
+        pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+        pkg.jsRequires.value = [
+          pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
+          pkg.JSRequire('other', target: pkg.JSRequireTarget.node),
+        ];
+
+        pkg.addNpmTasks();
+        grind(args);
+      }
+    """;
+
+    test("isn't added if there's only one main JS file", () async {
       await d.package(pubspec, grindDotDart, [
+        _packageJson,
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file("my_app/build/npm/package.json",
+              after(jsonDecode, isNot(contains("exports"))))
+          .validate();
+    });
+
+    test("adds exports if another target is set", () async {
+      await d.package(pubspec, grindDotDartWithExports, [
         _packageJson,
         d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
       ]).create();
@@ -564,13 +607,51 @@ void main() {
               after(
                   jsonDecode,
                   containsPair("exports", {
-                    "default": "./my_app.default.dart.js",
+                    "node": "./my_app.node.js",
+                    "default": "./my_app.default.js"
+                  })))
+          .validate();
+    });
+
+    test("generates ESM files if jsEsmExports is set", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+          pkg.jsRequires.value = [
+            pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
+            pkg.JSRequire('other', target: pkg.JSRequireTarget.node),
+          ];
+          pkg.jsEsmExports.value = {};
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        _packageJson,
+        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+      ]).create();
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      await d
+          .file(
+              "my_app/build/npm/package.json",
+              after(
+                  jsonDecode,
+                  containsPair("exports", {
+                    "node": {
+                      "require": "./my_app.node.cjs",
+                      "default": "./my_app.node.js"
+                    },
+                    "default": {
+                      "require": "./my_app.default.cjs",
+                      "default": "./my_app.default.js"
+                    }
                   })))
           .validate();
     });
 
     test("overwrite existing string value", () async {
-      await d.package(pubspec, grindDotDart, [
+      await d.package(pubspec, grindDotDartWithExports, [
         d.file(
             "package.json",
             jsonEncode({
@@ -587,13 +668,14 @@ void main() {
               after(
                   jsonDecode,
                   containsPair("exports", {
-                    "default": "./my_app.default.dart.js",
+                    "node": "./my_app.node.js",
+                    "default": "./my_app.default.js",
                   })))
           .validate();
     });
 
     test("overwrite existing array value", () async {
-      await d.package(pubspec, grindDotDart, [
+      await d.package(pubspec, grindDotDartWithExports, [
         d.file(
             "package.json",
             jsonEncode({
@@ -610,7 +692,8 @@ void main() {
               after(
                   jsonDecode,
                   containsPair("exports", {
-                    "default": "./my_app.default.dart.js",
+                    "node": "./my_app.node.js",
+                    "default": "./my_app.default.js",
                   })))
           .validate();
     });
@@ -639,21 +722,13 @@ void main() {
                   containsPair("exports", {
                     "types": "./foo",
                     "node": "./bar",
-                    "default": "./my_app.default.dart.js",
+                    "default": "./my_app.default.js",
                   })))
           .validate();
     });
 
-    test("merges with existing map/JSON values - node target only", () async {
-      await d.package(pubspec, """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
-          pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.node)];
-
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """, [
+    test("merges with existing map/JSON values - with browser", () async {
+      await d.package(pubspec, grindDotDartWithExports, [
         d.file(
             "package.json",
             jsonEncode({
@@ -675,8 +750,8 @@ void main() {
                   jsonDecode,
                   containsPair("exports", {
                     "types": "./foo",
-                    "node": "./my_app.node.dart.js",
-                    "default": "./my_app.default.dart.js",
+                    "node": "./my_app.node.js",
+                    "default": "./my_app.default.js",
                   })))
           .validate();
     });

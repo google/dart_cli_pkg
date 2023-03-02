@@ -1,3 +1,21 @@
+## 2.3.0
+
+* Added `pkg.jsEsmExports`. If this is set, `cli_pkg` will generate ESM
+  libraries for each target in addition to CommonJS.
+
+* Made `JSRequireTarget` a proper enum.
+
+* Added `JSRequireTarget.defaultTarget`, which is explicitly loaded only by the
+  `"default"` [conditional export] in package.json.
+
+  [conditional export]: https://nodejs.org/api/packages.html#packages_conditional_exports
+
+* It's now allowed to set `JSRequire`s with `JSRequireTarget.cli` without
+  setting `jsModuleMainLibrary`.
+
+* **Potentially breaking bug fix:** Instead of scraping source maps after the
+  fact, added `--no-source-maps` to the default value of `jsReleaseFlags`.
+
 ## 2.2.0
 
 * Use the current SDK's `dart` executable to build the standalone snapshot for
