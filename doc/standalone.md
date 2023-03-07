@@ -98,6 +98,10 @@ host OS matches the target OS *and* the architecture is 64-bit, executables will
 be built as native (["AOT"][snapshot]) executables, which are substantially
 faster and smaller than the kernel snapshots that are generated otherwise.
 
+The target for the current OS and architecture is always available. However, for
+any OS or architecture under experimental Dart SDK support, such task is only
+available when building with the experimental Dart SDK directly.
+
 This produces a ZIP file in Windows, and a gzipped TAR file on Linux and Mac OS.
 
 Note that `pkg-standalone-macos-ia32` doesn't exist. The Dart SDK no longer has

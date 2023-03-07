@@ -145,6 +145,18 @@ void addStandaloneTasks() {
   addTask(GrinderTask('pkg-standalone-all',
       description: 'Build all standalone packages.',
       depends: tasks.map((task) => task.name)));
+
+  // Add a task for current sdk if it is experimental.
+  var taskNameForCurrentAbi = "pkg-standalone-$_currentOs-$_currentArch";
+  if (!tasks.any((task) => task.name == taskNameForCurrentAbi)) {
+    addTask(GrinderTask(taskNameForCurrentAbi,
+        taskFunction: () => _buildPackage(_currentOs, _currentArch),
+        description:
+            'Build a standalone $_currentArch package for ${humanOSName(_currentOs)}.',
+        depends: _useNative(_currentOs, _currentArch)
+            ? ['pkg-compile-native']
+            : ['pkg-compile-snapshot']));
+  }
 }
 
 /// Returns whether to use the natively-compiled executable for the given [os]
@@ -162,9 +174,18 @@ bool _useNative(String os, String arch) {
   return true;
 }
 
+/// List of strings containing the os and arch for the current Dart SDK.
+List<String> _currentOsAndArch = Abi.current().toString().split('_');
+
+/// The os of the current Dart SDK.
+String _currentOs = _currentOsAndArch[0];
+
+/// The arch of the current Dart SDK.
+String _currentArch = _currentOsAndArch[1];
+
 /// Returns whether currently running SDK matches [os] and [arch] combination.
 bool _isCurrentOsAndArch(String os, String arch) {
-  return "${os}_$arch" == Abi.current().toString();
+  return os == _currentOs && arch == _currentArch;
 }
 
 /// Builds scripts for testing each executable on the current OS and
@@ -285,10 +306,8 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
 ///
 /// This is just intended to guard against programmer error within `cli_pkg`.
 void _verifyOsAndArch(String os, String arch) {
-  if (!osToArchs.containsKey(os)) {
-    fail("Unknown operating system $os!");
-  } else if (!osToArchs[os]!.contains(arch)) {
-    fail("Unknown or unsupperted architecture $arch for ${humanOSName(os)}!");
+  if (!Abi.values.any((abi) => abi.toString() == '${os}_$arch')) {
+    fail("Unknown or unsupported platform $os-$arch!");
   }
 }
 
