@@ -304,7 +304,7 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
 /// This is just intended to guard against programmer error within `cli_pkg`.
 void _verifyOsAndArch(String os, String arch) {
   if (!Abi.values.any((abi) => abi.toString() == '${os}_$arch')) {
-    fail("Unknown or unsupperted platform $os-$arch!");
+    fail("Unknown or unsupported platform $os-$arch!");
   }
 }
 
