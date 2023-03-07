@@ -174,10 +174,13 @@ bool _useNative(String os, String arch) {
   return true;
 }
 
+/// List of strings containing the os and arch for the current Dart SDK.
 List<String> _currentOsAndArch = Abi.current().toString().split('_');
 
+/// The os of the current Dart SDK.
 String _currentOs = _currentOsAndArch[0];
 
+/// The arch of the current Dart SDK.
 String _currentArch = _currentOsAndArch[1];
 
 /// Returns whether currently running SDK matches [os] and [arch] combination.
