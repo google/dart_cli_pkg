@@ -1,3 +1,8 @@
+## 2.4.0
+
+* Add standalone tasks for experimental dart sdks. These tasks are only
+  available directly on experimental dart sdks.
+
 ## 2.3.0
 
 * Added `pkg.jsEsmExports`. If this is set, `cli_pkg` will generate ESM
