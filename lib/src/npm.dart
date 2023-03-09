@@ -534,14 +534,14 @@ void _writePlatformWrapper(String path, JSRequireSet requires) {
 void _writeRequireWrapper(String path, JSRequireSet requires) {
   writeString(
       path,
-      (jsEsmExports.value == null ?
-      "const library = require('./$_npmName.dart.js');\n"
-      : "require('./$_npmName.dart.js');\n"
-      "const library = globalThis._cliPkgExports.pop();\n"
-      "if (globalThis._cliPkgExports.length === 0) delete ""globalThis._cliPkgExports;\n"
-    ) +
-      "${_loadRequires(requires)}\n"
-      "module.exports = library;\n");
+      (jsEsmExports.value == null
+              ? "const library = require('./$_npmName.dart.js');\n"
+              : "require('./$_npmName.dart.js');\n"
+                  "const library = globalThis._cliPkgExports.pop();\n"
+                  "if (globalThis._cliPkgExports.length === 0) delete "
+                  "globalThis._cliPkgExports;\n") +
+          "${_loadRequires(requires)}\n"
+              "module.exports = library;\n");
 }
 
 /// Returns the text of a `library.load()` call that loads [requires].
