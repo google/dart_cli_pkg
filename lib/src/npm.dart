@@ -465,7 +465,11 @@ if (this === undefined ||
     // Work around vitejs/vite#12340. Node.js loading via CommonJS sets `this`
     // to an empty object. This will also trigger if a browser directly loads
     // the `.dart.js` file, but that's never going to work anyway.
-    (typeof globalThis !== 'undefined' && this === globalThis)) {
+    (typeof globalThis !== 'undefined' &&
+        this === globalThis &&
+        // This is necessary to ensure that if the library is `require()`d in
+        // Rollup, it will load as CommonJS.
+        typeof exports === 'undefined')) {
   const globalObject = typeof globalThis !== 'undefined'
       ? globalThis
       : typeof window === 'undefined' ? window : global;
@@ -577,7 +581,7 @@ import * as _cliPkgModule from ${json.encode('./$_npmName.dart.js')};
 
 // Bundlers may try to resolve this file eagerly, in which case
 // $_npmName.dart.js won't be able to accurately detect that it's being imported
-// rather than required. Fortunately, in that case, exports will be defiend and
+// rather than required. Fortunately, in that case, exports will be defined and
 // we can load the library that way instead.
 const _cliPkgLibrary =
     'load' in _cliPkgModule ? _cliPkgModule : window._cliPkgExports;
