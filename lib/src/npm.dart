@@ -460,26 +460,14 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
   var exportsVariable = "exports";
   if (jsEsmExports.value != null) {
     buffer.writeln("""
-let _cliPkgExports;
-if (this === undefined ||
-    // Work around vitejs/vite#12340. Node.js loading via CommonJS sets `this`
-    // to an empty object. This will also trigger if a browser directly loads
-    // the `.dart.js` file, but that's never going to work anyway.
-    (typeof globalThis !== 'undefined' &&
-        this === globalThis &&
-        // This is necessary to ensure that if the library is `require()`d in
-        // Rollup, it will load as CommonJS.
-        typeof exports === 'undefined')) {
-  const globalObject = typeof globalThis !== 'undefined'
-      ? globalThis
-      : typeof window === 'undefined' ? window : global;
-  // If this is being loaded in an ESM context we need to establish a back
-  // channel to export values. We can't use normal ESM exports because then the
-  // file won't be loadable via CommonJS.
-  _cliPkgExports = globalObject._cliPkgExports = {};
-} else {
-  _cliPkgExports = exports;
-}
+// Because of vitejs/vite#12340, there's no way to reliably detect whether we're
+// running as a (possibly bundled/polyfilled) ESM module or as a CommonJS
+// module. In order to work everywhere, we have to provide the load function via
+// a side channel on the global object. We write it as a stack so that multiple
+// cli_pkg packages can depend on one another without clobbering their exports.
+globalThis._cliPkgExports ??= [];
+let _cliPkgExports = {};
+globalThis._cliPkgExports.push(_cliPkgExports);
 """);
     exportsVariable = "_cliPkgExports";
   }
@@ -546,7 +534,12 @@ void _writePlatformWrapper(String path, JSRequireSet requires) {
 void _writeRequireWrapper(String path, JSRequireSet requires) {
   writeString(
       path,
-      "var library = require('./$_npmName.dart.js');\n"
+      (jsEsmExports.value == null ?
+      "const library = require('./$_npmName.dart.js');\n"
+      : "require('./$_npmName.dart.js');\n"
+      "const library = globalThis._cliPkgExports.pop();\n"
+      "if (globalThis._cliPkgExports.length === 0) delete ""globalThis._cliPkgExports;\n"
+    ) +
       "${_loadRequires(requires)}\n"
       "module.exports = library;\n");
 }
@@ -577,15 +570,10 @@ void _writeImportWrapper(
 
   buffer
     ..write("""
-import * as _cliPkgModule from ${json.encode('./$_npmName.dart.js')};
+import ${json.encode('./$_npmName.dart.js')};
 
-// Bundlers may try to resolve this file eagerly, in which case
-// $_npmName.dart.js won't be able to accurately detect that it's being imported
-// rather than required. Fortunately, in that case, exports will be defined and
-// we can load the library that way instead.
-const _cliPkgLibrary =
-    'load' in _cliPkgModule ? _cliPkgModule : window._cliPkgExports;
-delete window._cliPkgExports;
+const _cliPkgLibrary = globalThis._cliPkgExports.pop();
+if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
 const _cliPkgExports = {};
 """)
     ..write("_cliPkgLibrary.load({")
