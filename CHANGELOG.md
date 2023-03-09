@@ -1,3 +1,7 @@
+## 2.4.1
+
+* Work around a bug in Vite when bundling packages for the browser.
+
 ## 2.4.0
 
 * Add standalone tasks for experimental dart sdks. These tasks are only

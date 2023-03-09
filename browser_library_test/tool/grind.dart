@@ -44,7 +44,7 @@ void main(List<String> args) {
 }
 
 @Task('Run all tasks required to test the package')
-@Depends(readyPackage, npmInstall, raw, webpack, rollup, esbuild, jspm)
+@Depends(readyPackage, npmInstall, raw, webpack, rollup, esbuild, jspm, vite)
 void beforeTest() {}
 
 @Task('Install JS dependencies')
@@ -104,6 +104,11 @@ void esbuild() {
     "lib/import.js",
     "--outfile=lib/build/esbuild-import.js"
   ]);
+}
+
+@Task('Build rollup bundles')
+void vite() {
+  run("npx", arguments: ["vite", "build"]);
 }
 
 @Task('Format JS source')

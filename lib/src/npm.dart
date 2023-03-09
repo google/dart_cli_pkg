@@ -461,7 +461,11 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
   if (jsEsmExports.value != null) {
     buffer.writeln("""
 let _cliPkgExports;
-if (this === undefined) {
+if (this === undefined ||
+    // Work around vitejs/vite#12340. Node.js loading via CommonJS sets `this`
+    // to an empty object. This will also trigger if a browser directly loads
+    // the `.dart.js` file, but that's never going to work anyway.
+    (typeof globalThis !== 'undefined' && this === globalThis)) {
   const globalObject = typeof globalThis !== 'undefined'
       ? globalThis
       : typeof window === 'undefined' ? window : global;
