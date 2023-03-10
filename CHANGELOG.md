@@ -1,3 +1,7 @@
+## 2.4.1
+
+* Fix a crash on dart sdks under experimental OS support.
+
 ## 2.4.0
 
 * Add standalone tasks for experimental dart sdks. These tasks are only
