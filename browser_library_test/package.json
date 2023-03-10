@@ -22,8 +22,8 @@
     "esmify": "^2.1.1",
     "prettier": "^2.8.4",
     "rollup": "^3.17.3",
-    "vite": "^4.1.4"
+    "vite": "^4.1.4",
     "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1",
+    "webpack-cli": "^5.0.1"
   }
 }
