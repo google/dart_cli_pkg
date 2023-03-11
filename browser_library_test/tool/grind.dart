@@ -44,7 +44,7 @@ void main(List<String> args) {
 }
 
 @Task('Run all tasks required to test the package')
-@Depends(readyPackage, npmInstall, raw, webpack, rollup, esbuild)
+@Depends(readyPackage, npmInstall, raw, webpack, rollup, esbuild, jspm, vite)
 void beforeTest() {}
 
 @Task('Install JS dependencies')
@@ -63,10 +63,7 @@ void raw() {
   delete(getDir('lib/build/pkg'));
   Directory('lib/build/pkg').createSync(recursive: true);
 
-  // Link the package into the served directory to work around
-  // jspm/generator#223. Otherwise, it'll generate a path pointing out of the
-  // served directory.
-  Link('lib/build/cli-pkg-test').createSync('../../build/npm');
+  _forceLink('lib/build/cli-pkg-test', '../../build/npm');
   File('lib/build/pkg/package.json').writeAsStringSync(json.encode({
     "dependencies": {"cli-pkg-test": "file:../cli-pkg-test"}
   }));
@@ -75,7 +72,12 @@ void raw() {
       arguments: ["install"], workingDirectory: "lib/build/cli-pkg-test");
 }
 
-// TODO(nweiz): Test JSPM if/when browsers support loading import maps by URL.
+@Task('Build jspm')
+void jspm() {
+  _forceLink('lib/build/cli-pkg-test', '../../build/npm');
+  _forceLink('lib/build/node_modules', '../../node_modules');
+  run("node", arguments: ["generate.mjs"]);
+}
 
 @Task('Build webpack bundles')
 void webpack() {
@@ -104,6 +106,11 @@ void esbuild() {
   ]);
 }
 
+@Task('Build rollup bundles')
+void vite() {
+  run("npx", arguments: ["vite", "build"]);
+}
+
 @Task('Format JS source')
 void format() {
   run("npx", arguments: [
@@ -113,4 +120,16 @@ void format() {
     "!lib/build/**",
     "!build/**"
   ]);
+}
+
+/// Creates a link from [location] to [target], overwriting an existing link if
+/// it exists.
+void _forceLink(String location, String target) {
+  try {
+    Link(location).deleteSync();
+  } on IOException {
+    // Ignore if the link doesn't exist.
+  }
+
+  Link(location).createSync(target);
 }
