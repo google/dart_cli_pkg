@@ -217,14 +217,12 @@ Uri url(String url) {
 /// Returns the human-friendly name for the given [os] string.
 String humanOSName(String os) {
   switch (os) {
-    case "linux":
-      return "Linux";
+    case "ios":
+      return "iOS";
     case "macos":
-      return "Mac OS";
-    case "windows":
-      return "Windows";
+      return "macOS";
     default:
-      throw ArgumentError("Unknown OS $os.");
+      return "${os[0].toUpperCase()}${os.substring(1).toLowerCase()}";
   }
 }
 

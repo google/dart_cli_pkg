@@ -1,5 +1,7 @@
 ## 2.4.1
 
+* Fix a crash on dart sdks under experimental OS support.
+
 * Work around a bug in Vite when bundling packages for the browser.
 
 ## 2.4.0
