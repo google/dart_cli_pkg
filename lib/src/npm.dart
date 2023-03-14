@@ -465,7 +465,7 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
 // module. In order to work everywhere, we have to provide the load function via
 // a side channel on the global object. We write it as a stack so that multiple
 // cli_pkg packages can depend on one another without clobbering their exports.
-globalThis._cliPkgExports ??= [];
+globalThis._cliPkgExports  ||= [];
 let _cliPkgExports = {};
 globalThis._cliPkgExports.push(_cliPkgExports);
 """);
@@ -484,7 +484,7 @@ globalThis._cliPkgExports.push(_cliPkgExports);
       .replaceFirst("""
 if (typeof exports !== "undefined") {
   self.exports = exports;
-}""", "self.exports = _cliPkgExportParam ?? $exportsVariable;"));
+}""", "self.exports = _cliPkgExportParam || $exportsVariable;"));
 
   for (var require in [...jsRequires.value, ...extractedRequires]) {
     buffer.write("self.${require.identifier} = ");
