@@ -435,6 +435,43 @@ void main() {
       expect(process.stdout, emitsInOrder(["js", emitsDone]));
       await process.shouldExit(0);
     });
+
+    test("when jsEsmExports is set", () async {
+      await d.package({
+        "name": "my_app",
+        "version": "1.2.3",
+      }, """
+        void main(List<String> args) {
+          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+          pkg.jsEsmExports.value = {};
+          pkg.executables.value = {"exec": "bin/exec.dart"};
+
+          pkg.addNpmTasks();
+          grind(args);
+        }
+      """, [
+        _packageJson,
+        d.dir("lib/src", [
+          _exportsHello('"Hi, there!"'),
+        ]),
+        d.dir("bin", [
+          d.file("exec.dart", r"""
+          import '../lib/src/exports.dart' as lib;
+
+          void main(List<String> args) {
+            print("Hello from exec");
+          }
+        """)
+        ]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
+        expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
+      await process.shouldExit(0);
+    });
   });
 
   group("package.json", () {
@@ -648,42 +685,6 @@ void main() {
                     }
                   })))
           .validate();
-    });
-
-    test("generates exec bin files with jsEsmExports is set", () async {
-      await d.package({
-        "name": "my_app",
-        "version": "1.2.3",
-      }, """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-          pkg.jsEsmExports.value = {};
-          pkg.executables.value = { "exec": "bin/exec.dart" };
-
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """, [
-        _packageJson,
-        d.dir("lib/src", [
-          _exportsHello('"Hi, there!"'),
-        ]),
-        d.dir("bin", [
-          d.file("exec.dart", r"""
-          import '../lib/src/exports.dart' as lib;
-
-          void main(List<String> args) {
-          }
-        """)
-        ]),
-      ]).create();
-
-      await (await grind(["pkg-npm-dev"])).shouldExit();
-
-      var process = await TestProcess.start(
-          "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
-      expect(process.stdout, emitsInOrder([emitsDone]));
-      await process.shouldExit(0);
     });
 
     test("overwrite existing string value", () async {
