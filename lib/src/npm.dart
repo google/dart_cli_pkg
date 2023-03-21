@@ -387,8 +387,17 @@ Future<void> _buildPackage() async {
     var buffer = StringBuffer("""
 #!/usr/bin/env node
 
-var library = require('./$_npmName.dart.js');
 """);
+
+    if (jsEsmExports.value != null) {
+      buffer.writeln("""
+require('./$_npmName.dart.js');
+var library = globalThis._cliPkgExports.pop();
+if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
+""");
+    } else {
+      buffer.writeln("var library = require('./$_npmName.dart.js');");
+    }
 
     buffer.writeln(_loadRequires(cliRequires.union(allRequires)));
     buffer.writeln(
