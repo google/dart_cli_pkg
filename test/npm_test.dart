@@ -469,7 +469,7 @@ void main() {
 
       var process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
-        expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
+      expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
       await process.shouldExit(0);
     });
   });
