@@ -34,9 +34,9 @@ final pubCredentials = InternalConfigVariable.fn<String>(() =>
 /// The path in which pub expects to find its credentials file.
 final String _credentialsPath = () {
   // This follows the same logic as pub.
-  if (dartVersion.major >= Version.parse('2.15.0')) {
+  if (dartVersion >= Version.parse('2.15.0')) {
     // https://github.com/dart-lang/pub/blob/a16763a93b5050c6a9d917fca5a132cfcb00f1a9/doc/cache_layout.md#layout
-    return p.join(applicationConfigHome('dart'), 'pub-credentials.json')
+    return p.join(applicationConfigHome('dart'), 'pub-credentials.json');
   }
 
   // https://github.com/dart-lang/pub/blob/d99b0d58f4059d7bb4ac4616fd3d54ec00a2b5d4/lib/src/system_cache.dart#L34-L43
