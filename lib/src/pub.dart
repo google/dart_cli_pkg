@@ -5,16 +5,26 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cli_util/cli_util.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 
 import 'config_variable.dart';
 import 'utils.dart';
 
-/// The entire contents of pub's `~/.pub-cache/credentials.json` file.
+/// The entire contents of the `pub-credentials.json` file.
 ///
 /// **Do not check this in directly.** This should only come from secure
 /// sources.
+///
+/// You can find your current `pub-credentials.json` in the following locations:
+///
+/// * Dart prior to 2.15.0: `$HOME/.pub-cache/credentials.json`.
+/// * Linux: `$XDG_CONFIG_HOME/dart/pub-credentials.json` if `$XDG_CONFIG_HOME`
+///   is defined, otherwise `$HOME/.config/dart/pub-credentials.json`.
+/// * Mac OS: `$HOME/Library/Application Support/dart/pub-credentials.json`
+/// * Windows: `%APPDATA%/dart/pub-credentials.json`
 ///
 /// By default this comes from the `PUB_CREDENTIALS` environment variable.
 final pubCredentials = InternalConfigVariable.fn<String>(() =>
@@ -23,7 +33,12 @@ final pubCredentials = InternalConfigVariable.fn<String>(() =>
 
 /// The path in which pub expects to find its credentials file.
 final String _credentialsPath = () {
-  // This follows the same logic as pub:
+  // This follows the same logic as pub.
+  if (dartVersion >= Version.parse('2.15.0')) {
+    // https://github.com/dart-lang/pub/blob/a16763a93b5050c6a9d917fca5a132cfcb00f1a9/doc/cache_layout.md#layout
+    return p.join(applicationConfigHome('dart'), 'pub-credentials.json');
+  }
+
   // https://github.com/dart-lang/pub/blob/d99b0d58f4059d7bb4ac4616fd3d54ec00a2b5d4/lib/src/system_cache.dart#L34-L43
   String cacheDir;
   var pubCache = Platform.environment['PUB_CACHE'];
