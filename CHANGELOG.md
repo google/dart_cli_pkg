@@ -1,5 +1,7 @@
 ## 2.4.5
 
+* Properly set the pub credentials for the latest versions of the Dart SDK.
+
 * `pkg.homebrewFormula` now looks for formula files in the `Formula` directory
   as well as the repository root.
 
