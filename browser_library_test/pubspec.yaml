@@ -1,5 +1,6 @@
 name: cli_pkg_test
 version: 0.0.0
+publish_to: none
 
 environment:
   sdk: '>=2.16.0 <3.0.0'

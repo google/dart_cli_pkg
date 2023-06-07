@@ -374,7 +374,7 @@ Future<void> _buildPackage() async {
             jsEsmExports.value != null)
           "exports": {
             if (npmPackageJson.value["exports"] is Map)
-              ...npmPackageJson.value["exports"],
+              ...npmPackageJson.value["exports"] as Map,
             if (browserRequires.isNotEmpty)
               "browser": _exportSpecifier("browser"),
             if (nodeRequires.isNotEmpty) "node": _exportSpecifier("node"),
