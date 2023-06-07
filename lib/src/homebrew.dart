@@ -146,8 +146,7 @@ String _formulaFile(String repo) {
 
   var entries = [
     for (var entry in Glob('{,Formula/}*.rb').listSync(root: repo))
-      if (entry is File && !p.basename(entry.path).contains("@"))
-        entry.path
+      if (entry is File && !p.basename(entry.path).contains("@")) entry.path
   ];
 
   if (entries.isEmpty) {
