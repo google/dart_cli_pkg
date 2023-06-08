@@ -444,7 +444,8 @@ if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
   if (jsModuleMainLibrary.value != null) {
     if (nodeRequires.isNotEmpty || _supportsEsm) {
       _writePlatformWrapper(p.join('build', 'npm', '$_npmName.node'),
-          nodeRequires.union(allRequires), node: true);
+          nodeRequires.union(allRequires),
+          node: true);
     }
     if (browserRequires.isNotEmpty) {
       _writePlatformWrapper(p.join('build', 'npm', '$_npmName.browser'),
@@ -561,7 +562,10 @@ JSRequireSet _requiresForTarget(JSRequireTarget target) =>
 ///
 /// See the note above [jsEsmExports] for details on the file extensions here.
 Object _exportSpecifier(String name, {bool node = false}) => _supportsEsm
-    ? {"require": "./$_npmName.$name.${node ? 'js' : 'cjs'}", "default": "./$_npmName.$name.${node ? 'mjs' : 'js'}"}
+    ? {
+        "require": "./$_npmName.$name.${node ? 'js' : 'cjs'}",
+        "default": "./$_npmName.$name.${node ? 'mjs' : 'js'}"
+      }
     : "./$_npmName.$name.js";
 
 /// Writes one or two wrappers that loads and re-exports `$_npmName.dart.[c]js`
@@ -571,7 +575,8 @@ Object _exportSpecifier(String name, {bool node = false}) => _supportsEsm
 /// before [jsEsmExports] for more detail on the file extensions at play here.
 ///
 /// This writes both an ESM and a CJS wrapper if [jsEsmExports] is set.
-void _writePlatformWrapper(String path, JSRequireSet requires, {bool node = false}) {
+void _writePlatformWrapper(String path, JSRequireSet requires,
+    {bool node = false}) {
   var exports = jsEsmExports.value;
   if (exports != null) {
     _writeImportWrapper('$path.${node ? 'mjs' : 'js'}', requires, exports);
