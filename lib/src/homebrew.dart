@@ -5,6 +5,8 @@
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
@@ -25,8 +27,9 @@ final homebrewRepo = InternalConfigVariable.fn<String>(
 /// the new package version.
 ///
 /// If this isn't set, the task will default to looking for a single `.rb` file
-/// at the root of the repo without an `@` in its filename and modifying that.
-/// If there isn't exactly one such file, the task will fail.
+/// either in the `Formula` directory or at the root of the repo without an `@`
+/// in its filename and modifying that. If there isn't exactly one such file,
+/// the task will fail.
 final homebrewFormula = InternalConfigVariable.value<String?>(null);
 
 /// Whether to update [homebrewFormula] in-place or copy it to a new
@@ -142,11 +145,8 @@ String _formulaFile(String repo) {
   if (homebrewFormula.value != null) return p.join(repo, homebrewFormula.value);
 
   var entries = [
-    for (var entry in Directory(repo).listSync())
-      if (entry is File &&
-          entry.path.endsWith(".rb") &&
-          !p.basename(entry.path).contains("@"))
-        entry.path
+    for (var entry in Glob('{,Formula/}*.rb').listSync(root: repo))
+      if (entry is File && !p.basename(entry.path).contains("@")) entry.path
   ];
 
   if (entries.isEmpty) {
