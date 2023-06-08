@@ -186,6 +186,10 @@ bool get _supportsEsm => jsEsmExports.value != null;
 ///
 /// If the NPM package supports ESM, we treat that as canonical and add an
 /// explicit extension for CJS files. Otherwise, we treat CJS as canonical.
+///
+/// The only file that shouldn't either end in this or [_mjs] is the
+/// dart2js-compiled `.dart.js` file, since that is neither type of module and
+/// is in fact compatible with both.
 String get _cjs => _supportsEsm ? '.cjs' : '.js';
 
 /// The file extension for ESM files in the generated NPM package.
@@ -366,7 +370,7 @@ Future<void> _buildPackage() async {
   dir.createSync(recursive: true);
 
   var extractedRequires = _copyJSAndInjectDependencies(
-      'build/$_npmName.dart.js', p.join(dir.path, '$_npmName.dart$_cjs'));
+      'build/$_npmName.dart.js', p.join(dir.path, '$_npmName.dart.js'));
   var allRequires =
       _requiresForTarget(JSRequireTarget.all).union(extractedRequires);
 
@@ -407,12 +411,12 @@ Future<void> _buildPackage() async {
 
     if (_supportsEsm) {
       buffer.writeln("""
-require('./$_npmName.dart$_cjs');
+require('./$_npmName.dart.js');
 var library = globalThis._cliPkgExports.pop();
 if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
 """);
     } else {
-      buffer.writeln("var library = require('./$_npmName.dart$_cjs');");
+      buffer.writeln("var library = require('./$_npmName.dart.js');");
     }
 
     buffer.writeln(_loadRequires(cliRequires.union(allRequires)));
@@ -564,11 +568,11 @@ void _writeRequireWrapper(String path, JSRequireSet requires) {
   writeString(
       path,
       (_supportsEsm
-              ? "require('./$_npmName.dart$_cjs');\n"
+              ? "require('./$_npmName.dart.js');\n"
                   "const library = globalThis._cliPkgExports.pop();\n"
                   "if (globalThis._cliPkgExports.length === 0) delete "
                   "globalThis._cliPkgExports;\n"
-              : "const library = require('./$_npmName.dart$_cjs');\n") +
+              : "const library = require('./$_npmName.dart.js');\n") +
           "${_loadRequires(requires)}\n"
               "module.exports = library;\n");
 }
@@ -599,7 +603,7 @@ void _writeImportWrapper(
 
   buffer
     ..write("""
-import ${json.encode('./$_npmName.dart$_cjs')};
+import ${json.encode('./$_npmName.dart.js')};
 
 const _cliPkgLibrary = globalThis._cliPkgExports.pop();
 if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
