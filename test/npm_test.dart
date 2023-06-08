@@ -468,7 +468,7 @@ void main() {
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       var process = await TestProcess.start(
-          "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
+          "node$dotExe", [d.path("my_app/build/npm/exec.cjs")]);
       expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
       await process.shouldExit(0);
     });
@@ -650,22 +650,22 @@ void main() {
           .validate();
     });
 
-    test("generates ESM files if jsEsmExports is set", () async {
+    test("generates loadable ESM files if jsEsmExports is set", () async {
       await d.package(pubspec, """
         void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
           pkg.jsRequires.value = [
             pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
-            pkg.JSRequire('other', target: pkg.JSRequireTarget.node),
+            pkg.JSRequire('os', target: pkg.JSRequireTarget.node),
           ];
-          pkg.jsEsmExports.value = {};
+          pkg.jsEsmExports.value = {'hello'};
 
           pkg.addNpmTasks();
           grind(args);
         }
       """, [
         _packageJson,
-        d.dir("lib/src", [d.file("module_main.dart", "void main() {}")])
+        d.dir("lib/src", [_exportsHello('osLoaded')])
       ]).create();
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
@@ -685,6 +685,40 @@ void main() {
                     }
                   })))
           .validate();
+
+      await d.dir("depender", [
+        d.file(
+            "package.json",
+            json.encode({
+              "dependencies": {"my_app": "file:../my_app/build/npm"}
+            })),
+        d.file("test.mjs", """
+          import * as myApp from "my_app";
+
+          console.log(myApp.hello);
+        """),
+        d.file("test.cjs", """
+          const myApp = require("my_app");
+
+          console.log(myApp.hello);
+        """)
+      ]).create();
+
+      await (await TestProcess.start("npm", ["install"],
+              runInShell: true, workingDirectory: d.path("depender")))
+          .shouldExit(0);
+
+      var mjsProcess =
+          await TestProcess.start("node$dotExe", [d.path("depender/test.mjs")]);
+      expect(mjsProcess.stdout, emits("true"));
+      ;
+      await mjsProcess.shouldExit(0);
+
+      var cjsProcess =
+          await TestProcess.start("node$dotExe", [d.path("depender/test.cjs")]);
+      expect(cjsProcess.stdout, emits("true"));
+      ;
+      await cjsProcess.shouldExit(0);
     });
 
     test("overwrite existing string value", () async {

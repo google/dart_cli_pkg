@@ -1,3 +1,8 @@
+## 2.4.6
+
+* Properly mark NPM packages as `"type": "module"` when `pkg.jsEsmExports` is
+  set, and mark all CJS files as explicitly `.cjs`.
+
 ## 2.4.5
 
 * Properly set the pub credentials for the latest versions of the Dart SDK.
