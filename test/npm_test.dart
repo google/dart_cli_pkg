@@ -157,10 +157,10 @@ void main() {
                 "dependencies": {"my_app": "file:../my_app/build/npm"}
               })),
           d.file("test.js", """
-          var my_app = require("my_app");
+            var my_app = require("my_app");
 
-          console.log(my_app.hello);
-        """)
+            console.log(my_app.hello);
+          """)
         ]).create();
 
         await (await TestProcess.start("npm", ["install"],
@@ -468,7 +468,7 @@ void main() {
       await (await grind(["pkg-npm-dev"])).shouldExit();
 
       var process = await TestProcess.start(
-          "node$dotExe", [d.path("my_app/build/npm/exec.cjs")]);
+          "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
       expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
       await process.shouldExit(0);
     });
@@ -676,8 +676,8 @@ void main() {
                   jsonDecode,
                   containsPair("exports", {
                     "node": {
-                      "require": "./my_app.node.cjs",
-                      "default": "./my_app.node.js"
+                      "require": "./my_app.node.js",
+                      "default": "./my_app.node.mjs"
                     },
                     "default": {
                       "require": "./my_app.default.cjs",

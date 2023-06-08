@@ -67,6 +67,39 @@ final jsReleaseFlags = InternalConfigVariable.value<List<String>>(
 final jsRequires = InternalConfigVariable.value<List<JSRequire>>([],
     freeze: (list) => List.unmodifiable(list));
 
+// The way we handle imports and requires is moderately complicated, due to the
+// conflux of requirements from Node.js and browsers. If there are no
+// [jsEsmExports], it's easy: we don't need to support anything but Node, so we
+// just make everything CJS with the `.js` extension. But once ESM is in play,
+// things get much harder. We're under the following constraints:
+//
+// * For MIME type reasons, browsers can _only_ load files with extension `.js`,
+//   not `.mjs` or `.cjs`.
+//
+// * This means we need the dart2js output to be named `.js`, which in turn
+//   means we can't use `"type": "module"` in the package.json because otherwise
+//   our CJS libraries wouldn't be able to `require()` the `.dart.js` file
+//   (since Node.js would consider it a module).
+//
+// * Because we can't use `"type": "module"`, we need ESM files that are
+//   consumed by Node.js to use the extension `.mjs`, while CJS files that are
+//   consumed by Node.js need to use the extension `.js`.
+//
+// * On the other hand, ESM files that can be consumed by the browser need to
+//   use the extension `.js` as above. But we still want to provide
+//   browser-capable CJS alternatives because many browser users go through
+//   bundlers first rather than directly loading files, so to disambiguate we
+//   use the extension `.cjs` for those.
+//
+// To summarize, we use the following extensions:
+//
+// * `.js`: The dart2js-generated `.dart.js` file which has no imports or
+//   requires, CJS wrappers consumed by node, ESM files consumed by non-Node.
+//
+// * `.cjs`: CJS wrappers consumed by non-Node.
+//
+// * `.mjs`: ESM files consumed by Node.
+
 /// A list of member names to export from ESM library entrypoints, since ESM
 /// exports must be explicitly listed in each wrapper library.
 ///
@@ -181,23 +214,6 @@ final npmDistTag = InternalConfigVariable.fn<String>(() {
 
 /// Whether we're generating a package that supports ESM imports.
 bool get _supportsEsm => jsEsmExports.value != null;
-
-/// The file extension for CommonJS files in the generated NPM package.
-///
-/// If the NPM package supports ESM, we treat that as canonical and add an
-/// explicit extension for CJS files. Otherwise, we treat CJS as canonical.
-///
-/// The only file that shouldn't either end in this or [_mjs] is the
-/// dart2js-compiled `.dart.js` file, since that is neither type of module and
-/// is in fact compatible with both.
-String get _cjs => _supportsEsm ? '.cjs' : '.js';
-
-/// The file extension for ESM files in the generated NPM package.
-///
-/// This is always `.js`, because we treat ESM as canonical if it's being
-/// generated at all. We still store it as a variable to document that the files
-/// are expected to be ESM.
-const _mjs = '.js';
 
 /// Whether [addNpmTasks] has been called yet.
 var _addedNpmTasks = false;
@@ -384,10 +400,9 @@ Future<void> _buildPackage() async {
       jsonEncode({
         ...npmPackageJson.value,
         "version": version.toString(),
-        if (_supportsEsm) "type": "module",
-        "bin": {for (var name in executables.value.keys) name: "$name$_cjs"},
+        "bin": {for (var name in executables.value.keys) name: "$name.js"},
         if (jsModuleMainLibrary.value != null)
-          "main": "$_npmName.${nodeRequires.isEmpty ? 'default' : 'node'}$_cjs",
+          "main": "$_npmName.${nodeRequires.isEmpty ? 'default' : 'node'}.js",
         if (npmPackageJson.value["exports"] is Map ||
             nodeRequires.isNotEmpty ||
             browserRequires.isNotEmpty ||
@@ -397,7 +412,8 @@ Future<void> _buildPackage() async {
               ...npmPackageJson.value["exports"] as Map,
             if (browserRequires.isNotEmpty)
               "browser": _exportSpecifier("browser"),
-            if (nodeRequires.isNotEmpty) "node": _exportSpecifier("node"),
+            if (nodeRequires.isNotEmpty || _supportsEsm)
+              "node": _exportSpecifier("node", node: true),
             if (jsModuleMainLibrary.value != null)
               "default": _exportSpecifier("default"),
           },
@@ -422,13 +438,13 @@ if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
     buffer.writeln(_loadRequires(cliRequires.union(allRequires)));
     buffer.writeln(
         "library.${_executableIdentifiers[name]}(process.argv.slice(2));");
-    writeString(p.join('build', 'npm', '$name$_cjs'), buffer.toString());
+    writeString(p.join('build', 'npm', '$name.js'), buffer.toString());
   }
 
   if (jsModuleMainLibrary.value != null) {
-    if (nodeRequires.isNotEmpty) {
+    if (nodeRequires.isNotEmpty || _supportsEsm) {
       _writePlatformWrapper(p.join('build', 'npm', '$_npmName.node'),
-          nodeRequires.union(allRequires));
+          nodeRequires.union(allRequires), node: true);
     }
     if (browserRequires.isNotEmpty) {
       _writePlatformWrapper(p.join('build', 'npm', '$_npmName.browser'),
@@ -542,23 +558,26 @@ JSRequireSet _requiresForTarget(JSRequireTarget target) =>
 
 /// Returns a single string specifier for `package.exports` if [jsEsmExports]
 /// isn't set, or a conditional export if it is.
-Object _exportSpecifier(String name) => _supportsEsm
-    ? {"require": "./$_npmName.$name$_cjs", "default": "./$_npmName.$name$_mjs"}
-    : "./$_npmName.$name$_cjs";
+///
+/// See the note above [jsEsmExports] for details on the file extensions here.
+Object _exportSpecifier(String name, {bool node = false}) => _supportsEsm
+    ? {"require": "./$_npmName.$name.${node ? 'js' : 'cjs'}", "default": "./$_npmName.$name.${node ? 'mjs' : 'js'}"}
+    : "./$_npmName.$name.js";
 
 /// Writes one or two wrappers that loads and re-exports `$_npmName.dart.[c]js`
 /// with [requires] injected.
 ///
-/// The [requires] should not have the final `.[cm]js` extension.
+/// The [requires] should not have the final `.[cm]js` extension. See the note
+/// before [jsEsmExports] for more detail on the file extensions at play here.
 ///
 /// This writes both an ESM and a CJS wrapper if [jsEsmExports] is set.
-void _writePlatformWrapper(String path, JSRequireSet requires) {
+void _writePlatformWrapper(String path, JSRequireSet requires, {bool node = false}) {
   var exports = jsEsmExports.value;
   if (exports != null) {
-    _writeImportWrapper('$path$_mjs', requires, exports);
-    _writeRequireWrapper('$path$_cjs', requires);
+    _writeImportWrapper('$path.${node ? 'mjs' : 'js'}', requires, exports);
+    _writeRequireWrapper('$path.${node ? 'js' : 'cjs'}', requires);
   } else {
-    _writeRequireWrapper('$path$_cjs', requires);
+    _writeRequireWrapper('$path.js', requires);
   }
 }
 
