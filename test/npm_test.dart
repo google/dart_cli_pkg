@@ -711,13 +711,11 @@ void main() {
       var mjsProcess =
           await TestProcess.start("node$dotExe", [d.path("depender/test.mjs")]);
       expect(mjsProcess.stdout, emits("true"));
-      ;
       await mjsProcess.shouldExit(0);
 
       var cjsProcess =
           await TestProcess.start("node$dotExe", [d.path("depender/test.cjs")]);
       expect(cjsProcess.stdout, emits("true"));
-      ;
       await cjsProcess.shouldExit(0);
     });
 
