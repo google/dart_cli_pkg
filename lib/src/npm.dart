@@ -579,7 +579,11 @@ void _writePlatformWrapper(String path, JSRequireSet requires,
     {bool node = false}) {
   var exports = jsEsmExports.value;
   if (exports != null) {
-    _writeImportWrapper('$path.${node ? 'mjs' : 'js'}', requires, exports);
+    if (node) {
+      _writeNodeImportWrapper('$path.mjs', exports);
+    } else {
+      _writeImportWrapper('$path.${node ? 'mjs' : 'js'}', requires, exports);
+    }
     _writeRequireWrapper('$path.${node ? 'js' : 'cjs'}', requires);
   } else {
     _writeRequireWrapper('$path.js', requires);
@@ -611,6 +615,27 @@ String _loadRequires(JSRequireSet requires) {
   }
   buffer.writeln("});");
   return buffer.toString();
+}
+
+
+/// Writes a wrapper to [path] that loads and re-exports `$_npmName.node.js`
+/// using ESM imports.
+///
+/// Rather than having a totally separate ESM wrapper, for Node we load ESM
+/// exports *through* the require wrapper. This ensures that we don't run into
+/// issues like sass/dart-sass#2017 if both are loaded in the same Node process.
+///
+/// [exports] is the value of [jsEsmExports].
+void _writeNodeImportWrapper(
+    String path, Set<String> exports) {
+  var cjsUrl = './' + p.setExtension(p.basename(path), '.js');
+  var buffer = StringBuffer("import cjs from ${json.encode(cjsUrl)};\n\n");
+
+  for (var export in exports) {
+    buffer.writeln("export const $export = cjs.$export;");
+  }
+
+  writeString(path, buffer.toString());
 }
 
 /// Writes a wrapper to [path] that loads and re-exports `$_npmName.dart.js`

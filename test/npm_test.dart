@@ -701,6 +701,11 @@ void main() {
           const myApp = require("my_app");
 
           console.log(myApp.hello);
+        """),
+        // Regression test for sass/dart-sass#2017
+        d.file("both.mjs", """
+          import "./test.mjs";
+          import "./test.cjs";
         """)
       ]).create();
 
@@ -717,6 +722,12 @@ void main() {
           await TestProcess.start("node$dotExe", [d.path("depender/test.cjs")]);
       expect(cjsProcess.stdout, emits("true"));
       await cjsProcess.shouldExit(0);
+
+      var bothProcess =
+          await TestProcess.start("node$dotExe", [d.path("depender/both.mjs")]);
+      expect(bothProcess.stdout, emits("true"));
+      expect(bothProcess.stdout, emits("true"));
+      await bothProcess.shouldExit(0);
     });
 
     test("overwrite existing string value", () async {
