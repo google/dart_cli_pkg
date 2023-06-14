@@ -617,7 +617,6 @@ String _loadRequires(JSRequireSet requires) {
   return buffer.toString();
 }
 
-
 /// Writes a wrapper to [path] that loads and re-exports `$_npmName.node.js`
 /// using ESM imports.
 ///
@@ -626,8 +625,7 @@ String _loadRequires(JSRequireSet requires) {
 /// issues like sass/dart-sass#2017 if both are loaded in the same Node process.
 ///
 /// [exports] is the value of [jsEsmExports].
-void _writeNodeImportWrapper(
-    String path, Set<String> exports) {
+void _writeNodeImportWrapper(String path, Set<String> exports) {
   var cjsUrl = './' + p.setExtension(p.basename(path), '.js');
   var buffer = StringBuffer("import cjs from ${json.encode(cjsUrl)};\n\n");
 
