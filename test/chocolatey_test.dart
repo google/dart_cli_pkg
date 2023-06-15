@@ -326,6 +326,7 @@ void main() {
 
       await (await TestProcess.start("choco", [
         "install", "my_app_choco",
+        if (dartVersion.isPreRelease) "--pre",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
         "--source=" + d.path("my_app/build")
@@ -375,6 +376,7 @@ void main() {
 
       await (await TestProcess.start("choco", [
         "install", "my_app_choco",
+        if (dartVersion.isPreRelease) "--pre",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
         "--source=" + d.path("my_app/build")
