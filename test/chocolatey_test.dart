@@ -328,7 +328,7 @@ void main() {
         "install", "my_app_choco",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        "--source=" + d.path("my_app/build/my_app_choco.$version.nupkg")
+        "--source=" + d.path("my_app/build")
       ]))
           .shouldExit(0);
 
@@ -377,7 +377,7 @@ void main() {
         "install", "my_app_choco",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        "--source=" + d.path("my_app/build/my_app_choco.$version.nupkg")
+        "--source=" + d.path("my_app/build")
       ]))
           .shouldExit(0);
 
