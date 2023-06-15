@@ -325,10 +325,10 @@ void main() {
       await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
       await (await TestProcess.start("choco", [
-        "install",
+        "install", "my_app_choco",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        d.path("my_app/build/my_app_choco.$version.nupkg")
+        "--source=" + d.path("my_app/build/my_app_choco.$version.nupkg")
       ]))
           .shouldExit(0);
 
@@ -374,10 +374,10 @@ void main() {
       await (await grind(["pkg-chocolatey-pack"])).shouldExit(0);
 
       await (await TestProcess.start("choco", [
-        "install",
+        "install", "my_app_choco",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        d.path("my_app/build/my_app_choco.$version.nupkg")
+        "--source=" + d.path("my_app/build/my_app_choco.$version.nupkg")
       ]))
           .shouldExit(0);
 
