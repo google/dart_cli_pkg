@@ -1,7 +1,18 @@
+## 2.5.0
+
+* Set the minimum Dart SDK version to `3.0.0`.
+  * sdk: '>=3.0.0 <4.0.0'
+
+* Update dependencies:
+  * http: ^1.1.0
+  * xml: ^6.3.0
+
 ## 2.4.7
-g
+
 * Fix a bug where npm packages could crash on Node.js if loaded both through
   `require()` and `import`.
+
+* http: ^1.1.0
 
 ## 2.4.6
 
