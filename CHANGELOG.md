@@ -12,8 +12,6 @@
 * Fix a bug where npm packages could crash on Node.js if loaded both through
   `require()` and `import`.
 
-* http: ^1.1.0
-
 ## 2.4.6
 
 * Properly mark NPM packages as `"type": "module"` when `pkg.jsEsmExports` is
