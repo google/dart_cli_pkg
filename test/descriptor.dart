@@ -71,8 +71,8 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
     file("pubspec.lock", File("pubspec.lock").readAsStringSync()),
 
     dir("bin", [
-      for (var basename in executables)
-        if (!_containsExecutable(basename))
+      for (var basename in executables.cast<String>())
+        if (!_containsExecutable(files, basename))
           file(
               "$basename.dart",
               // Include the version variable to ensure that executables we
@@ -96,12 +96,12 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
 
 /// Returns whether [files] defines an executable named [basename].
 bool _containsExecutable(List<Descriptor>? descriptors, String basename) {
-  if (descriptors == null) return;
+  if (descriptors == null) return false;
   return descriptors.any((descriptor) =>
       (descriptor is DirectoryDescriptor &&
           descriptor.name == "bin" &&
           descriptor.contents.any((child) =>
-              child is FileDescriptor && file.name == "$basename.dart")) ||
+              child is FileDescriptor && child.name == "$basename.dart")) ||
       (descriptor is FileDescriptor &&
           descriptor.name == "bin/$basename.dart"));
 }
