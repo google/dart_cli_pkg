@@ -53,7 +53,9 @@ T wrapJSExceptions<T>(T Function() callback) {
     throw error;
   } catch (error) {
     if (typeofEquals<Object>(error, 'symbol') ||
-        typeofEquals<Object>(error, 'bigint')) {
+        typeofEquals<Object>(error, 'bigint') ||
+        // ignore: unnecessary_cast
+        (error as Object?) == null) {
       // Work around dart-lang/sdk#53106
       throw callMethod<String>(error, "toString", []);
     }

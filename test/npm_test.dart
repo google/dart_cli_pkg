@@ -1128,6 +1128,12 @@ void main() {
 
       test("handles a thrown BigInt",
           () => assertCatchesGracefully('BigInt(123)'));
+
+      test("handles a thrown null",
+          () => assertCatchesGracefully('BigInt(null)'));
+
+      test("handles a thrown undefined",
+          () => assertCatchesGracefully('BigInt(undefined)'));
     });
   });
 }
