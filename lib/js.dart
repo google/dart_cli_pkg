@@ -43,15 +43,19 @@ T wrapJSExceptions<T>(T Function() callback) {
   try {
     return callback();
   } on String catch (error) {
+    // ignore: use_rethrow_when_possible
     throw error;
   } on bool catch (error) {
+    // ignore: use_rethrow_when_possible
     throw error;
   } on num catch (error) {
+    // ignore: use_rethrow_when_possible
     throw error;
   } catch (error) {
-    if (typeofEquals(error, 'symbol') || typeofEquals(error, 'bigint')) {
+    if (typeofEquals<Object>(error, 'symbol') ||
+        typeofEquals<Object>(error, 'bigint')) {
       // Work around dart-lang/sdk#53106
-      throw callMethod(error, "toString", []);
+      throw callMethod<String>(error, "toString", []);
     }
     rethrow;
   }
