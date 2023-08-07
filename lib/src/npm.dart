@@ -105,6 +105,16 @@ final jsRequires = InternalConfigVariable.value<List<JSRequire>>([],
 ///
 /// ESM library entrypoints will be generated if and only if this is set.
 ///
+/// **Warning:** When JS code is loaded as ESM in a browser, it automatically
+/// runs in [strict mode]. Dart has [an outstanding bug] where primitive types
+/// such as strings thrown by JS will cause Dart code that catches them to crash
+/// in strict mode specifically. To work around this bug, wrap all calls to JS
+/// callbacks in [`wrapJSExceptions`].
+///
+/// [strict mode]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
+/// [an outstanding bug]: https://github.com/dart-lang/sdk/issues/53105
+/// [`wrapJSExceptions`]: https://pub.dev/documentation/cli_pkg/latest/js/wrapJSExceptions.html
+///
 /// If this is set, [jsModuleMainLibrary] must also be set.
 final jsEsmExports = InternalConfigVariable.value<Set<String>?>(null,
     freeze: (set) => set == null ? null : Set.unmodifiable(set));
@@ -162,6 +172,17 @@ final npmPackageJson = InternalConfigVariable.fn<Map<String, dynamic>>(
 final npmAdditionalFiles = InternalConfigVariable.fn<Map<String, String>>(
     () => {},
     freeze: (map) => Map.unmodifiable(map));
+
+/// Whether to force [strict mode] for the generated JS code.
+///
+/// [strict mode]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
+///
+/// If the generated JS is loaded as a library in the browser without bundling,
+/// it will _unavoidably_ be loaded in strict mode, so even if this is `false`
+/// (the default) it's not a guarantee that the code will always run in sloppy
+/// mode. Setting it to `true` can make it easier to surface strict mode bugs
+/// early.
+final jsForceStrictMode = InternalConfigVariable.value<bool>(false);
 
 /// The name of the npm package, from `package.json`.
 String get _npmName {
@@ -502,6 +523,8 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
   });
 
   var buffer = StringBuffer();
+
+  if (jsForceStrictMode.value) buffer.writeln('"use strict";');
 
   var exportsVariable = "exports";
   if (_supportsEsm) {

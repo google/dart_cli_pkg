@@ -1,4 +1,4 @@
-## 2.5.0
+## 2.6.0
 
 * Set the minimum Dart SDK version to `3.0.0`.
   * sdk: '>=3.0.0 <4.0.0'
@@ -6,6 +6,18 @@
 * Update dependencies:
   * http: ^1.1.0
   * xml: ^6.3.0
+
+## 2.5.0
+
+* Add a `wrapJSException()` function in the new `package:cli_pkg/js.dart`
+  library to work around [dart-lang/sdk#53105]. This should be called around all
+  calls to JS callbacks to avoid unexpected crashes when exceptions are caught
+  by Dart code.
+
+  [dart-lang/sdk#53105]: https://github.com/dart-lang/sdk/issues/53105
+
+* Add a `pkg.jsForceStrictMode` configuration option. This defaults to `false`,
+  but if it's set to `true`, all generated JS code will be run in strict mode.
 
 ## 2.4.7
 
