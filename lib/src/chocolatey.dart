@@ -134,7 +134,7 @@ final XmlDocument _nuspec = () {
 
   try {
     nuspec = XmlDocument.parse(chocolateyNuspec.value);
-  } on XmlParserException catch (error) {
+  } on XmlException catch (error) {
     fail("Invalid nuspec: $error");
   }
 
