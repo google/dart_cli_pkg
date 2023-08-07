@@ -71,13 +71,14 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
     file("pubspec.lock", File("pubspec.lock").readAsStringSync()),
 
     dir("bin", [
-      for (var basename in executables)
-        file(
-            "$basename.dart",
-            // Include the version variable to ensure that executables we invoke
-            // have access to it.
-            'void main() => print("in $basename '
-                '\${const String.fromEnvironment("version")}");')
+      for (var basename in executables.cast<String>())
+        if (!_containsExecutable(files, basename))
+          file(
+              "$basename.dart",
+              // Include the version variable to ensure that executables we
+              // invoke have access to it.
+              'void main() => print("in $basename '
+                  '\${const String.fromEnvironment("version")}");')
     ]),
 
     dir("tool", [
@@ -91,6 +92,18 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
 
     ...?files
   ]);
+}
+
+/// Returns whether [files] defines an executable named [basename].
+bool _containsExecutable(List<Descriptor>? descriptors, String basename) {
+  if (descriptors == null) return false;
+  return descriptors.any((descriptor) =>
+      (descriptor is DirectoryDescriptor &&
+          descriptor.name == "bin" &&
+          descriptor.contents.any((child) =>
+              child is FileDescriptor && child.name == "$basename.dart")) ||
+      (descriptor is FileDescriptor &&
+          descriptor.name == "bin/$basename.dart"));
 }
 
 /// Returns the dependency description for `package` from `cli_pkg`'s own

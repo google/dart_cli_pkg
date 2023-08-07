@@ -441,27 +441,27 @@ void main() {
         "name": "my_app",
         "version": "1.2.3",
       }, """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-          pkg.jsEsmExports.value = {};
-          pkg.executables.value = {"exec": "bin/exec.dart"};
+          void main(List<String> args) {
+            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+            pkg.jsEsmExports.value = {};
+            pkg.executables.value = {"exec": "bin/exec.dart"};
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """, [
+            pkg.addNpmTasks();
+            grind(args);
+          }
+        """, [
         _packageJson,
         d.dir("lib/src", [
           _exportsHello('"Hi, there!"'),
         ]),
         d.dir("bin", [
           d.file("exec.dart", r"""
-          import '../lib/src/exports.dart' as lib;
+            import '../lib/src/exports.dart' as lib;
 
-          void main(List<String> args) {
-            print("Hello from exec");
-          }
-        """)
+            void main(List<String> args) {
+              print("Hello from exec");
+            }
+          """)
         ]),
       ]).create();
 
@@ -470,6 +470,54 @@ void main() {
       var process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/exec.js")]);
       expect(process.stdout, emitsInOrder(["Hello from exec", emitsDone]));
+      await process.shouldExit(0);
+    });
+
+    var strictOrSloppy = r"""
+      import 'dart:js_util';
+
+      void main(List<String> args) {
+        try {
+          // This shouldn't throw an error in sloppy mode.
+          setProperty('', 'name', null);
+          print("sloppy mode");
+        } catch (_) {
+          print("strict mode");
+        }
+      }
+    """;
+
+    test("that run in sloppy mode by default", () async {
+      await d.package(pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [d.file("foo.dart", strictOrSloppy)]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["sloppy mode", emitsDone]));
+      await process.shouldExit(0);
+    });
+
+    test("that run in strict mode with jsForceStrictMode = true", () async {
+      await d.package(pubspec, r"""
+          void main(List<String> args) {
+            pkg.addNpmTasks();
+            pkg.jsForceStrictMode.value = true;
+            grind(args);
+          }
+        """, [
+        _packageJson,
+        d.dir("bin", [d.file("foo.dart", strictOrSloppy)]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["strict mode", emitsDone]));
       await process.shouldExit(0);
     });
   });
@@ -1020,6 +1068,72 @@ void main() {
               contains("pkg.npmAdditionalFiles keys must be relative paths,")));
       expect(process.stderr, emits(contains("/foo/bar/baz.txt")));
       await process.shouldExit(1);
+    });
+  });
+
+  group("package:cli_pkg/js.dart", () {
+    group("wrapJSException in strict mode", () {
+      // Asserts that the JS [expression] doesn't crash when caught by Dart code
+      // after going through `wrapJSExceptions()`.
+      Future<void> assertCatchesGracefully(String expression) async {
+        await d.package(pubspec, r"""
+            void main(List<String> args) {
+              pkg.addNpmTasks();
+              pkg.jsForceStrictMode.value = true;
+              grind(args);
+            }
+          """, [
+          _packageJson,
+          d.dir("bin", [
+            d.file("foo.dart", """
+              import 'package:cli_pkg/js.dart';
+              import 'package:js/js.dart';
+
+              @JS("Function")
+              class _JSFunction {
+                external _JSFunction(String arguments, String body);
+                external Object? call();
+              }
+
+              void main() {
+                try {
+                  wrapJSExceptions(() {
+                    _JSFunction("error",
+                        "throw \${${json.encode(expression)}};").call();
+                  });
+                } catch (_, stackTrace) {
+                  print(stackTrace);
+                }
+              }
+            """)
+          ]),
+        ]).create();
+
+        await (await grind(["pkg-npm-dev"])).shouldExit();
+
+        var process = await TestProcess.start(
+            "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+        await process.shouldExit(0);
+      }
+
+      test(
+          "handles a thrown string", () => assertCatchesGracefully('"string"'));
+
+      test("handles a thrown boolean", () => assertCatchesGracefully('true'));
+
+      test("handles a thrown number", () => assertCatchesGracefully('123'));
+
+      test("handles a thrown Symbol",
+          () => assertCatchesGracefully('Symbol("foo")'));
+
+      test("handles a thrown BigInt",
+          () => assertCatchesGracefully('BigInt(123)'));
+
+      test("handles a thrown null",
+          () => assertCatchesGracefully('BigInt(null)'));
+
+      test("handles a thrown undefined",
+          () => assertCatchesGracefully('BigInt(undefined)'));
     });
   });
 }

@@ -45,13 +45,14 @@ library in addition to having its executables invoked. See
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.jsFlags`][],
 [`pkg.jsDevFlags`][], [`pkg.jsRequires`][], [`pkg.jsModuleMainLibrary`][],
-[`pkg.npmPackageJson`][]
+[`pkg.jsForceStrictMode`][], [`pkg.npmPackageJson`][]
 
 [`pkg.executables`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/executables.html
 [`pkg.version`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/version.html
 [`pkg.jsFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsFlags.html
 [`pkg.jsDevFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsDevFlags.html
 [`pkg.jsRequires`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsRequires.html
+[`pkg.jsForceStrictMode`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsForceStrictMode.html
 
 Output: `build/$name.dart.js`
 
@@ -62,7 +63,7 @@ development mode. By default, development mode has all optimizations disabled.
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.jsFlags`][],
 [`pkg.jsReleaseFlags`][], [`pkg.jsRequires`][], [`pkg.jsModuleMainLibrary`][],
-[`pkg.npmPackageJson`][]
+[`pkg.jsForceStrictMode`][], [`pkg.npmPackageJson`][]
 
 [`pkg.jsReleaseFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsReleaseFlags.html
 
