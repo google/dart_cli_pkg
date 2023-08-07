@@ -168,9 +168,7 @@ final XmlDocument _nuspec = () {
 XmlElement get _nuspecMetadata => _findElement(_nuspec.rootElement, "metadata");
 
 /// The name of the Chocolatey package.
-String get _chocolateyName =>
-    _findElement(_nuspecMetadata, "id").value ??
-    fail("Expected metadata.id to have a value.");
+String get _chocolateyName => _findElement(_nuspecMetadata, "id").innerText;
 
 /// Whether [addChocolateyTasks] has been called yet.
 var _addedChocolateyTasks = false;
