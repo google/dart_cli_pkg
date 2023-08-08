@@ -17,7 +17,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
-import 'package:xml/xml.dart' hide parse;
+import 'package:xml/xml.dart';
 
 import 'package:cli_pkg/src/chocolatey.dart';
 import 'package:cli_pkg/src/utils.dart';

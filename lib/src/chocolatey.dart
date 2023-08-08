@@ -18,7 +18,7 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
-import 'package:xml/xml.dart' hide parse;
+import 'package:xml/xml.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
@@ -134,7 +134,7 @@ final XmlDocument _nuspec = () {
 
   try {
     nuspec = XmlDocument.parse(chocolateyNuspec.value);
-  } on XmlParserException catch (error) {
+  } on XmlException catch (error) {
     fail("Invalid nuspec: $error");
   }
 
@@ -168,7 +168,7 @@ final XmlDocument _nuspec = () {
 XmlElement get _nuspecMetadata => _findElement(_nuspec.rootElement, "metadata");
 
 /// The name of the Chocolatey package.
-String get _chocolateyName => _findElement(_nuspecMetadata, "id").text;
+String get _chocolateyName => _findElement(_nuspecMetadata, "id").innerText;
 
 /// Whether [addChocolateyTasks] has been called yet.
 var _addedChocolateyTasks = false;
