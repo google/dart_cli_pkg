@@ -12,7 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:js/js.dart';
 import 'package:js/js_util.dart';
+import 'package:node_interop/process.dart';
+
+@JS('process')
+external final Process? _process; // process is null in the browser
+
+/// This extension adds `maybe<Property>` getters that return non-nullable
+/// properties with a nullable type.
+extension PartialProcess on Process {
+  /// Returns [release] as nullable.
+  Release? get maybeRelease => release;
+}
+
+/// Whether the code is being executed in a NodeJS environment.
+bool get isNodeJs => _process?.maybeRelease?.name == 'node';
 
 /// Whether this Dart code is running in a strict mode context.
 ///

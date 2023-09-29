@@ -1135,6 +1135,28 @@ void main() {
       test("handles a thrown undefined",
           () => assertCatchesGracefully('BigInt(undefined)'));
     });
+
+    test("isNodeJs returns `true` when running in NodeJS", () async {
+      await d.package(pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", """
+              import 'package:cli_pkg/js.dart';
+
+              void main() {
+                print(isNodeJs);
+              }
+            """)
+        ]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["true", emitsDone]));
+      expect(process.shouldExit(0), completes);
+    });
   });
 }
 
