@@ -1136,7 +1136,7 @@ void main() {
           () => assertCatchesGracefully('BigInt(undefined)'));
     });
 
-    test("isNodeJs returns `true` when running in NodeJS", () async {
+    test("isNodeJs returns `true` when running in Node.JS", () async {
       await d.package(pubspec, _enableNpm, [
         _packageJson,
         d.dir("bin", [
@@ -1158,7 +1158,7 @@ void main() {
       expect(process.shouldExit(0), completes);
     });
 
-    test("process returns a Process when running in NodeJS", () async {
+    test("process returns a Process when running in Node.JS", () async {
       await d.package(pubspec, _enableNpm, [
         _packageJson,
         d.dir("bin", [

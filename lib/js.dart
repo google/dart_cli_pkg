@@ -26,20 +26,20 @@ extension PartialProcess on Process {
   Release? get maybeRelease => release;
 }
 
-/// Whether the script is being executed in a NodeJS environment.
+/// Whether the script is being executed in a Node.JS environment.
 bool get isNodeJs => _process?.maybeRelease?.name == 'node';
 
 /// Returns the NodeJs [Process] value only when the script is running in
-/// NodeJS, otherwise returns `null`.
+/// Node.JS, otherwise returns `null`.
 ///
-/// By checking whether the script is running in NodeJS we can avoid returning a
-/// non-[Process] object if the script is running in a browser, and there is a
+/// By checking whether the script is running in Node.JS we can avoid returning
+/// a non-[Process] object if the script is running in a browser, and there is a
 /// different `process` object in the `window`.
 ///
 /// The getter can still return a non-[Process] object if the script is running
 /// in a browser and there is a `process` object in the `window` with the value
 /// `{release: {name: 'node'}}`. In this case the script must trust the browser
-/// is emulating a NodeJS environment.
+/// is emulating a Node.JS environment.
 Process? get process => isNodeJs ? _process : null;
 
 /// Whether this Dart code is running in a strict mode context.
