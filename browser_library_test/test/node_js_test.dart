@@ -21,7 +21,7 @@ import 'package:test/test.dart';
 
 @TestOn('browser')
 void main() {
-  tearDown(() => globalThis.toJS.delete('process'.toJS));
+  tearDown(() => globalThis.toJSBox.delete('process'.toJS));
 
   const nonNodeJsProcessTestCases = <String, Map<String, Map<String, String>>>{
     'an empty process': {},
@@ -45,13 +45,13 @@ void main() {
       final processJson = entry.value.jsify();
 
       test("returns 'false' when $caseName exists in the 'window'", () {
-        globalThis.toJS['process'.toJS] = processJson;
+        globalThis.toJSBox['process'.toJS] = processJson;
         expect(isNodeJs, isFalse);
       });
     }
 
     test("returns 'true' with a fake Node.JS process", () {
-      globalThis.toJS['process'.toJS] = fakeNodeJsProcess.jsify();
+      globalThis.toJSBox['process'.toJS] = fakeNodeJsProcess.jsify();
       expect(isNodeJs, isTrue);
     });
   });
@@ -66,13 +66,13 @@ void main() {
       final processJson = entry.value.jsify();
 
       test("returns 'null' when $caseName exists in the 'window'", () {
-        globalThis.toJS['process'.toJS] = processJson;
+        globalThis.toJSBox['process'.toJS] = processJson;
         expect(process, isNull);
       });
     }
 
     test("returns a fake process if it fakes being a Node.JS environment", () {
-      globalThis.toJS['process'.toJS] = fakeNodeJsProcess.jsify();
+      globalThis.toJSBox['process'.toJS] = fakeNodeJsProcess.jsify();
       expect(process.jsify().dartify(), fakeNodeJsProcess);
     });
   });
