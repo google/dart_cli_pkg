@@ -34,7 +34,11 @@ bool get isNodeJs => _process?.maybeRelease?.name == 'node';
 ///
 /// By checking whether the script is running in Node.JS we can avoid returning
 /// a non-[Process] object if the script is running in a browser, and there is a
-/// different `process` object in the `window`.
+/// different `process` object in the `window`. This can happen when a library
+/// or framework adds a global variable named `process`. For example, Next.JS
+/// adds [`process.env`] to access environment variables on the browser.
+///
+/// [`process.env`]: https://nextjs.org/docs/pages/building-your-application/configuring/environment-variables#bundling-environment-variables-for-the-browser
 ///
 /// The getter can still return a non-[Process] object if the script is running
 /// in a browser and there is a `process` object in the `window` with the value
