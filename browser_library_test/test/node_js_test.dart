@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 import 'dart:js_util';
 
 import 'package:cli_pkg/js.dart';
@@ -21,7 +20,7 @@ import 'package:test/test.dart';
 
 @TestOn('browser')
 void main() {
-  tearDown(() => globalThis.toJSBox.delete('process'.toJS));
+  tearDown(() => delete(globalThis, 'process'));
 
   const nonNodeJsProcessTestCases = <String, Map<String, Map<String, String>>>{
     'an empty process': {},
@@ -45,13 +44,13 @@ void main() {
       final processJson = entry.value.jsify();
 
       test("returns 'false' when $caseName exists in the 'window'", () {
-        globalThis.toJSBox['process'.toJS] = processJson;
+        setProperty(globalThis, 'process', processJson);
         expect(isNodeJs, isFalse);
       });
     }
 
     test("returns 'true' with a fake Node.JS process", () {
-      globalThis.toJSBox['process'.toJS] = fakeNodeJsProcess.jsify();
+      setProperty(globalThis, 'process', fakeNodeJsProcess.jsify());
       expect(isNodeJs, isTrue);
     });
   });
@@ -66,13 +65,13 @@ void main() {
       final processJson = entry.value.jsify();
 
       test("returns 'null' when $caseName exists in the 'window'", () {
-        globalThis.toJSBox['process'.toJS] = processJson;
+        setProperty(globalThis, 'process', processJson);
         expect(process, isNull);
       });
     }
 
     test("returns a fake process if it fakes being a Node.JS environment", () {
-      globalThis.toJSBox['process'.toJS] = fakeNodeJsProcess.jsify();
+      setProperty(globalThis, 'process', fakeNodeJsProcess.jsify());
       expect(process.jsify().dartify(), fakeNodeJsProcess);
     });
   });
