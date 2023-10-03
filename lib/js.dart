@@ -44,6 +44,9 @@ bool get isNodeJs => _process?.maybeRelease?.name == 'node';
 /// in a browser and there is a `process` object in the `window` with the value
 /// `{release: {name: 'node'}}`. In this case the script must trust the browser
 /// is emulating a Node.JS environment.
+///
+/// Note: Add a dependency on `node_interop` to ensure you get a version
+/// compatible with your usage.
 Process? get process => isNodeJs ? _process : null;
 
 /// Whether this Dart code is running in a strict mode context.

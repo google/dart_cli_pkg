@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+@TestOn('browser')
+
 import 'dart:js_interop';
 import 'dart:js_util';
 
 import 'package:cli_pkg/js.dart';
 import 'package:test/test.dart';
 
-@TestOn('browser')
 void main() {
   tearDown(() => delete<Object>(globalThis, 'process'));
 
