@@ -55,6 +55,7 @@ void main() {
   test("isNodeJs returns 'false'", () {
     expect(isNodeJs, isFalse);
   });
+
   test("process returns 'null'", () {
     expect(process, isNull);
   });
