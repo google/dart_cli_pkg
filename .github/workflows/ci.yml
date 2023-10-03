@@ -21,7 +21,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        dart-channel: [stable, dev]
+        # Testing dart-dev disabled due to:
+        # https://github.com/dart-lang/sdk/issues/52121
+        dart-channel: [stable]
         shard: [0, 1, 2]
       fail-fast: false
 
@@ -49,7 +51,9 @@ jobs:
 
     strategy:
       matrix:
-        dart-channel: [stable, dev]
+        # Testing dart-dev disabled due to:
+        # https://github.com/dart-lang/sdk/issues/52121
+        dart-channel: [stable]
       fail-fast: false
 
     runs-on: ubuntu-latest
