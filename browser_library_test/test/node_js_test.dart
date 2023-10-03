@@ -20,7 +20,7 @@ import 'package:test/test.dart';
 
 @TestOn('browser')
 void main() {
-  tearDown(() => delete(globalThis, 'process'));
+  tearDown(() => delete<Object>(globalThis, 'process'));
 
   const nonNodeJsProcessTestCases = <String, Map<String, Map<String, String>>>{
     'an empty process': {},
