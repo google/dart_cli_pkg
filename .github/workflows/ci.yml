@@ -21,7 +21,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        dart-channel: [stable, dev]
+        dart-channel: [stable]
+        # TODO(nweiz): Re-enable this when
+        # https://github.com/dart-lang/sdk/issues/52121#issuecomment-1728534228
+        # is addressed.
+        # dart-channel: [stable, dev]
         shard: [0, 1, 2]
       fail-fast: false
 
@@ -49,7 +53,11 @@ jobs:
 
     strategy:
       matrix:
-        dart-channel: [stable, dev]
+        dart-channel: [stable]
+        # TODO(nweiz): Re-enable this when
+        # https://github.com/dart-lang/sdk/issues/52121#issuecomment-1728534228
+        # is addressed.
+        # dart-channel: [stable, dev]
       fail-fast: false
 
     runs-on: ubuntu-latest

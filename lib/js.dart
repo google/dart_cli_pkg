@@ -12,7 +12,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:js/js.dart';
 import 'package:js/js_util.dart';
+import 'package:node_interop/process.dart';
+
+@JS('process')
+external final Process? _process; // process is null in the browser
+
+/// This extension adds `maybe<Property>` getters that return non-nullable
+/// properties with a nullable type.
+extension PartialProcess on Process {
+  /// Returns [release] as nullable.
+  Release? get maybeRelease => release;
+}
+
+/// Whether the script is being executed in a Node.JS environment.
+bool get isNodeJs => _process?.maybeRelease?.name == 'node';
+
+/// Returns the NodeJs [Process] value only when the script is running in
+/// Node.JS, otherwise returns `null`.
+///
+/// By checking whether the script is running in Node.JS we can avoid returning
+/// a non-[Process] object if the script is running in a browser, and there is a
+/// different `process` object in the `window`. This can happen when a library
+/// or framework adds a global variable named `process`. For example, Next.JS
+/// adds [`process.env`] to access environment variables on the browser.
+///
+/// [`process.env`]: https://nextjs.org/docs/pages/building-your-application/configuring/environment-variables#bundling-environment-variables-for-the-browser
+///
+/// The getter can still return a non-[Process] object if the script is running
+/// in a browser and there is a `process` object in the `window` with the value
+/// `{release: {name: 'node'}}`. In this case the script must trust the browser
+/// is emulating a Node.JS environment.
+///
+/// Note: If you use this, add a dependency on `node_interop` to ensure you get
+/// a version compatible with your usage.
+Process? get process => isNodeJs ? _process : null;
 
 /// Whether this Dart code is running in a strict mode context.
 ///

@@ -1,3 +1,7 @@
+## 2.6.0
+
+* Add `isNodeJs` and `process` getters to `package:cli_pkg/js.dart`.
+
 ## 2.5.0
 
 * Add a `wrapJSException()` function in the new `package:cli_pkg/js.dart`

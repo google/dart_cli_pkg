@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:cli_pkg/js.dart';
 import 'package:js/js.dart';
 import 'package:test/test.dart';
 
@@ -49,5 +50,13 @@ void main() {
 
   test("the default dependency is not loaded", () {
     expect(loadedDefaultDependency, isFalse);
+  });
+
+  test("isNodeJs returns 'false'", () {
+    expect(isNodeJs, isFalse);
+  });
+
+  test("process returns 'null'", () {
+    expect(process, isNull);
   });
 }

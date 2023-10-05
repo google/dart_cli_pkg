@@ -1135,6 +1135,50 @@ void main() {
       test("handles a thrown undefined",
           () => assertCatchesGracefully('BigInt(undefined)'));
     });
+
+    test("isNodeJs returns `true` when running in Node.JS", () async {
+      await d.package(pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", """
+              import 'package:cli_pkg/js.dart';
+
+              void main() {
+                print(isNodeJs);
+              }
+            """)
+        ]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["true", emitsDone]));
+      expect(process.shouldExit(0), completes);
+    });
+
+    test("process returns a Process when running in Node.JS", () async {
+      await d.package(pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", """
+              import 'package:cli_pkg/js.dart';
+
+              void main() {
+                print(process?.release.name);
+              }
+            """)
+        ]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["node", emitsDone]));
+      expect(process.shouldExit(0), completes);
+    });
   });
 }
 
