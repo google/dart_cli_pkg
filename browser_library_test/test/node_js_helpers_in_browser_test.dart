@@ -51,7 +51,7 @@ void main() {
 
 /// Runs a suite of tests that verify the same behavior across environments that
 /// look like Node.JS, but that don't actually fake a Node.JS environment.
-void withNonNodeJsProcess(Function() callback) {
+void withNonNodeJsProcess(void Function() callback) {
   const nonNodeJsProcessTestCases = <String, Map<String, Map<String, String>>>{
     'an empty process': {},
     'a process with empty release': {'release': {}},
@@ -76,7 +76,7 @@ void withNonNodeJsProcess(Function() callback) {
 
 /// Runs a suite of tests that verify the same behavior across environments that
 /// fake a Node.JS environment.
-void withFakedNodeJsProcess(Function() callback) {
+void withFakedNodeJsProcess(void Function() callback) {
   const fakeNodeJsProcess = {
     'release': {'name': 'node'}
   };
