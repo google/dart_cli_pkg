@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export 'src/js/interface.dart'
-    if (dart.library.js) 'src/js/js.dart'
-    if (dart.library.io) 'src/js/vm.dart';
+import 'package:cli_pkg/js.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('isNodeJs returns false', () {
+    expect(isNodeJs, isFalse);
+  });
+
+  test('isBrowser returns false', () {
+    expect(isBrowser, isFalse);
+  });
+
+  test('isJS returns false', () {
+    expect(isJS, isFalse);
+  });
+
+  test('wrapJSException throws the same primitive', () {
+    expect(() => wrapJSExceptions(() => throw ''), throwsA(equals('')));
+  });
+}

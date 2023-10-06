@@ -56,7 +56,11 @@ void main() {
     expect(isNodeJs, isFalse);
   });
 
-  test("process returns 'null'", () {
-    expect(process, isNull);
+  test("isBrowser returns 'true'", () {
+    expect(isBrowser, isTrue);
+  });
+
+  test("isJS returns 'true'", () {
+    expect(isJS, isTrue);
   });
 }
