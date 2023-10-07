@@ -67,9 +67,9 @@ void withNonNodeJsProcess(void Function() callback) {
     final processJson = entry.value.jsify();
 
     group(caseName, () {
-      tearDown(() => delete<Object>(globalThis, 'process'));
       setUp(() => setProperty(globalThis, 'process', processJson));
       callback();
+      tearDown(() => delete<Object>(globalThis, 'process'));
     });
   }
 }
@@ -82,8 +82,8 @@ void withFakedNodeJsProcess(void Function() callback) {
   };
 
   group('fake Node.JS environment', () {
-    tearDown(() => delete<Object>(globalThis, 'process'));
     setUp(() => setProperty(globalThis, 'process', fakeNodeJsProcess.jsify()));
     callback();
+    tearDown(() => delete<Object>(globalThis, 'process'));
   });
 }

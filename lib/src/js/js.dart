@@ -12,18 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:html';
+
 import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'package:node_interop/process.dart';
 
 @JS('process')
-external final Process? _process; // process is null in the browser
+external final Process? _process; // process is undefined in the browser
+
+@JS('location')
+external final Location? _location; // location is undefined in Node.JS
 
 /// This extension adds `maybe<Property>` getters that return non-nullable
 /// properties with a nullable type.
-extension PartialProcess on Process {
+extension _PartialProcess on Process {
   /// Returns [release] as nullable.
-  Release? get maybeRelease => release;
+  Release? get _maybeRelease => release;
 }
 
 /// Whether this Dart code is running in a strict mode context.
@@ -41,9 +46,9 @@ final _isStrictMode = () {
 
 const bool isJS = true;
 
-bool get isNodeJs => _process?.maybeRelease?.name == 'node';
+bool get isNodeJs => _process?._maybeRelease?.name == 'node';
 
-bool get isBrowser => isJS && !isNodeJs;
+bool get isBrowser => !isNodeJs && _location?.href != null;
 
 T wrapJSExceptions<T>(T Function() callback) {
   if (!_isStrictMode) return callback();
