@@ -16,9 +16,14 @@
 const bool isJS = false;
 
 /// Whether we're running as Node.js (not browser or Dart VM).
+///
+/// This is determined by validating that `process.release.name == "node"`.
 bool get isNodeJs => throw '';
 
 /// Whether we're running as browser (not Node.js or Dart VM).
+///
+/// This is determined by checking for the `scrollRestoration` property in
+/// the browser's History API.
 bool get isBrowser => throw '';
 
 /// Runs [callback], wrapping any primitive JS objects it throws so they don't

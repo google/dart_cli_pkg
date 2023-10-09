@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:html';
-
 import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'package:node_interop/process.dart';
@@ -21,8 +19,8 @@ import 'package:node_interop/process.dart';
 @JS('process')
 external final Process? _process; // process is undefined in the browser
 
-@JS('location')
-external final Location? _location; // location is undefined in Node.JS
+@JS('history')
+external final Object? _historyApi; // history is undefined in Node.JS
 
 /// This extension adds `maybe<Property>` getters that return non-nullable
 /// properties with a nullable type.
@@ -48,7 +46,12 @@ const bool isJS = true;
 
 bool get isNodeJs => _process?._maybeRelease?.name == 'node';
 
-bool get isBrowser => !isNodeJs && _location?.href != null;
+bool get isBrowser =>
+    !isNodeJs &&
+    _historyApi != null &&
+    // Checking the type at runtime with `is` avoids throwing an error in the
+    // unlikely case that the returned object isn't a `string`.
+    getProperty<Object?>(_historyApi!, 'scrollRestoration') is String;
 
 T wrapJSExceptions<T>(T Function() callback) {
   if (!_isStrictMode) return callback();
