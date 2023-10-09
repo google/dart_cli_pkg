@@ -22,8 +22,8 @@ bool get isNodeJs => throw '';
 
 /// Whether we're running as browser (not Node.js or Dart VM).
 ///
-/// This is determined by checking for the `scrollRestoration` property in
-/// the browser's History API.
+/// This is determined by checking for the `querySelector` function in the
+/// browser's Document API.
 bool get isBrowser => throw '';
 
 /// Runs [callback], wrapping any primitive JS objects it throws so they don't

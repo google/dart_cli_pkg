@@ -19,8 +19,8 @@ import 'package:node_interop/process.dart';
 @JS('process')
 external final Process? _process; // process is undefined in the browser
 
-@JS('history')
-external final Object? _historyApi; // history is undefined in Node.JS
+@JS('document')
+external final Object? _document; // document is undefined in Node.JS
 
 /// This extension adds `maybe<Property>` getters that return non-nullable
 /// properties with a nullable type.
@@ -48,10 +48,9 @@ bool get isNodeJs => _process?._maybeRelease?.name == 'node';
 
 bool get isBrowser =>
     !isNodeJs &&
-    _historyApi != null &&
-    // Checking the type at runtime with `is` avoids throwing an error in the
-    // unlikely case that the returned object isn't a `string`.
-    getProperty<Object?>(_historyApi!, 'scrollRestoration') is String;
+    _document != null &&
+    typeofEquals<Object?>(
+        getProperty<Object?>(_document!, 'querySelector'), 'function');
 
 T wrapJSExceptions<T>(T Function() callback) {
   if (!_isStrictMode) return callback();
