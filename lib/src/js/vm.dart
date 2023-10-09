@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export 'src/js/interface.dart'
-    if (dart.library.js) 'src/js/js.dart'
-    if (dart.library.io) 'src/js/vm.dart';
+const bool isJS = false;
+
+bool get isNodeJs => false;
+
+bool get isBrowser => false;
+
+T wrapJSExceptions<T>(T Function() callback) => callback();

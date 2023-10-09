@@ -1,3 +1,15 @@
+## 2.7.0
+
+* The `package:cli_pkg/js.dart` library can now be used by the Dart VM.
+  Previously it could only be imported when compiling to JS.
+
+* Add `isBrowser` and `isJS` getters to `package:cli_pkg/js.dart`.
+
+* **Potentially breaking bug fix:** Removed the `process` getter and the
+  `PartialProcess` class extension from `package:cli_pkg/js.dart` to avoid
+  exporting the `Process` type as part of the API. The package version `2.6.0`
+  was rescinded immediately after publishing.
+
 ## 2.6.0
 
 * Add `isNodeJs` and `process` getters to `package:cli_pkg/js.dart`.

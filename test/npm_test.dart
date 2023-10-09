@@ -1136,17 +1136,17 @@ void main() {
           () => assertCatchesGracefully('BigInt(undefined)'));
     });
 
-    test("isNodeJs returns `true` when running in Node.JS", () async {
+    test("isNodeJs returns `true`", () async {
       await d.package(pubspec, _enableNpm, [
         _packageJson,
         d.dir("bin", [
           d.file("foo.dart", """
-              import 'package:cli_pkg/js.dart';
+            import 'package:cli_pkg/js.dart';
 
-              void main() {
-                print(isNodeJs);
-              }
-            """)
+            void main() {
+              print(isNodeJs);
+            }
+          """)
         ]),
       ]).create();
 
@@ -1158,17 +1158,17 @@ void main() {
       expect(process.shouldExit(0), completes);
     });
 
-    test("process returns a Process when running in Node.JS", () async {
+    test("isBrowser returns `false`", () async {
       await d.package(pubspec, _enableNpm, [
         _packageJson,
         d.dir("bin", [
           d.file("foo.dart", """
-              import 'package:cli_pkg/js.dart';
+            import 'package:cli_pkg/js.dart';
 
-              void main() {
-                print(process?.release.name);
-              }
-            """)
+            void main() {
+              print(isBrowser);
+            }
+          """)
         ]),
       ]).create();
 
@@ -1176,7 +1176,29 @@ void main() {
 
       var process = await TestProcess.start(
           "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
-      expect(process.stdout, emitsInOrder(["node", emitsDone]));
+      expect(process.stdout, emitsInOrder(["false", emitsDone]));
+      expect(process.shouldExit(0), completes);
+    });
+
+    test("isJS returns `true`", () async {
+      await d.package(pubspec, _enableNpm, [
+        _packageJson,
+        d.dir("bin", [
+          d.file("foo.dart", """
+            import 'package:cli_pkg/js.dart';
+
+            void main() {
+              print(isJS);
+            }
+          """)
+        ]),
+      ]).create();
+
+      await (await grind(["pkg-npm-dev"])).shouldExit();
+
+      var process = await TestProcess.start(
+          "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
+      expect(process.stdout, emitsInOrder(["true", emitsDone]));
       expect(process.shouldExit(0), completes);
     });
   });

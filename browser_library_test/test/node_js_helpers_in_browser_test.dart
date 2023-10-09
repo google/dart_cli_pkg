@@ -21,59 +21,69 @@ import 'package:cli_pkg/js.dart';
 import 'package:test/test.dart';
 
 void main() {
-  tearDown(() => delete<Object>(globalThis, 'process'));
+  group('isNodeJs', () {
+    withNonNodeJsProcess(() {
+      test('returns false', () => expect(isNodeJs, isFalse));
+    });
 
+    withFakedNodeJsProcess(() {
+      test('returns true', () => expect(isNodeJs, isTrue));
+    });
+  });
+
+  group('isBrowser', () {
+    withNonNodeJsProcess(() {
+      test('returns true', () => expect(isBrowser, isTrue));
+    });
+
+    withFakedNodeJsProcess(() {
+      test('returns false', () => expect(isBrowser, isFalse));
+    });
+  });
+
+  test('isJS returns true', () => expect(isJS, isTrue));
+
+  // Strict-mode tests are in `npm_test.dart`.
+  test('wrapJSException throws the same primitive in non-strict mode', () {
+    expect(() => wrapJSExceptions(() => throw ''), throwsA(equals('')));
+  });
+}
+
+/// Runs a suite of tests that verify the same behavior across environments that
+/// look like Node.JS, but that don't actually fake a Node.JS environment.
+void withNonNodeJsProcess(void Function() callback) {
   const nonNodeJsProcessTestCases = <String, Map<String, Map<String, String>>>{
     'an empty process': {},
     'a process with empty release': {'release': {}},
     'a process with non-Node.JS release name': {
-      'release': {'name': 'hello'}
+      'release': {'name': 'definitely-not-node'}
     },
   };
 
+  group('default environment', callback);
+
+  for (final entry in nonNodeJsProcessTestCases.entries) {
+    final caseName = entry.key;
+    final processJson = entry.value.jsify();
+
+    group(caseName, () {
+      setUp(() => setProperty(globalThis, 'process', processJson));
+      callback();
+      tearDown(() => delete<Object>(globalThis, 'process'));
+    });
+  }
+}
+
+/// Runs a suite of tests that verify the same behavior across environments that
+/// fake a Node.JS environment.
+void withFakedNodeJsProcess(void Function() callback) {
   const fakeNodeJsProcess = {
     'release': {'name': 'node'}
   };
 
-  group('isNodeJs', () {
-    test("returns 'false' from the browser", () {
-      expect(isNodeJs, isFalse);
-    });
-
-    for (final entry in nonNodeJsProcessTestCases.entries) {
-      final caseName = entry.key;
-      final processJson = entry.value.jsify();
-
-      test("returns 'false' when $caseName exists in the 'window'", () {
-        setProperty(globalThis, 'process', processJson);
-        expect(isNodeJs, isFalse);
-      });
-    }
-
-    test("returns 'true' with a fake Node.JS process", () {
-      setProperty(globalThis, 'process', fakeNodeJsProcess.jsify());
-      expect(isNodeJs, isTrue);
-    });
-  });
-
-  group('process', () {
-    test("returns 'null' from the browser", () {
-      expect(process, isNull);
-    });
-
-    for (final entry in nonNodeJsProcessTestCases.entries) {
-      final caseName = entry.key;
-      final processJson = entry.value.jsify();
-
-      test("returns 'null' when $caseName exists in the 'window'", () {
-        setProperty(globalThis, 'process', processJson);
-        expect(process, isNull);
-      });
-    }
-
-    test("returns a fake process if it fakes being a Node.JS environment", () {
-      setProperty(globalThis, 'process', fakeNodeJsProcess.jsify());
-      expect(process.jsify().dartify(), fakeNodeJsProcess);
-    });
+  group('fake Node.JS environment', () {
+    setUp(() => setProperty(globalThis, 'process', fakeNodeJsProcess.jsify()));
+    callback();
+    tearDown(() => delete<Object>(globalThis, 'process'));
   });
 }
