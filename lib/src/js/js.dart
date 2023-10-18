@@ -16,18 +16,18 @@ import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'package:node_interop/process.dart';
 
+@JS('Object.prototype.toString.call')
+external String _toString(Object? obj);
+
 @JS('process')
-external final Process? _process; // process is undefined in the browser
+external final Process? _process; // process is a native object in Node.js
 
-@JS('document')
-external final Object? _document; // document is undefined in Node.JS
+@JS('window')
+external final Object? _window; // window is a native object in the browser
 
-/// This extension adds `maybe<Property>` getters that return non-nullable
-/// properties with a nullable type.
-extension _PartialProcess on Process {
-  /// Returns [release] as nullable.
-  Release? get _maybeRelease => release;
-}
+@JS('importScripts')
+external final Object?
+    _importScripts; // importScripts is a native function in the web worker
 
 /// Whether this Dart code is running in a strict mode context.
 ///
@@ -44,13 +44,15 @@ final _isStrictMode = () {
 
 const bool isJS = true;
 
-bool get isNodeJs => _process?._maybeRelease?.name == 'node';
+bool get isNodeJs =>
+    _process != null && _toString(_process) == '[object process]';
 
 bool get isBrowser =>
-    !isNodeJs &&
-    _document != null &&
-    typeofEquals<Object?>(
-        getProperty<Object?>(_document!, 'querySelector'), 'function');
+    (_window != null && _toString(_window) == '[object Window]') ||
+    _isWebWorker;
+
+bool get _isWebWorker =>
+    _importScripts != null && _toString(_importScripts) == '[object Function]';
 
 T wrapJSExceptions<T>(T Function() callback) {
   if (!_isStrictMode) return callback();

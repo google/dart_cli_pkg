@@ -20,6 +20,12 @@ import 'dart:js_util';
 import 'package:cli_pkg/js.dart';
 import 'package:test/test.dart';
 
+@JS('Object.defineProperty')
+external Object _defineProperty(Object obj, Object prop, Object descriptor);
+
+@JS('Symbol.toStringTag')
+external Object _toStringTag;
+
 void main() {
   group('isNodeJs', () {
     withNonNodeJsProcess(() {
@@ -37,7 +43,7 @@ void main() {
     });
 
     withFakedNodeJsProcess(() {
-      test('returns false', () => expect(isBrowser, isFalse));
+      test('returns true', () => expect(isBrowser, isTrue));
     });
   });
 
@@ -82,7 +88,11 @@ void withFakedNodeJsProcess(void Function() callback) {
   };
 
   group('fake Node.JS environment', () {
-    setUp(() => setProperty(globalThis, 'process', fakeNodeJsProcess.jsify()));
+    setUp(() => setProperty(
+        globalThis,
+        'process',
+        _defineProperty(fakeNodeJsProcess.jsify() as Object, _toStringTag,
+            ({'value': 'process'}).jsify() as Object)));
     callback();
     tearDown(() => delete<Object>(globalThis, 'process'));
   });

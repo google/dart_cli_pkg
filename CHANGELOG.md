@@ -1,3 +1,7 @@
+## 2.8.0
+
+* Make `isBrowser` and `isNodeJs` more reliable.
+
 ## 2.7.0
 
 * The `package:cli_pkg/js.dart` library can now be used by the Dart VM.
