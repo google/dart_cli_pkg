@@ -1,3 +1,7 @@
+## 2.7.1
+
+* Compile native executables for 32-bit Dart SDKs.
+
 ## 2.7.0
 
 * The `package:cli_pkg/js.dart` library can now be used by the Dart VM.
