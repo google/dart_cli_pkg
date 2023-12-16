@@ -549,8 +549,6 @@ globalThis._cliPkgExports.push(_cliPkgExports);
 
   buffer.writeln(preamble
       .getPreamble()
-      // Reassigning require() makes Webpack complain.
-      .replaceFirst("self.require = require;\n", "")
       // Allow library wrappers to pass in an explicit export variable.
       .replaceFirst("""
 if (typeof exports !== "undefined") {
