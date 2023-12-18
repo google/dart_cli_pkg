@@ -1,3 +1,9 @@
+## 2.7.1
+
+* Make `require` available as a top-level name for JS interop. Dependencies
+  should still be defined declaratively through `jsRequires`, but this allows
+  Dart code to access attributes like `require.main`.
+
 ## 2.7.0
 
 * The `package:cli_pkg/js.dart` library can now be used by the Dart VM.
