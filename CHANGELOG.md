@@ -1,5 +1,9 @@
 ## 2.7.1
 
+* Make `require` available as a top-level name for JS interop. Dependencies
+  should still be defined declaratively through `jsRequires`, but this allows
+  Dart code to access attributes like `require.main`.
+
 * Compile native executables for 32-bit Dart SDKs.
 
 ## 2.7.0
