@@ -164,14 +164,10 @@ void addStandaloneTasks() {
 ///
 /// We can only use the native executable on the current operating system *and*
 /// on 64-bit machines, because currently Dart doesn't support cross-compilation
-/// (dart-lang/sdk#28617) and only 64-bit Dart SDKs support `dart compile exe`
-/// (dart-lang/sdk#47177).
+/// (dart-lang/sdk#28617).
 bool _useNative(String os, String arch) {
   _verifyOsAndArch(os, arch);
-  if (!_isCurrentOsAndArch(os, arch)) return false;
-  if (arch == "ia32") return false;
-
-  return true;
+  return _isCurrentOsAndArch(os, arch);
 }
 
 /// List of strings containing the os and arch for the current Dart SDK.
