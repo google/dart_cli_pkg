@@ -1,3 +1,8 @@
+## 2.7.2
+
+* Stop attempting to compile native executables for 32-bit Dart SDKs, again. (I
+  misunderstood and thought the underlying Dart SDK issue was fixed.)
+
 ## 2.7.1
 
 * Make `require` available as a top-level name for JS interop. Dependencies
