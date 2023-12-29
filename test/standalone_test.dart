@@ -18,31 +18,17 @@ import 'dart:convert';
 import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
+import 'package:cli_pkg/src/standalone/architecture.dart';
+import 'package:cli_pkg/src/standalone/cli_platform.dart';
+import 'package:cli_pkg/src/standalone/operating_system.dart';
 import 'package:cli_pkg/src/utils.dart';
 
 import 'descriptor.dart' as d;
 import 'utils.dart';
 
-/// The architecture of the current operating system.
-final _architecture = () {
-  if (Platform.version.contains("x64")) return "x64";
-  if (Platform.version.contains("arm64")) return "arm64";
-  return "ia32";
-}();
-
-/// The operating system/architecture combination for the current machine.
-///
-/// We build this for most tests so we can avoid downloading SDKs from the Dart
-/// server.
-final _target = "${Platform.operatingSystem}-$_architecture";
-
-/// Whether `pkg-compile-native` will generate fully standalone executable that
-/// doesn't need a separate `dartaotruntime` executable to run.
-final _useExe = Platform.operatingSystem == "linux" &&
-    ["x64", "arm64"].contains(_architecture);
-
 /// The archive suffix for the current platform.
-final _archiveSuffix = _target + (Platform.isWindows ? ".zip" : ".tar.gz");
+final _archiveSuffix =
+    CliPlatform.current.toString() + CliPlatform.current.archiveExtension;
 
 /// The contents of a `grind.dart` file that just enables standalone tasks.
 final _enableStandalone = """
@@ -63,7 +49,8 @@ void main() {
     test("default to pkg.dartName", () async {
       await d.package(pubspec, _enableStandalone).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix",
           [d.dir("my_app")]).validate();
@@ -78,7 +65,8 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my-app-1.2.3-$_archiveSuffix",
           [d.dir("my-app")]).validate();
@@ -94,7 +82,8 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
           [d.dir("my-sa-app")]).validate();
@@ -110,14 +99,15 @@ void main() {
 
     test("default to the pubspec's executables", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
           d.file("foo$dotBat", anything),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-          if (!_useExe)
+          if (!CliPlatform.current.useExe)
             d.dir("src", [
               d.file("foo.snapshot", anything),
               d.file("bar.snapshot", anything),
@@ -136,14 +126,15 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
           d.nothing("foo$dotBat"),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-          if (!_useExe)
+          if (!CliPlatform.current.useExe)
             d.dir("src",
                 [d.nothing("foo.snapshot"), d.file("bar.snapshot", anything)])
         ])
@@ -159,7 +150,8 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -167,7 +159,7 @@ void main() {
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
           d.file("zip$dotBat", anything),
-          if (!_useExe)
+          if (!CliPlatform.current.useExe)
             d.dir("src", [
               d.file("foo.snapshot", anything),
               d.file("bar.snapshot", anything),
@@ -206,7 +198,8 @@ void main() {
             "void main() => print(const String.fromEnvironment('my-const'));")
       ]).create();
 
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
       // Directly
@@ -305,7 +298,8 @@ void main() {
               _enableStandalone,
               [d.file("LICENSE", "Please use my code")])
           .create();
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
@@ -323,7 +317,8 @@ void main() {
 
     test("is still generated if the package doesn't have a license", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind(["pkg-standalone-$_target"])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
@@ -341,20 +336,25 @@ void main() {
           "executables": {"foo": "foo"}
         }, _enableStandalone).create());
 
-    d.Descriptor archive(String os, String arch) {
-      var name = "my_app/build/my_app-1.2.3-$os-$arch."
-          "${os == 'windows' ? 'zip' : 'tar.gz'}";
+    d.Descriptor archive(String os, String arch, {bool musl = false}) {
+      var platform = CliPlatform(
+          OperatingSystem.parse(os), Architecture.parse(arch),
+          musl: musl);
+      var name =
+          "my_app/build/my_app-1.2.3-$os-$arch${platform.archiveExtension}";
 
-      var useExe =
-          Platform.operatingSystem == os && arch == _architecture && _useExe;
       return d.archive(name, [
         d.dir("my_app", [
-          d.file("foo${os == 'windows' ? (useExe ? '.exe' : '.bat') : ''}",
+          d.file(
+              "foo" +
+                  (platform.os.isWindows
+                      ? (platform.useExe ? '.exe' : '.bat')
+                      : ''),
               anything),
-          if (!useExe)
+          if (!platform.useExe)
             d.dir("src", [
               d.file("LICENSE", anything),
-              d.file("dart${os == 'windows' ? '.exe' : ''}", anything),
+              d.file("dart${platform.binaryExtension}", anything),
               d.file("foo.snapshot", anything)
             ])
         ])
@@ -374,46 +374,100 @@ void main() {
     });
 
     group("Linux", () {
-      test("32-bit", () async {
-        await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
-        await archive("linux", "ia32").validate();
-      });
+      for (var musl in [false, true]) {
+        group(musl ? "musl" : "glibc", () {
+          test("32-bit x86", () async {
+            await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
+            await archive("linux", "ia32", musl: musl).validate();
+          });
 
-      test("64-bit x86", () async {
-        await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
-        await archive("linux", "x64").validate();
-      });
+          test("64-bit x86", () async {
+            await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
+            await archive("linux", "x64", musl: musl).validate();
+          });
 
-      test("64-bit ARM", () async {
-        await (await grind(["pkg-standalone-linux-arm64"])).shouldExit(0);
-        await archive("linux", "arm64").validate();
-      });
+          test("32-bit ARM", () async {
+            await (await grind(["pkg-standalone-linux-arm"])).shouldExit(0);
+            await archive("linux", "arm", musl: musl).validate();
+          });
+
+          test("64-bit ARM", () async {
+            await (await grind(["pkg-standalone-linux-arm64"])).shouldExit(0);
+            await archive("linux", "arm64", musl: musl).validate();
+          });
+
+          test("32-bit RISCV", () async {
+            await (await grind(["pkg-standalone-linux-riscv32"])).shouldExit(0);
+            await archive("linux", "riscv32", musl: musl).validate();
+          });
+
+          test("64-bit RISCV", () async {
+            await (await grind(["pkg-standalone-linux-riscv64"])).shouldExit(0);
+            await archive("linux", "riscv64", musl: musl).validate();
+          });
+        });
+      }
     });
 
     group("Windows", () {
-      test("32-bit", () async {
+      test("32-bit x86", () async {
         await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
         await archive("windows", "ia32").validate();
       });
 
-      test("64-bit", () async {
+      test("64-bit x86", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
         await archive("windows", "x64").validate();
       });
+
+      test("64-bit ARM", () async {
+        await (await grind(["pkg-standalone-windows-arm64"])).shouldExit(0);
+        await archive("windows", "arm64").validate();
+      });
     });
 
-    test("all platforms", () async {
-      await (await grind(["pkg-standalone-all"])).shouldExit(0);
+    group("Android", () {
+      test("32-bit x86", () async {
+        await (await grind(["pkg-standalone-android-ia32"])).shouldExit(0);
+        await archive("android", "ia32").validate();
+      });
 
-      await Future.wait([
-        archive("macos", "x64").validate(),
-        archive("macos", "arm64").validate(),
-        archive("linux", "ia32").validate(),
-        archive("linux", "x64").validate(),
-        archive("linux", "arm64").validate(),
-        archive("windows", "ia32").validate(),
-        archive("windows", "x64").validate()
-      ]);
+      test("64-bit x86", () async {
+        await (await grind(["pkg-standalone-android-x64"])).shouldExit(0);
+        await archive("android", "x64").validate();
+      });
+
+      test("32-bit ARM", () async {
+        await (await grind(["pkg-standalone-android-arm"])).shouldExit(0);
+        await archive("android", "arm").validate();
+      });
+
+      test("64-bit ARM", () async {
+        await (await grind(["pkg-standalone-android-arm64"])).shouldExit(0);
+        await archive("android", "arm64").validate();
+      });
+
+      test("64-bit RISCV", () async {
+        await (await grind(["pkg-standalone-android-riscv64"])).shouldExit(0);
+        await archive("android", "riscv64").validate();
+      });
+    });
+
+    group("iOS", () {
+      test("32-bit ARM", () async {
+        await (await grind(["pkg-standalone-ios-arm"])).shouldExit(0);
+        await archive("ios", "arm").validate();
+      });
+
+      test("64-bit ARM", () async {
+        await (await grind(["pkg-standalone-ios-arm64"])).shouldExit(0);
+        await archive("ios", "arm64").validate();
+      });
+
+      test("64-bit x86", () async {
+        await (await grind(["pkg-standalone-ios-x64"])).shouldExit(0);
+        await archive("ios", "x64").validate();
+      });
     });
   });
 

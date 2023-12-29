@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:async/async.dart';
+import 'package:collection/collection.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:pool/pool.dart';
@@ -25,6 +26,7 @@ import 'package:retry/retry.dart';
 import 'config_variable.dart';
 import 'info.dart';
 import 'standalone.dart';
+import 'standalone/cli_platform.dart';
 import 'last_changelog_section.dart';
 import 'utils.dart';
 
@@ -210,22 +212,22 @@ void addGithubTasks() {
       taskFunction: _release,
       description: 'Create a GitHub release, without executables.'));
 
-  var osTasks = osToArchs.entries.map((entry) {
-    var os = entry.key;
-    var archTasks = entry.value
-        .map((arch) => GrinderTask('pkg-github-$os-$arch',
-            taskFunction: () => _uploadExecutables(os, arch),
-            description:
-                'Release ${humanOSName(os)} $arch executables to GitHub.',
-            depends: ['pkg-standalone-$os-$arch']))
-        .toList();
-    archTasks.forEach(addTask);
+  for (var platform in CliPlatform.all) {
+    addTask(GrinderTask('pkg-github-$platform',
+        taskFunction: () => _uploadExecutables(platform),
+        description:
+            'Release executable to GitHub for ${platform.toHumanString()}.',
+        depends: ['pkg-standalone-$platform']));
+  }
 
-    return GrinderTask('pkg-github-$os',
-        description: 'Release ${humanOSName(os)} executables to GitHub.',
-        depends: archTasks.map((task) => task.name));
-  }).toList();
-  osTasks.forEach(addTask);
+  var osTasks = [
+    for (var MapEntry(key: os, value: platforms)
+        in CliPlatform.all.groupListsBy((platform) => platform.os).entries)
+      GrinderTask('pkg-github-$os',
+          description: 'Release ${platforms.first.os.toHumanString()} '
+              'executables to GitHub.',
+          depends: platforms.map((platform) => 'pkg-github-$platform'))
+  ]..forEach(addTask);
 
   var dependencies = ['pkg-github-release'];
   dependencies.addAll(osTasks.map((task) => task.name));
@@ -240,15 +242,14 @@ void addGithubTasks() {
       taskFunction: _fixPermissions));
 }
 
-/// Upload an executable for the given [os] and [arch] to the current GitHub
-/// release.
-Future<void> _uploadExecutables(String os, String arch) async {
+/// Upload an executable for the given [playform] to the current GitHub release.
+Future<void> _uploadExecutables(CliPlatform platform) async {
   var response = await client.get(
       url("https://api.github.com/repos/$githubRepo/releases/tags/$version"),
       headers: {"authorization": _authorization});
 
-  var format = os == "windows" ? "zip" : "tar.gz";
-  var package = "$standaloneName-$version-$os-$arch.$format";
+  var format = platform.os.isWindows ? "zip" : "tar.gz";
+  var package = "$standaloneName-$version-$platform.$format";
   await _uploadToRelease(json.decode(response.body) as Map<String, dynamic>,
       package, File(p.join("build", package)).readAsBytesSync());
   log("Uploaded $package.");

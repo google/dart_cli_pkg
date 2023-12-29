@@ -58,8 +58,8 @@ Depends on: [`pkg-compile-snapshot-dev`][]
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
-Output: `build/$executable` (on Linux and Mac OS) or `build/$executable.bat` (on
-Windows)
+Output: `build/$executable` (on non-Windows operating systems) or
+`build/$executable.bat` (on Windows)
 
 Creates scripts for each of this package's executables that executes them with
 asserts enabled. The details of how the executables are compiled may change over
@@ -102,18 +102,19 @@ The target for the current OS and architecture is always available. However, for
 any OS or architecture under experimental Dart SDK support, such task is only
 available when building with the experimental Dart SDK directly.
 
-This produces a ZIP file in Windows, and a gzipped TAR file on Linux and Mac OS.
+This produces a ZIP file in Windows, and a gzipped TAR file on other operating
+systems.
 
 Note that `pkg-standalone-macos-ia32` doesn't exist. The Dart SDK no longer has
 a 32-bit distribution for Mac OS (as of Dart 2.7), because Mac OS Catalina and
-later are 64-bit-only. Similarly, `pkg-standalone-windows-arm64` doesn't exist
-because the Dart SDK has never had an ARM distribution for Windows.
+later are 64-bit-only. Similarly, `pkg-standalone-windows-arm` doesn't exist
+because the Dart SDK has never had a 32-bit ARM distribution for Windows.
 
 ## `pkg-standalone-all`
 
-Depends on: [`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-linux-arm64`, `pkg-standalone-macos-x64`, `pkg-standalone-macos-arm64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`][]
+Depends on: all [`pkg-standalone-$os-$arch`][]
 
-[`pkg-standalone-linux-ia32`, `pkg-standalone-linux-x64`, `pkg-standalone-linux-arm64`, `pkg-standalone-macos-x64`, `pkg-standalone-macos-arm64`, `pkg-standalone-windows-ia32`, `pkg-standalone-windows-x64`]: #pkg-standalone-os-arch
+[`pkg-standalone-$os-$arch`]: #pkg-standalone-os-arch
 
 A utility task for creating a packages for all operating systems in the same
 step.

@@ -1,10 +1,10 @@
 name: cli_pkg
-version: 2.7.2
+version: 2.8.0
 description: Grinder tasks for releasing Dart CLI packages.
 homepage: https://github.com/google/dart_cli_pkg
 
 environment:
-  sdk: '>=2.16.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   archive: ^3.1.2

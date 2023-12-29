@@ -1,3 +1,8 @@
+## 2.8.0
+
+* Add standalone and GitHub tasks for all OS/architecture combinations supported
+  by Dart, as well as for Musl Linux.
+
 ## 2.7.2
 
 * Stop attempting to compile native executables for 32-bit Dart SDKs, again. (I
