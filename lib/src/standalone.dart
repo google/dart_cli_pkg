@@ -21,6 +21,7 @@ import 'package:path/path.dart' as p;
 
 import 'config_variable.dart';
 import 'info.dart';
+import 'sdk_channel.dart';
 import 'standalone/cli_platform.dart';
 import 'standalone/operating_system.dart';
 import 'template.dart';
@@ -239,8 +240,8 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
           "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
           "that platform."),
     _ => "https://storage.googleapis.com/dart-archive/channels/"
-        "${isDevSdk ? "dev" : "stable"}/release/$dartVersion/sdk/"
-        "dartsdk-${platform.os}-${platform.arch}-release.zip"
+        "${SdkChannel.current}/release/$dartVersion/sdk/dartsdk-${platform.os}-"
+        "${platform.arch}-release.zip"
   };
   log("Downloading $url...");
   var response = await client.get(Uri.parse(url));

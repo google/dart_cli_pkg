@@ -39,9 +39,6 @@ Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
 
-/// Whether we're using a dev Dart SDK.
-bool get isDevSdk => dartVersion.isPreRelease;
-
 /// Returns whether tasks are being run in a test environment.
 bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
 
