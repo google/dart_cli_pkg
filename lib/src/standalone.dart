@@ -231,9 +231,13 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
     CliPlatform(os: OperatingSystem.android) => "https://github.com/"
         "dart-android/dart/releases/download/$dartVersion/"
         "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
-    CliPlatform(os: OperatingSystem.fuchsia) => fail(
-        "Fuchsia executables can only be generated when running on the Fuchsia "
-        "OS, because Dart doesn't distribute SDKs for Fuchsia."),
+    CliPlatform(
+      os: var os && (OperatingSystem.fuchsia || OperatingSystem.ios)
+    ) =>
+      fail(
+          "${os.toHumanString()} executables can only be generated when running "
+          "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
+          "that platform."),
     _ => "https://storage.googleapis.com/dart-archive/channels/"
         "${isDevSdk ? "dev" : "stable"}/release/$dartVersion/sdk/"
         "dartsdk-${platform.os}-${platform.arch}-release.zip"

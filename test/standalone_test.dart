@@ -396,11 +396,6 @@ void main() {
             await archive("linux", "arm64", musl: musl).validate();
           });
 
-          test("32-bit RISCV", () async {
-            await (await grind(["pkg-standalone-linux-riscv32"])).shouldExit(0);
-            await archive("linux", "riscv32", musl: musl).validate();
-          });
-
           test("64-bit RISCV", () async {
             await (await grind(["pkg-standalone-linux-riscv64"])).shouldExit(0);
             await archive("linux", "riscv64", musl: musl).validate();
@@ -446,19 +441,9 @@ void main() {
         await (await grind(["pkg-standalone-android-arm64"])).shouldExit(0);
         await archive("android", "arm64").validate();
       });
-
-      test("64-bit RISCV", () async {
-        await (await grind(["pkg-standalone-android-riscv64"])).shouldExit(0);
-        await archive("android", "riscv64").validate();
-      });
     });
 
     group("iOS", () {
-      test("32-bit ARM", () async {
-        await (await grind(["pkg-standalone-ios-arm"])).shouldExit(0);
-        await archive("ios", "arm").validate();
-      });
-
       test("64-bit ARM", () async {
         await (await grind(["pkg-standalone-ios-arm64"])).shouldExit(0);
         await archive("ios", "arm64").validate();

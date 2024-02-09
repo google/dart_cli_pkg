@@ -13,14 +13,32 @@
 // limitations under the License.
 
 import 'dart:ffi';
+import 'dart:io';
 
 import 'package:grinder/grinder.dart';
+import 'package:native_stack_traces/elf.dart';
+import 'package:path/path.dart' as p;
 
 import 'architecture.dart';
 import 'operating_system.dart';
 
+/// The set of ABIs that Dart recognizes but cli_pkg doesn't support for various
+/// reasons.
+const _unsupportedAbis = {
+  // iOS dropped 32-bit support with iOS 11 in 2017
+  Abi.iosArm,
+  // The dart-android project doesn't support this because Android on riscv64 is
+  // "still far from stable"
+  Abi.androidRiscv64,
+  // This is still experimental and Dart isn't shipping SDKs for it yet
+  Abi.linuxRiscv32
+};
+
 /// The set of all ABI strings known by this SDK.
-final _abiStrings = {for (var abi in Abi.values) abi.toString()};
+final _abiStrings = {
+  for (var abi in Abi.values)
+    if (!_unsupportedAbis.contains(abi)) abi.toString()
+};
 
 /// A struct representing a platform for which we can build standalone
 /// executables.
@@ -55,9 +73,9 @@ class CliPlatform {
   /// Returns whether to use the natively-compiled executable for this platform.
   ///
   /// We can only use the native executable on the current operating system
-  /// *and* on 64-bit machines, because currently Dart doesn't support
-  /// cross-compilation (dart-lang/sdk#28617) and only 64-bit Dart SDKs support
-  /// `dart compile exe` (dart-lang/sdk#47177).
+  /// because Dart doesn't currently support cross-compilation
+  /// (dart-lang/sdk#28617). Dart also doesn't support native compilation on
+  /// ia32 in particular (dart-lang/sdk#47177).
   bool get useNative => isCurrent && !arch.isIA32;
 
   /// The binary file extension for this platform.
@@ -80,10 +98,25 @@ class CliPlatform {
   /// executables can run on 64-bit operating systems and the choice of LibC is
   /// OS-independent.
   static final CliPlatform current = () {
-    // TODO(nweiz): Detect when we're running on musl LibC.
-    var [os, arch] = Abi.current().toString().split('_');
-    return CliPlatform(OperatingSystem.parse(os), Architecture.parse(arch));
+    var [osName, archName] = Abi.current().toString().split('_');
+    var os = OperatingSystem.parse(osName);
+    var arch = Architecture.parse(archName);
+    return CliPlatform(os, arch, musl: os.isLinux && _isCurrentPlatformMusl);
   }();
+
+  /// Returns whether the current platform is using musl LibC.
+  static bool get _isCurrentPlatformMusl {
+    var section = Elf.fromFile(Platform.resolvedExecutable)
+        ?.namedSections('.interp')
+        .firstOrNull;
+    if (section == null) return false;
+
+    var file = File(Platform.resolvedExecutable).openSync()
+      ..setPositionSync(section.offset);
+    var interp = String.fromCharCodes(file.readSync(section.length - 1));
+    file.closeSync();
+    return p.basename(interp).startsWith('ld-musl-');
+  }
 
   CliPlatform(this.os, this.arch, {bool musl = false}) : isMusl = musl {
     if (!_abiStrings.contains('${os}_$arch')) {
