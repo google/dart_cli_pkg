@@ -39,6 +39,15 @@ final homebrewFormula = InternalConfigVariable.value<String?>(null);
 final homebrewCreateVersionedFormula =
     InternalConfigVariable.fn(() => version.isPreRelease);
 
+/// A user-defined function that modifies the formula after the automatic edits
+/// have been applied.
+///
+/// This can be used to handle applicatoin-speicfic changes, like updating
+/// secondary resource URLs. It runs after the URL, SHA, and vesion number have
+/// been updated.
+final homebrewEditFormula =
+    InternalConfigVariable.value<String Function(String)>((formula) => formula);
+
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
 
@@ -96,13 +105,13 @@ Future<void> _update() async {
 
     var newFormulaPath = p.join(p.dirname(formulaPath),
         "${p.basenameWithoutExtension(formulaPath)}@$version.rb");
-    writeString(newFormulaPath, formula);
+    writeString(newFormulaPath, homebrewEditFormula.value(formula));
     run("git",
         arguments: ["add", p.relative(newFormulaPath, from: repo)],
         workingDirectory: repo,
         runOptions: botEnvironment);
   } else {
-    writeString(formulaPath, formula);
+    writeString(formulaPath, homebrewEditFormula.value(formula));
   }
 
   run("git",
