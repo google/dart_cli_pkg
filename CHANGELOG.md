@@ -3,6 +3,9 @@
 * Add standalone and GitHub tasks for all OS/architecture combinations supported
   by Dart, as well as for Musl Linux.
 
+* Add a `homebrewEditFormula` `ConfigVariable` that allows users to make custom
+  modifications to the Homebrew formula after the built-in edits.
+
 ## 2.7.2
 
 * Stop attempting to compile native executables for 32-bit Dart SDKs, again. (I
