@@ -22,11 +22,9 @@ import 'package:path/path.dart' as p;
 import 'architecture.dart';
 import 'operating_system.dart';
 
-/// The set of ABIs that Dart recognizes but cli_pkg doesn't support for various
+/// Certain ABIs that Dart recognizes but cli_pkg doesn't support for various
 /// reasons.
 const _unsupportedAbis = {
-  // iOS dropped 32-bit support with iOS 11 in 2017
-  Abi.iosArm,
   // The dart-android project doesn't support this because Android on riscv64 is
   // "still far from stable"
   Abi.androidRiscv64,
@@ -37,7 +35,10 @@ const _unsupportedAbis = {
 /// The set of all ABI strings known by this SDK.
 final _abiStrings = {
   for (var abi in Abi.values)
-    if (!_unsupportedAbis.contains(abi)) abi.toString()
+    if (!_unsupportedAbis.contains(abi) &&
+        // There are no Dart SDKs for iOS
+        !abi.toString().startsWith("ios"))
+      abi.toString()
 };
 
 /// A struct representing a platform for which we can build standalone
@@ -126,7 +127,7 @@ class CliPlatform {
     if (musl && !os.isLinux) fail("musl LibC only supports Linux.");
   }
 
-  int get hashCode => os.hashCode ^ arch.hashCode ^ isMusl.hashCode;
+  int get hashCode => Object.hash(os.hashCode, arch.hashCode, isMusl.hashCode);
 
   bool operator ==(Object other) =>
       other is CliPlatform &&

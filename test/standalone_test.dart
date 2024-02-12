@@ -442,18 +442,6 @@ void main() {
         await archive("android", "arm64").validate();
       });
     });
-
-    group("iOS", () {
-      test("64-bit ARM", () async {
-        await (await grind(["pkg-standalone-ios-arm64"])).shouldExit(0);
-        await archive("ios", "arm64").validate();
-      });
-
-      test("64-bit x86", () async {
-        await (await grind(["pkg-standalone-ios-x64"])).shouldExit(0);
-        await archive("ios", "x64").validate();
-      });
-    });
   });
 
   group("pkg-standalone-dev creates an executable", () {
