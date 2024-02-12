@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -22,23 +21,11 @@ import 'package:path/path.dart' as p;
 
 import 'config_variable.dart';
 import 'info.dart';
+import 'sdk_channel.dart';
+import 'standalone/cli_platform.dart';
+import 'standalone/operating_system.dart';
 import 'template.dart';
 import 'utils.dart';
-
-/// Whether to generate a fully standalone executable that doesn't need a
-/// separate `dartaotruntime` executable to run.
-///
-/// Note that even if this is `true`, fully standalone executables can only be
-/// generated for the current operating system in 64-bit mode, so [_useNative]
-/// should be checked as well.
-///
-/// This is currently disabled on Windows and OS X because they generate
-/// annoying warnings when running unsigned executables. See #67 for details.
-///
-/// This is currently disabled on Linux because the self-contained executable
-/// can be broken due to the way trailing snapshot in ELF is handled.
-/// See https://github.com/dart-lang/sdk/issues/50926 for details.
-final _useExe = false;
 
 /// The name of the standalone package.
 ///
@@ -87,7 +74,7 @@ void _compileNative() {
       existingSnapshots[path] = name;
       run('dart', arguments: [
         'compile',
-        _useExe ? 'exe' : 'aot-snapshot',
+        CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
         path,
         for (var entry in environmentConstants.value.entries)
           '-D${entry.key}=${entry.value}',
@@ -128,64 +115,26 @@ void addStandaloneTasks() {
       // when dart-lang/sdk#39973 is fixed.
       depends: ['pkg-compile-snapshot-dev']));
 
-  var tasks = osToArchs.entries.expand((entry) {
-    var os = entry.key;
-    return entry.value.map((arch) {
-      return GrinderTask('pkg-standalone-$os-$arch',
-          taskFunction: () => _buildPackage(os, arch),
+  var tasks = {
+    for (var platform in CliPlatform.all)
+      platform: GrinderTask('pkg-standalone-$platform',
+          taskFunction: () => _buildPackage(platform),
           description:
-              'Build a standalone $arch package for ${humanOSName(os)}.',
-          depends: _useNative(os, arch)
+              'Build a standalone package for ${platform.toHumanString()}.',
+          depends: platform.useNative
               ? ['pkg-compile-native']
-              : ['pkg-compile-snapshot']);
-    }).toList();
-  }).toList();
-  tasks.forEach(addTask);
+              : ['pkg-compile-snapshot'])
+  };
+  tasks.values.forEach(addTask);
 
   addTask(GrinderTask('pkg-standalone-all',
       description: 'Build all standalone packages.',
-      depends: tasks.map((task) => task.name)));
-
-  // Add a task for current sdk if it is experimental.
-  var taskNameForCurrentAbi = "pkg-standalone-$_currentOs-$_currentArch";
-  if (!tasks.any((task) => task.name == taskNameForCurrentAbi)) {
-    addTask(GrinderTask(taskNameForCurrentAbi,
-        taskFunction: () => _buildPackage(_currentOs, _currentArch),
-        description:
-            'Build a standalone $_currentArch package for ${humanOSName(_currentOs)}.',
-        depends: _useNative(_currentOs, _currentArch)
-            ? ['pkg-compile-native']
-            : ['pkg-compile-snapshot']));
-  }
-}
-
-/// Returns whether to use the natively-compiled executable for the given [os]
-/// and [arch] combination.
-///
-/// We can only use the native executable on the current operating system *and*
-/// on 64-bit machines, because currently Dart doesn't support cross-compilation
-/// (dart-lang/sdk#28617) and only 64-bit Dart SDKs support `dart compile exe`
-/// (dart-lang/sdk#47177).
-bool _useNative(String os, String arch) {
-  _verifyOsAndArch(os, arch);
-  if (!_isCurrentOsAndArch(os, arch)) return false;
-  if (arch == "ia32") return false;
-
-  return true;
-}
-
-/// List of strings containing the os and arch for the current Dart SDK.
-List<String> _currentOsAndArch = Abi.current().toString().split('_');
-
-/// The os of the current Dart SDK.
-String _currentOs = _currentOsAndArch[0];
-
-/// The arch of the current Dart SDK.
-String _currentArch = _currentOsAndArch[1];
-
-/// Returns whether currently running SDK matches [os] and [arch] combination.
-bool _isCurrentOsAndArch(String os, String arch) {
-  return os == _currentOs && arch == _currentArch;
+      depends: [
+        for (var MapEntry(key: platform, value: task) in tasks.entries)
+          // Omit Fuchsia tasks because we can't run those unless we're actually
+          // running on Fuchsia ourselves.
+          if (!platform.os.isFuchsia || platform.isCurrent) task.name
+      ]));
 }
 
 /// Builds scripts for testing each executable on the current OS and
@@ -212,48 +161,44 @@ Future<void> _buildDev() async {
   }
 }
 
-/// Builds a package for the given [os] and architecture.
-Future<void> _buildPackage(String os, String arch) async {
-  _verifyOsAndArch(os, arch);
+/// Builds a package for the given [platform].
+Future<void> _buildPackage(CliPlatform platform) async {
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  var useNative = _useNative(os, arch);
-  var useExe = useNative && _useExe;
-  if (!useExe) {
+  if (!platform.useExe) {
     archive.addFile(fileFromBytes(
-        "$standaloneName/src/dart${_binaryExtension(os)}",
-        await _dartExecutable(os, arch),
+        "$standaloneName/src/dart${platform.binaryExtension}",
+        await _dartExecutable(platform),
         executable: true));
   }
 
   for (var name in executables.value.keys) {
-    if (useExe) {
-      archive.addFile(file(
-          "$standaloneName/$name${os == 'windows' ? '.exe' : ''}",
+    if (platform.useExe) {
+      archive.addFile(file("$standaloneName/$name${platform.binaryExtension}",
           "build/$name.native",
           executable: true));
     } else {
       archive.addFile(file("$standaloneName/src/$name.snapshot",
-          useNative ? "build/$name.native" : "build/$name.snapshot"));
+          platform.useNative ? "build/$name.native" : "build/$name.snapshot"));
     }
   }
 
-  if (!useExe) {
+  if (!platform.useExe) {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
       archive.addFile(fileFromString(
-          "$standaloneName/$name${os == 'windows' ? '.bat' : ''}",
+          "$standaloneName/$name${platform.os.isWindows ? '.bat' : ''}",
           renderTemplate(
-              "standalone/executable.${os == 'windows' ? 'bat' : 'sh'}",
+              "standalone/executable${platform.os.isWindows ? '.bat' : '.sh'}",
               {"name": standaloneName.value, "executable": name}),
           executable: true));
     }
   }
 
-  var prefix = 'build/$standaloneName-$version-$os-$arch';
-  if (os == 'windows') {
+  var prefix = 'build/$standaloneName-$version-$platform';
+  if (platform.os.isWindows) {
     var output = "$prefix.zip";
     log("Creating $output...");
     File(output).writeAsBytesSync(ZipEncoder().encode(archive)!);
@@ -266,28 +211,38 @@ Future<void> _buildPackage(String os, String arch) async {
 }
 
 /// Returns the binary contents of the `dart` or `dartaotruntime` exectuable for
-/// the given [os] and architecture.
-Future<List<int>> _dartExecutable(String os, String arch) async {
-  _verifyOsAndArch(os, arch);
-
+/// the given [platform].
+Future<List<int>> _dartExecutable(CliPlatform platform) async {
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
-  if (_useNative(os, arch)) {
-    return File(
-            p.join(sdkDir.path, "bin/dartaotruntime${_binaryExtension(os)}"))
-        .readAsBytesSync();
-  } else if (_isCurrentOsAndArch(os, arch)) {
-    return File(p.join(sdkDir.path, "bin/dart${_binaryExtension(os)}"))
+  if (platform.useNative) {
+    return File(p.join(
+            sdkDir.path, "bin/dartaotruntime${platform.binaryExtension}"))
         .readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
     // executable.
-    return utf8.encode("Dart $os $arch");
+    return utf8.encode("Dart ${platform.toHumanString()}");
   }
 
-  var channel = isDevSdk ? "dev" : "stable";
-  var url = "https://storage.googleapis.com/dart-archive/channels/$channel/"
-      "release/$dartVersion/sdk/dartsdk-$os-$arch-release.zip";
+  var url = switch (platform) {
+    CliPlatform(isMusl: true) => "https://github.com/dart-musl/dart/releases/"
+        "download/$dartVersion/"
+        "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
+    CliPlatform(os: OperatingSystem.android) => "https://github.com/"
+        "dart-android/dart/releases/download/$dartVersion/"
+        "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
+    CliPlatform(
+      os: var os && (OperatingSystem.fuchsia || OperatingSystem.ios)
+    ) =>
+      fail(
+          "${os.toHumanString()} executables can only be generated when running "
+          "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
+          "that platform."),
+    _ => "https://storage.googleapis.com/dart-archive/channels/"
+        "${SdkChannel.current}/release/$dartVersion/sdk/dartsdk-${platform.os}-"
+        "${platform.arch}-release.zip"
+  };
   log("Downloading $url...");
   var response = await client.get(Uri.parse(url));
   if (response.statusCode ~/ 100 != 2) {
@@ -295,21 +250,11 @@ Future<List<int>> _dartExecutable(String os, String arch) async {
         "${response.reasonPhrase}.");
   }
 
-  var filename = "/bin/dart${_binaryExtension(os)}";
-  return ZipDecoder()
-      .decodeBytes(response.bodyBytes)
+  var filename = "/bin/dart${platform.binaryExtension}";
+  return (url.endsWith(".zip")
+          ? ZipDecoder().decodeBytes(response.bodyBytes)
+          : TarDecoder()
+              .decodeBytes(GZipDecoder().decodeBytes(response.bodyBytes)))
       .firstWhere((file) => file.name.endsWith(filename))
       .content as List<int>;
 }
-
-/// Throws an error if [os] and [arch] aren't a valid combination.
-///
-/// This is just intended to guard against programmer error within `cli_pkg`.
-void _verifyOsAndArch(String os, String arch) {
-  if (!Abi.values.any((abi) => abi.toString() == '${os}_$arch')) {
-    fail("Unknown or unsupported platform $os-$arch!");
-  }
-}
-
-/// Returns the binary extension for the given [os].
-String _binaryExtension(String os) => os == 'windows' ? '.exe' : '';

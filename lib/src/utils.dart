@@ -29,13 +29,6 @@ import 'package:yaml/yaml.dart';
 
 import 'info.dart';
 
-/// The map of os to list of architectures for packaging.
-final osToArchs = {
-  'macos': ['x64', 'arm64'],
-  'linux': ['ia32', 'x64', 'arm', 'arm64'],
-  'windows': ['ia32', 'x64'],
-};
-
 /// The raw YAML of the pubspec.
 final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
     sourceUrl: Uri(path: 'pubspec.yaml')) as Map<dynamic, dynamic>;
@@ -45,9 +38,6 @@ Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
 
 /// The version of the current Dart executable.
 final Version dartVersion = Version.parse(Platform.version.split(" ").first);
-
-/// Whether we're using a dev Dart SDK.
-bool get isDevSdk => dartVersion.isPreRelease;
 
 /// Returns whether tasks are being run in a test environment.
 bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
@@ -212,18 +202,6 @@ Uri url(String url) {
       port: parsedHost.port,
       path:
           p.url.join(parsedHost.path, p.url.relative(parsed.path, from: "/")));
-}
-
-/// Returns the human-friendly name for the given [os] string.
-String humanOSName(String os) {
-  switch (os) {
-    case "ios":
-      return "iOS";
-    case "macos":
-      return "macOS";
-    default:
-      return "${os[0].toUpperCase()}${os.substring(1).toLowerCase()}";
-  }
 }
 
 /// Returns a sentence fragment listing the elements of [iter].

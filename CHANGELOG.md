@@ -1,5 +1,8 @@
 ## 2.8.0
 
+* Add standalone and GitHub tasks for all OS/architecture combinations supported
+  by Dart, as well as for Musl Linux.
+
 * Add a `homebrewEditFormula` `ConfigVariable` that allows users to make custom
   modifications to the Homebrew formula after the built-in edits.
 
