@@ -42,8 +42,8 @@ final homebrewCreateVersionedFormula =
 /// A user-defined function that modifies the formula after the automatic edits
 /// have been applied.
 ///
-/// This can be used to handle applicatoin-speicfic changes, like updating
-/// secondary resource URLs. It runs after the URL, SHA, and vesion number have
+/// This can be used to handle application-specific changes, like updating
+/// secondary resource URLs. It runs after the URL, SHA, and version number have
 /// been updated.
 final homebrewEditFormula =
     InternalConfigVariable.value<String Function(String)>((formula) => formula);
