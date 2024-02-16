@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ignore: deprecated_member_use
-import 'dart:cli';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -29,8 +27,7 @@ final _cache = p.PathMap<String>();
 /// Note: This function only supports simple variable replacement. It does not
 /// support any additional Mustache features.
 String renderTemplate(String path, Map<String, String> variables) {
-  // ignore: deprecated_member_use
-  path = p.join(waitFor(cliPkgSrc), 'templates', path);
+  path = p.join(cliPkgSrc, 'templates', path);
   var text =
       _cache.putIfAbsent(path, () => File("$path.mustache").readAsStringSync());
   for (var entry in variables.entries) {

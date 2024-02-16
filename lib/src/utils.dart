@@ -43,10 +43,8 @@ final Version dartVersion = Version.parse(Platform.version.split(" ").first);
 bool get isTesting => Platform.environment["_CLI_PKG_TESTING"] == "true";
 
 /// The `src/` directory in the `cli_pkg` package.
-final Future<String> cliPkgSrc = () async {
-  return p.fromUri(
-      await Isolate.resolvePackageUri(Uri.parse('package:cli_pkg/src')));
-}();
+String get cliPkgSrc =>
+    p.fromUri(Isolate.resolvePackageUriSync(Uri.parse('package:cli_pkg/src')));
 
 /// A shared client to use across all HTTP requests.
 ///
