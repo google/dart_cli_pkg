@@ -1,3 +1,8 @@
+## 2.9.0
+
+* Expand `homebrewEditFormula`'s return type from `String` to
+  `FutureOr<String>`.
+
 ## 2.8.1
 
 * Stop using `dart:cli`.

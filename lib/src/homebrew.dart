@@ -2,6 +2,7 @@
 // MIT-style license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -46,7 +47,8 @@ final homebrewCreateVersionedFormula =
 /// secondary resource URLs. It runs after the URL, SHA, and version number have
 /// been updated.
 final homebrewEditFormula =
-    InternalConfigVariable.value<String Function(String)>((formula) => formula);
+    InternalConfigVariable.value<FutureOr<String> Function(String)>(
+        (formula) => formula);
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -105,13 +107,13 @@ Future<void> _update() async {
 
     var newFormulaPath = p.join(p.dirname(formulaPath),
         "${p.basenameWithoutExtension(formulaPath)}@$version.rb");
-    writeString(newFormulaPath, homebrewEditFormula.value(formula));
+    writeString(newFormulaPath, await homebrewEditFormula.value(formula));
     run("git",
         arguments: ["add", p.relative(newFormulaPath, from: repo)],
         workingDirectory: repo,
         runOptions: botEnvironment);
   } else {
-    writeString(formulaPath, homebrewEditFormula.value(formula));
+    writeString(formulaPath, await homebrewEditFormula.value(formula));
   }
 
   run("git",
