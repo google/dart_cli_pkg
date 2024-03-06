@@ -1,3 +1,7 @@
+## 2.9.1
+
+* Add standalone and GitHub tasks for android-riscv64.
+
 ## 2.9.0
 
 * Expand `homebrewEditFormula`'s return type from `String` to
