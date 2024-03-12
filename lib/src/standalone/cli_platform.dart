@@ -25,9 +25,6 @@ import 'operating_system.dart';
 /// Certain ABIs that Dart recognizes but cli_pkg doesn't support for various
 /// reasons.
 const _unsupportedAbis = {
-  // The dart-android project doesn't support this because Android on riscv64 is
-  // "still far from stable"
-  Abi.androidRiscv64,
   // This is still experimental and Dart isn't shipping SDKs for it yet
   Abi.linuxRiscv32
 };
