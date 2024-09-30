@@ -68,9 +68,8 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
         .expand((files) => files);
   }
 
-  ArchiveDescriptor(String name, Iterable<Descriptor> contents)
-      : contents = List.unmodifiable(contents),
-        super(name);
+  ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
+      : contents = List.unmodifiable(contents);
 
   Future<void> create([String? parent]) async {
     var path = p.join(parent ?? sandbox, name);

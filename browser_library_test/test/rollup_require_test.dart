@@ -13,6 +13,7 @@
 // limitations under the License.
 
 @TestOn('browser')
+library;
 
 import 'package:test/test.dart';
 
