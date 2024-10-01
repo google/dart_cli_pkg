@@ -13,6 +13,7 @@
 // limitations under the License.
 
 @TestOn('browser')
+library;
 
 import 'dart:js_interop';
 import 'dart:js_util';
