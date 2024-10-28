@@ -556,8 +556,8 @@ if (typeof exports !== "undefined") {
 }""", "self.exports = _cliPkgExportParam || $exportsVariable;"));
 
   for (var require in [...jsRequires.value, ...extractedRequires]) {
-    // A lazy require creates a function that invokes `require`, create a lazy
-    // getter to invoke the function.
+    // Rather than defining a module directly, a lazy require defines a function
+    // that loads a module, so we need to expose those functions as getters.
     if (require.lazy) {
       buffer.writeln("Object.defineProperty(self, '${require.identifier}', "
           "{ get: _cliPkgRequires.${require.identifier} });");
@@ -638,7 +638,7 @@ String _loadRequires(JSRequireSet requires) {
   var buffer = StringBuffer("library.load({");
   if (requires.isNotEmpty) buffer.writeln();
   for (var require in requires) {
-    // Returns a function for lazy requires, which will be called by lazy getter
+    // The functions returned by lazy requires will be wrapped in getters.
     var requireFn = switch (require) {
       JSRequire(lazy: true, optional: true) => "(function(i){"
           "let r;"

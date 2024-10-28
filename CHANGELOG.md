@@ -1,6 +1,6 @@
 ## 2.11.0
 
-* Add option `lazy` and `optional` to `JSRequire`.
+* Add `lazy` and `optional` options to `JSRequire()`.
 
 ## 2.10.0
 
