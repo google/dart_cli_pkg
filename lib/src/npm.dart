@@ -644,7 +644,12 @@ String _loadRequires(JSRequireSet requires) {
           "let r;"
           "return function ${require.identifier}(){"
           "if(void 0!==r)return r;"
-          "try{r=require(i)}catch(e){if('MODULE_NOT_FOUND'!==e.code)console.error(e);r=null}"
+          "try{"
+          "r=require(i)"
+          "}catch(e){"
+          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+          "r=null"
+          "}"
           "return r"
           "}"
           "})",
@@ -654,7 +659,12 @@ String _loadRequires(JSRequireSet requires) {
           "}"
           "})",
       JSRequire(optional: true) => "(function(i){"
-          "try{return require(i)}catch(e){if('MODULE_NOT_FOUND'!==e.code)console.error(e);return null}"
+          "try{"
+          "return require(i)"
+          "}catch(e){"
+          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+          "return null"
+          "}"
           "})",
       _ => "require"
     };

@@ -1245,138 +1245,143 @@ void main() {
       test("have access to lazy requires", () async {
         expect(
             load(
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node),"
-                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, lazy: true, identifier: 'os_lazy')",
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
+                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+                    "lazy: true, identifier: 'os_lazy')",
                 """
-import 'package:js/js.dart';
+                  import 'package:js/js.dart';
 
-@JS()
-class Exports {
-  external set os(Object? value);
-  external set osLazy(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set os(Object? value);
+                    external set osLazy(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('os')
-external Object? os;
+                  @JS('os')
+                  external Object? os;
 
-@JS('os_lazy')
-external Object? get osLazy;
+                  @JS('os_lazy')
+                  external Object? get osLazy;
 
-void main() {
-  exports.os = os;
-  exports.osLazy = osLazy;
-}
-""",
+                  void main() {
+                    exports.os = os;
+                    exports.osLazy = osLazy;
+                  }
+                  """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-console.log(my_app.os === my_app.osLazy);
-"""),
+                  console.log(my_app.os === my_app.osLazy);
+                """),
             completion(isTrue));
       });
 
       test("throw lazily for access to non-exist lazy require()", () async {
         expect(
             load(
-                "pkg.JSRequire('module_not_found', target: pkg.JSRequireTarget.node, lazy: true)",
+                "pkg.JSRequire('module_not_found', "
+                    "target: pkg.JSRequireTarget.node, lazy: true)",
                 """
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
+                  import 'package:js/js.dart';
+                  import 'package:js/js_util.dart';
 
-@JS()
-class Exports {
-  external set run(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set run(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('module_not_found')
-external Object? get moduleNotFound;
+                  @JS('module_not_found')
+                  external Object? get moduleNotFound;
 
-void main() {
-  exports.run = allowInterop(() => moduleNotFound);
-}
-""",
+                  void main() {
+                    exports.run = allowInterop(() => moduleNotFound);
+                  }
+                  """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-try {
-  myapp.run()
-} catch (_) {
-  console.log(true)
-}
-"""),
+                  try {
+                    myapp.run()
+                  } catch (_) {
+                    console.log(true)
+                  }
+                """),
             completion(isTrue));
       });
 
       test("have access to optional requires", () async {
         expect(
             load(
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node),"
-                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, optional: true, identifier: 'os_optional')",
+                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
+                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+                    "optional: true, identifier: 'os_optional')",
                 """
-import 'package:js/js.dart';
+                  import 'package:js/js.dart';
 
-@JS()
-class Exports {
-  external set os(Object? value);
-  external set osOptional(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set os(Object? value);
+                    external set osOptional(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('os')
-external Object? os;
+                  @JS('os')
+                  external Object? os;
 
-@JS('os_optional')
-external Object? osOptional;
+                  @JS('os_optional')
+                  external Object? osOptional;
 
-void main() {
-  exports.os = os;
-  exports.osOptional = osOptional;
-}
-""",
+                  void main() {
+                    exports.os = os;
+                    exports.osOptional = osOptional;
+                  }
+                """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-console.log(my_app.os === my_app.osOptional);
-"""),
+                  console.log(my_app.os === my_app.osOptional);
+                """),
             completion(isTrue));
       });
 
-      test("return null for access to non-exist optional require()", () async {
+      test("return null for access to non-existant optional require()",
+          () async {
         expect(
             load(
-                "pkg.JSRequire('module_not_found', target: pkg.JSRequireTarget.node, optional: true)",
+                "pkg.JSRequire('module_not_found', "
+                    "target: pkg.JSRequireTarget.node, optional: true)",
                 """
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
+                  import 'package:js/js.dart';
+                  import 'package:js/js_util.dart';
 
-@JS()
-class Exports {
-  external set moduleNotFound(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set moduleNotFound(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('module_not_found')
-external Object? moduleNotFound;
+                  @JS('module_not_found')
+                  external Object? moduleNotFound;
 
-void main() {
-  exports.moduleNotFound = moduleNotFound;
-}
-""",
+                  void main() {
+                    exports.moduleNotFound = moduleNotFound;
+                  }
+                  """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-console.log(my_app.moduleNotFound === null)
-"""),
+                  console.log(my_app.moduleNotFound === null)
+                """),
             completion(isTrue));
       });
 
@@ -1384,67 +1389,72 @@ console.log(my_app.moduleNotFound === null)
         expect(
             load(
                 "pkg.JSRequire('os', target: pkg.JSRequireTarget.node),"
-                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, lazy: true, optional: true, identifier: 'os_lazy_optional')",
+                    "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+                    "lazy: true, optional: true, "
+                    "identifier: 'os_lazy_optional')",
                 """
-import 'package:js/js.dart';
+                  import 'package:js/js.dart';
 
-@JS()
-class Exports {
-  external set os(Object? value);
-  external set osLazyOptional(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set os(Object? value);
+                    external set osLazyOptional(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('os')
-external Object? os;
+                  @JS('os')
+                  external Object? os;
 
-@JS('os_lazy_optional')
-external Object? get osLazyOptional;
+                  @JS('os_lazy_optional')
+                  external Object? get osLazyOptional;
 
-void main() {
-  exports.os = os;
-  exports.osLazyOptional = osLazyOptional;
-}
-""",
+                  void main() {
+                    exports.os = os;
+                    exports.osLazyOptional = osLazyOptional;
+                  }
+                """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-console.log(my_app.os === my_app.osLazyOptional);
-"""),
+                  console.log(my_app.os === my_app.osLazyOptional);
+                """),
             completion(isTrue));
       });
 
-      test("return null lazily for access to non-exist lazy optional require()",
-          () async {
+      test(
+          "return null lazily for access to non-existant lazy optional "
+          "require()", () async {
         expect(
             load(
-                "pkg.JSRequire('module_not_found', target: pkg.JSRequireTarget.node, lazy: true, optional: true)",
+                "pkg.JSRequire('module_not_found', "
+                    "target: pkg.JSRequireTarget.node, lazy: true, "
+                    "optional: true)",
                 """
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
+                  import 'package:js/js.dart';
+                  import 'package:js/js_util.dart';
 
-@JS()
-class Exports {
-  external set run(Object? value);
-}
+                  @JS()
+                  class Exports {
+                    external set run(Object? value);
+                  }
 
-@JS()
-external Exports get exports;
+                  @JS()
+                  external Exports get exports;
 
-@JS('module_not_found')
-external Object? get moduleNotFound;
+                  @JS('module_not_found')
+                  external Object? get moduleNotFound;
 
-void main() {
-  exports.run = allowInterop(() => moduleNotFound);
-}
-""",
+                  void main() {
+                    exports.run = allowInterop(() => moduleNotFound);
+                  }
+                """,
                 """
-var my_app = require("my_app");
+                  var my_app = require("my_app");
 
-console.log(my_app.run() === null)
-"""),
+                  console.log(my_app.run() === null)
+                """),
             completion(isTrue));
       });
     });
