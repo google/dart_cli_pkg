@@ -1,3 +1,7 @@
+## 2.11.0
+
+* Add `lazy` and `optional` options to `JSRequire()`.
+
 ## 2.10.0
 
 * Add standalone and GitHub tasks for android-riscv64.

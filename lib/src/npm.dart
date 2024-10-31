@@ -556,8 +556,15 @@ if (typeof exports !== "undefined") {
 }""", "self.exports = _cliPkgExportParam || $exportsVariable;"));
 
   for (var require in [...jsRequires.value, ...extractedRequires]) {
-    buffer.write("self.${require.identifier} = ");
-    buffer.writeln("_cliPkgRequires.${require.identifier};");
+    // Rather than defining a module directly, a lazy require defines a function
+    // that loads a module, so we need to expose those functions as getters.
+    if (require.lazy) {
+      buffer.writeln("Object.defineProperty(self, '${require.identifier}', "
+          "{ get: _cliPkgRequires.${require.identifier} });");
+    } else {
+      buffer.writeln("self.${require.identifier} = "
+          "_cliPkgRequires.${require.identifier};");
+    }
   }
 
   buffer.write(compiledDart);
@@ -631,8 +638,39 @@ String _loadRequires(JSRequireSet requires) {
   var buffer = StringBuffer("library.load({");
   if (requires.isNotEmpty) buffer.writeln();
   for (var require in requires) {
+    // The functions returned by lazy requires will be wrapped in getters.
+    var requireFn = switch (require) {
+      JSRequire(lazy: true, optional: true) => "(function(i){"
+          "let r;"
+          "return function ${require.identifier}(){"
+          "if(void 0!==r)return r;"
+          "try{"
+          "r=require(i)"
+          "}catch(e){"
+          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+          "r=null"
+          "}"
+          "return r"
+          "}"
+          "})",
+      JSRequire(lazy: true) => "(function(i){"
+          "return function ${require.identifier}(){"
+          "return require(i)"
+          "}"
+          "})",
+      JSRequire(optional: true) => "(function(i){"
+          "try{"
+          "return require(i)"
+          "}catch(e){"
+          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+          "return null"
+          "}"
+          "})",
+      _ => "require"
+    };
+
     buffer.writeln(
-        "  ${require.identifier}: require(${json.encode(require.package)}),");
+        "  ${require.identifier}: $requireFn(${json.encode(require.package)}),");
   }
   buffer.writeln("});");
   return buffer.toString();

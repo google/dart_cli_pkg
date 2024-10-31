@@ -31,12 +31,33 @@ class JSRequire {
   /// This defaults to a valid JS identifier based on [package].
   final String identifier;
 
+  /// Whether the dependency is loaded lazily.
+  ///
+  /// A lazy-loaded dependency only executes the `require()` function the first
+  /// time the module identifier is referenced, rather than eagerly executing it
+  /// when this package is loaded.
+  ///
+  /// This defaults to false.
+  final bool lazy;
+
+  /// Whether the dependency is optional.
+  ///
+  /// An optional dependency's module identifier will be `null` if a load fails
+  /// rather than throwing an error.
+  ///
+  /// This defaults to false.
+  final bool optional;
+
   /// The target in which to include this require.
   ///
   /// This defaults to [JSRequireTarget.all].
   final JSRequireTarget target;
 
-  JSRequire(this.package, {String? identifier, JSRequireTarget? target})
+  JSRequire(this.package,
+      {String? identifier,
+      JSRequireTarget? target,
+      this.lazy = false,
+      this.optional = false})
       : identifier = identifier ??
             package
                 .replaceFirst(RegExp(r'^@'), '')
