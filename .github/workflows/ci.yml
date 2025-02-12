@@ -97,5 +97,5 @@ jobs:
     - uses: actions/checkout@v2
     - uses: dart-lang/setup-dart@v1.2
     - run: dart --version
-    - run: dart format --fix .
-    - run: git diff --exit-code
+    - run: dart pub get
+    - run: dart format --set-exit-if-changed .
