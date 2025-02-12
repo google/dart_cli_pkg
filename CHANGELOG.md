@@ -1,3 +1,7 @@
+## 2.12.0
+
+* Drop support for ia32 on Dart SDK >=3.8.0.
+
 ## 2.11.0
 
 * Add `lazy` and `optional` options to `JSRequire()`.

@@ -18,7 +18,9 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 import 'package:native_stack_traces/elf.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 
+import '../utils.dart';
 import 'architecture.dart';
 import 'operating_system.dart';
 
@@ -34,7 +36,10 @@ final _abiStrings = {
   for (var abi in Abi.values)
     if (!_unsupportedAbis.contains(abi) &&
         // There are no Dart SDKs for iOS
-        !abi.toString().startsWith("ios"))
+        !abi.toString().startsWith("ios_") &&
+        // https://github.com/dart-lang/sdk/issues/59698
+        !(dartVersion >= Version(3, 8, 0, pre: '0') &&
+            abi.toString().endsWith("_ia32")))
       abi.toString()
 };
 
