@@ -10,3 +10,5 @@ dependencies:
   grinder: ^0.9.0
   cli_pkg: {path: ..}
   test: ^1.16.7
+dev_dependencies:
+  node_interop: any

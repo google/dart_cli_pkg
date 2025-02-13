@@ -60,6 +60,8 @@ jobs:
         # dart-channel: [stable, dev]
       fail-fast: false
 
+    # Run browser tests on macos to avoid "No usable sandbox!" error on linux.
+    # See https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
     runs-on: macos-latest
     steps:
     - uses: browser-actions/setup-chrome@v1
@@ -98,4 +100,6 @@ jobs:
     - uses: dart-lang/setup-dart@v1.2
     - run: dart --version
     - run: dart pub get
-    - run: dart format --set-exit-if-changed .
+    - run: dart fix --apply
+    - run: dart format .
+    - run: git diff --exit-code
