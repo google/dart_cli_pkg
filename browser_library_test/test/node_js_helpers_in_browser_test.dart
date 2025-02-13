@@ -16,10 +16,15 @@
 library;
 
 import 'dart:js_interop';
-import 'dart:js_util';
 
 import 'package:cli_pkg/js.dart';
 import 'package:test/test.dart';
+
+@JS()
+external JSAny? get process;
+
+@JS()
+external set process(JSAny? value);
 
 void main() {
   group('isNodeJs', () {
@@ -68,9 +73,9 @@ void withNonNodeJsProcess(void Function() callback) {
     final processJson = entry.value.jsify();
 
     group(caseName, () {
-      setUp(() => setProperty(globalThis, 'process', processJson));
+      setUp(() => process = processJson);
       callback();
-      tearDown(() => delete<Object>(globalThis, 'process'));
+      tearDown(() => process = null);
     });
   }
 }
@@ -83,8 +88,8 @@ void withFakedNodeJsProcess(void Function() callback) {
   };
 
   group('fake Node.JS environment', () {
-    setUp(() => setProperty(globalThis, 'process', fakeNodeJsProcess.jsify()));
+    setUp(() => process = fakeNodeJsProcess.jsify());
     callback();
-    tearDown(() => delete<Object>(globalThis, 'process'));
+    tearDown(() => process = null);
   });
 }
