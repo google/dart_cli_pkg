@@ -65,6 +65,7 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: browser-actions/setup-chrome@v1
+      id: setup-chrome
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
     - run: node --version
@@ -78,18 +79,19 @@ jobs:
       run: |
         git config --global user.email "ci@local"
         git config --global user.name CI
-    
+
     - run: dart pub get
       working-directory: ./browser_library_test
 
     - run: dart run grinder before-test
       working-directory: ./browser_library_test
 
-    - run: google-chrome --version
+    - run: ${{ steps.setup-chrome.outputs.chrome-path }} --version
 
     - run: dart run test --platform chrome --exclude-tags not-on-gh-actions
       working-directory: ./browser_library_test
-      env: {CHROME_EXECUTABLE: chrome}
+      env:
+        CHROME_EXECUTABLE: ${{ steps.setup-chrome.outputs.chrome-path }}
 
   format:
     name: "Code formatting"
