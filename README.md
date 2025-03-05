@@ -1,9 +1,9 @@
 ## Dart CLI Packager
 
 This package provides a set of [Grinder][] tasks that make it easy to release a
-Dart command-line application on many different release channels, to Dart users
-and non-Dart users alike. It also integrates with Travis CI to make it easy to
-automatically deploy packages.
+Dart command-line application on various release channels, for both Dart and
+non-Dart users alike. It also integrates with Travis CI to simplify automatic
+package deployment.
 
 [Grinder]: https://pub.dev/packages/grinder
 
@@ -33,13 +33,13 @@ individually:
 * [Updating a Homebrew formula to download from GitHub releases.](doc/homebrew.md)
 * [Publishing to pub.](doc/pub.md)
 
-It's strongly recommended that this package be imported with the prefix `pkg`.
+It’s strongly recommended that this package be imported with the prefix `pkg`.
 
 ### Configuration
 
-This package is highly configurable, using [`ConfigVariable`][] fields defined
+This package is highly configurable through [`ConfigVariable`][] fields defined
 [at the top level of the library][]. By default, it infers as much configuration
-as possible from the package's pubspec, but almost all properties can be
+as possible from the package’s pubspec, but nearly all properties can be
 overridden in the `main()` method:
 
 [`ConfigVariable`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/ConfigVariable.html
@@ -58,8 +58,8 @@ void main(List<String> args) {
 }
 ```
 
-`ConfigVariable`s whose values are expensive to compute or that might fail under
-some circumstances can also be set to callback functions, which are called
+`ConfigVariable`s whose values are expensive to compute or might fail under
+certain conditions can also be set to callback functions, which are evaluated
 lazily when the variables are used by the Grinder tasks:
 
 ```dart
@@ -74,8 +74,8 @@ void main(List<String> args) {
 }
 ```
 
-Each task describes exactly which configuration variables it uses. Configuration
-that just applies to one set of tasks is always prefixed with a corresponding
+Each task specifies exactly which configuration variables it uses. Configuration
+specific to a particular set of tasks is always prefixed with a corresponding
 name. For example, [`pkg.jsFlags`][] applies to JavaScript compilation.
 
 [`pkg.jsFlags`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/jsFlags.html
