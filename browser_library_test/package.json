@@ -18,11 +18,11 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "browserify": "^17.0.0",
     "cli-pkg-test": "file:build/npm",
-    "esbuild": "^0.17.10",
+    "esbuild": "^0.25.0",
     "esmify": "^2.1.1",
     "prettier": "^2.8.4",
     "rollup": "^3.29.5",
-    "vite": "^4.5.5",
+    "vite": "^6.2.0",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.0.1"
   }
