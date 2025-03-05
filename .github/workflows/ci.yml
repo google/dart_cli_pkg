@@ -60,9 +60,6 @@ jobs:
         # dart-channel: [stable, dev]
       fail-fast: false
 
-    # Run browser tests on macos to avoid "No usable sandbox!" error on linux.
-    # See https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
-    runs-on: macos-latest
     steps:
     - uses: browser-actions/setup-chrome@v1
       id: setup-chrome
@@ -85,6 +82,12 @@ jobs:
 
     - run: dart run grinder before-test
       working-directory: ./browser_library_test
+
+    # Run browser tests on macos to avoid "No usable sandbox!" error on linux.
+    # See https://github.com/puppeteer/puppeteer/issues/12818
+    # Ubuntu 23+ doesn't like running puppeteer without disabling AppArmor.
+    - name: Disable AppArmor
+      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
     - run: ${{ steps.setup-chrome.outputs.chrome-path }} --version
 
