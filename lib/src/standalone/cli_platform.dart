@@ -63,14 +63,14 @@ class CliPlatform {
   /// Whether to generate a fully standalone executable that doesn't need a
   /// separate `dartaotruntime` executable to run for this platform.
   ///
-  /// This is currently disabled on Windows and Mac OS because they generate
+  /// This is currently disabled on Mac OS because they generate
   /// annoying warnings when running unsigned executables. See #67 for details.
   ///
   /// This is currently disabled on Linux and Android because the self-contained
   /// executable can be broken due to the way a trailing snapshot in ELF is
   /// handled. See https://github.com/dart-lang/sdk/issues/50926 for details.
   bool get useExe =>
-      const {OperatingSystem.fuchsia, OperatingSystem.ios}.contains(os) &&
+      const {OperatingSystem.fuchsia, OperatingSystem.ios, OperatingSystem.windows}.contains(os) &&
       useNative;
 
   /// Returns whether to use the natively-compiled executable for this platform.
