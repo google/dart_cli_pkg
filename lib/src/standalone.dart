@@ -33,6 +33,14 @@ import 'utils.dart';
 /// This defaults to [name].
 final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
+/// Whether to build a native executable for the current platform instead of an
+/// AOT snapshot.
+/// Defined as a function of a [CliPlatform] to allow different behavior on
+/// different platforms.
+///
+/// This defaults to `CliPlatform::useExe`.
+final useExe = InternalConfigVariable.value<bool Function(CliPlatform)>((CliPlatform platform) => platform.useExe);
+
 /// For each executable entrypoint in [executables], builds a portable module
 /// (kernel) to `build/${executable}.snapshot`.
 void _compileSnapshot() {
@@ -66,7 +74,8 @@ void _compileSnapshot() {
 }
 
 /// For each executable entrypoint in [executables], builds an AOT module
-/// (aot-snapshot) to `build/${executable}.native`.
+/// (aot-snapshot) or standalone executable (exe) to
+/// `build/${executable}.native`.
 ///
 /// If [enableAsserts] is `true`, this compiles with `--enable-asserts`.
 void _compileNative({bool enableAsserts = false}) {
@@ -85,7 +94,7 @@ void _compileNative({bool enableAsserts = false}) {
         'dart',
         arguments: [
           'compile',
-          CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
+          useExe.value(CliPlatform.current) ? 'exe' : 'aot-snapshot',
           if (enableAsserts) '--enable-asserts',
           for (var entry in environmentConstants.value.entries)
             '-D${entry.key}=${entry.value}',
@@ -109,6 +118,7 @@ void addStandaloneTasks() {
 
   freezeSharedVariables();
   standaloneName.freeze();
+  useExe.freeze();
 
   addTask(
     GrinderTask(
@@ -211,7 +221,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  if (!platform.useExe) {
+  if (!(platform.useNative && useExe.value(platform))) {
     archive.addFile(
       fileFromBytes(
         "$standaloneName/src/dart${platform.binaryExtension}",
@@ -222,7 +232,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
   }
 
   for (var name in executables.value.keys) {
-    if (platform.useExe) {
+    if (platform.useNative && useExe.value(platform)) {
       archive.addFile(
         file(
           "$standaloneName/$name${platform.binaryExtension}",
@@ -240,7 +250,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
     }
   }
 
-  if (!platform.useExe) {
+  if (!(platform.useNative && useExe.value(platform))) {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
