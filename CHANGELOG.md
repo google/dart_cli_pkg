@@ -1,3 +1,9 @@
+## 2.12.1
+
+* Use the new `dart:js_interop` system instead of the older, deprecated system.
+  This is not a breaking change, and users can continue using the older system
+  until it's no longer supported by the Dart SDK.
+
 ## 2.12.0
 
 * Drop support for ia32 on Dart SDK >=3.8.0.

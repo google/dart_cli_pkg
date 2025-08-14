@@ -18,4 +18,5 @@ bool get isNodeJs => false;
 
 bool get isBrowser => false;
 
+@Deprecated('Run the callback directly, without a wrapper')
 T wrapJSExceptions<T>(T Function() callback) => callback();

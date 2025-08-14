@@ -131,18 +131,16 @@ final jsEsmExports = InternalConfigVariable.value<Set<String>?>(null,
 /// library might look like:
 ///
 /// ```dart
-/// import 'package:js/js.dart';
+/// import 'dart:js_interop';
 ///
-/// @JS()
-/// class _Exports {
-///   external set sayHello(function);
+/// extension type _Exports._(JSObject _) implements JSObjcet {
+///   external set sayHello(JSFunction function);
 /// }
 ///
-/// @JS()
 /// external get _Exports exports;
 ///
 /// void main() {
-///   exports.sayHello = allowInterop(() => print("Hello, world!"));
+///   exports.sayHello = (() => print("Hello, world!")).toJS;
 /// }
 /// ```
 ///
@@ -331,9 +329,7 @@ final Map<String, String> _executableIdentifiers = () {
 String get _wrapperLibrary {
   var wrapper = StringBuffer();
   wrapper.writeln("import 'dart:typed_data';");
-  wrapper.writeln("import 'package:js/js.dart';");
-  wrapper.writeln("import 'package:node_interop/node_interop.dart';");
-  wrapper.writeln("import 'package:node_interop/util.dart';");
+  wrapper.writeln("import 'dart:js_interop';");
 
   // Dart-import each executable library so we can JS-export their `main()`
   // methods and call them from individual files in the npm package.
@@ -350,11 +346,11 @@ String get _wrapperLibrary {
   // Define a JS-interop Future to Promise translator so that we can export
   // a Promise-based API
   wrapper.writeln("""
-dynamic _translateReturnValue(dynamic val) {
-  if (val is Future) {
-    return futureToPromise(val);
+JSAny? _translateReturnValue(dynamic val) {
+  if (val is Future<JSAny?>) {
+    return val.toJS;
   } else {
-    return val;
+    return val as JSAny?;
   }
 }
 """);
@@ -365,10 +361,9 @@ dynamic _translateReturnValue(dynamic val) {
 @JS()
 external _Exports get exports;
 
-@JS()
-class _Exports {""");
+extension type _Exports._(JSObject _) implements JSObject {""");
   for (var identifier in _executableIdentifiers.values) {
-    wrapper.writeln("external set $identifier(function);");
+    wrapper.writeln("external set $identifier(JSFunction function);");
   }
   wrapper.writeln("}");
 
@@ -387,13 +382,13 @@ class _Exports {""");
   // Add a wrapper function that convert the untyped JS argument list to a typed
   // Dart list, if `main()` takes arguments.
   wrapper.writeln("""
-Function _wrapMain(Function main) {
+JSFunction _wrapMain(Function main) {
   if (main is dynamic Function()) {
-    return allowInterop((_) => _translateReturnValue(main()));
+    return ((JSAny? _) => _translateReturnValue(main())).toJS;
   } else {
-    return allowInterop(
-        (args) => _translateReturnValue(
-            main(List<String>.from(args as List<dynamic>))));
+    return (
+      (JSArray<JSString> args) => _translateReturnValue(main(args.toDart))
+    ).toJS;
   }
 }""");
 

@@ -26,17 +26,7 @@ bool get isNodeJs => throw '';
 /// browser's Document API.
 bool get isBrowser => throw '';
 
-/// Runs [callback], wrapping any primitive JS objects it throws so they don't
-/// crash when caught by Dart code.
-///
-/// This works around [a bug] in Dart where primitive types such as strings
-/// thrown by JS will cause Dart code that catches them to crash in [strict mode]
-/// specifically. For safety, all calls to callbacks passed in from an external
-/// JS context should be wrapped in this function.
-///
-/// [a bug]: https://github.com/dart-lang/sdk/issues/53105
-/// [strict mode]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
-///
-/// This function will rethrow the original error if it's run from a non-JS
-/// platform.
+/// This used to exist to work around a bug in the Dart SDk that has since been
+/// fixed in all supported Dart SDK versions.
+@Deprecated('Run the callback directly, without a wrapper')
 T wrapJSExceptions<T>(T Function() callback) => throw '';

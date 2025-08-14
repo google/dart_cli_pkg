@@ -1,31 +1,29 @@
-import 'package:js/js.dart';
+import 'dart:js_interop';
 
-@JS()
-class Exports {
-  external set loadedAllDependency(Object value);
-  external set loadedBrowserDependency(Object value);
-  external set loadedNodeDependency(Object value);
-  external set loadedCliDependency(Object value);
-  external set loadedDefaultDependency(Object value);
+extension type Exports._(JSObject _) implements JSObject {
+  external set loadedAllDependency(JSFunction value);
+  external set loadedBrowserDependency(JSFunction value);
+  external set loadedNodeDependency(JSFunction value);
+  external set loadedCliDependency(JSFunction value);
+  external set loadedDefaultDependency(JSFunction value);
 }
 
-@JS()
 external Exports get exports;
 
 @JS('immutable')
-external Object? immutable;
+external JSObject? immutable;
 
 @JS('lodash')
-external Object? lodash;
+external JSObject? lodash;
 
 @JS('os')
-external Object? os;
+external JSObject? os;
 
 @JS('fs')
-external Object? fs;
+external JSObject? fs;
 
 @JS('http')
-external Object? http;
+external JSObject? http;
 
 void main() {
   exports.loadedAllDependency = immutable != null;

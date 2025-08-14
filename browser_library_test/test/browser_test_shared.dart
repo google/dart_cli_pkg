@@ -12,23 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:js_interop';
+
 import 'package:cli_pkg/js.dart';
-import 'package:js/js.dart';
 import 'package:test/test.dart';
 
-@JS()
 external bool? get loadedAllDependency;
-
-@JS()
 external bool? get loadedBrowserDependency;
-
-@JS()
 external bool? get loadedNodeDependency;
-
-@JS()
 external bool? get loadedCliDependency;
-
-@JS()
 external bool? get loadedDefaultDependency;
 
 void main() {

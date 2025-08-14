@@ -53,14 +53,12 @@ void main() {
 
       await d.dir("my_app/bin", [
         d.file("foo.dart", """
-          import 'package:js/js.dart';
+          import 'dart:js_interop';
 
-          @JS()
-          class FS {
+          extension type FS._(JSObject _) implements JSObject {
             external void rmdirSync(String path);
           }
 
-          @JS()
           external FS require(String name);
 
           void main(List<String> args) {
@@ -115,7 +113,7 @@ void main() {
           }
         """, [
           _packageJson,
-          d.dir("lib/src", [_exportsHello('"Hi, there!"')])
+          d.dir("lib/src", [_exportsHello('"Hi, there!".toJS')])
         ]).create();
 
         await (await grind(["pkg-npm-dev"])).shouldExit();
@@ -277,10 +275,9 @@ void main() {
       // Generate this after the package so it doesn't race the creation of the
       // default exectuable file.
       await d.file("my_app/bin/foo.dart", """
-        import 'package:js/js.dart';
+        import 'dart:js_interop';
 
-        @JS('os')
-        external Object? os;
+        external JSObject? os;
 
         void main() {
           print(os != null);
@@ -452,7 +449,7 @@ void main() {
         """, [
         _packageJson,
         d.dir("lib/src", [
-          _exportsHello('"Hi, there!"'),
+          _exportsHello('"Hi, there!".toJS'),
         ]),
         d.dir("bin", [
           d.file("exec.dart", r"""
@@ -1072,70 +1069,6 @@ void main() {
   });
 
   group("package:cli_pkg/js.dart", () {
-    group("wrapJSException in strict mode", () {
-      // Asserts that the JS [expression] doesn't crash when caught by Dart code
-      // after going through `wrapJSExceptions()`.
-      Future<void> assertCatchesGracefully(String expression) async {
-        await d.package(pubspec, r"""
-            void main(List<String> args) {
-              pkg.addNpmTasks();
-              pkg.jsForceStrictMode.value = true;
-              grind(args);
-            }
-          """, [
-          _packageJson,
-          d.dir("bin", [
-            d.file("foo.dart", """
-              import 'package:cli_pkg/js.dart';
-              import 'package:js/js.dart';
-
-              @JS("Function")
-              class _JSFunction {
-                external _JSFunction(String arguments, String body);
-                external Object? call();
-              }
-
-              void main() {
-                try {
-                  wrapJSExceptions(() {
-                    _JSFunction("error",
-                        "throw \${${json.encode(expression)}};").call();
-                  });
-                } catch (_, stackTrace) {
-                  print(stackTrace);
-                }
-              }
-            """)
-          ]),
-        ]).create();
-
-        await (await grind(["pkg-npm-dev"])).shouldExit();
-
-        var process = await TestProcess.start(
-            "node$dotExe", [d.path("my_app/build/npm/foo.js")]);
-        await process.shouldExit(0);
-      }
-
-      test(
-          "handles a thrown string", () => assertCatchesGracefully('"string"'));
-
-      test("handles a thrown boolean", () => assertCatchesGracefully('true'));
-
-      test("handles a thrown number", () => assertCatchesGracefully('123'));
-
-      test("handles a thrown Symbol",
-          () => assertCatchesGracefully('Symbol("foo")'));
-
-      test("handles a thrown BigInt",
-          () => assertCatchesGracefully('BigInt(123)'));
-
-      test("handles a thrown null",
-          () => assertCatchesGracefully('BigInt(null)'));
-
-      test("handles a thrown undefined",
-          () => assertCatchesGracefully('BigInt(undefined)'));
-    });
-
     test("isNodeJs returns `true`", () async {
       await d.package(pubspec, _enableNpm, [
         _packageJson,
@@ -1249,28 +1182,25 @@ void main() {
                     "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
                     "lazy: true, identifier: 'os_lazy')",
                 """
-                  import 'package:js/js.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osLazy(Object? value);
+                  extension type Exports {
+                    external set os(JSAny? value);
+                    external set osLazy(JSAny? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
-                  @JS('os')
-                  external Object? os;
+                  external JSAny? os;
 
                   @JS('os_lazy')
-                  external Object? get osLazy;
+                  external JSAny? get osLazy;
 
                   void main() {
                     exports.os = os;
                     exports.osLazy = osLazy;
                   }
-                  """,
+                """,
                 """
                   var my_app = require("my_app");
 
@@ -1285,22 +1215,19 @@ void main() {
                 "pkg.JSRequire('module_not_found', "
                     "target: pkg.JSRequireTarget.node, lazy: true)",
                 """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
+                  extension type Exports._(JSObject _) implements JSObject {
                     external set run(Object? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
                   @JS('module_not_found')
-                  external Object? get moduleNotFound;
+                  external JSAny? get moduleNotFound;
 
                   void main() {
-                    exports.run = allowInterop(() => moduleNotFound);
+                    exports.run = (() => moduleNotFound).toJS;
                   }
                   """,
                 """
@@ -1322,22 +1249,19 @@ void main() {
                     "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
                     "optional: true, identifier: 'os_optional')",
                 """
-                  import 'package:js/js.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osOptional(Object? value);
+                  extension type Exports._(JSObject _) implements JSObject {
+                    external set os(JSAny? value);
+                    external set osOptional(JSAny? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
-                  @JS('os')
-                  external Object? os;
+                  external JSAny? os;
 
                   @JS('os_optional')
-                  external Object? osOptional;
+                  external JSAny? osOptional;
 
                   void main() {
                     exports.os = os;
@@ -1359,24 +1283,21 @@ void main() {
                 "pkg.JSRequire('module_not_found', "
                     "target: pkg.JSRequireTarget.node, optional: true)",
                 """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
-                    external set moduleNotFound(Object? value);
+                  extension type Exports._(JSObject _) implements JSObject {
+                    external set moduleNotFound(JSAny? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
                   @JS('module_not_found')
-                  external Object? moduleNotFound;
+                  external JSAny? moduleNotFound;
 
                   void main() {
                     exports.moduleNotFound = moduleNotFound;
                   }
-                  """,
+                """,
                 """
                   var my_app = require("my_app");
 
@@ -1393,15 +1314,13 @@ void main() {
                     "lazy: true, optional: true, "
                     "identifier: 'os_lazy_optional')",
                 """
-                  import 'package:js/js.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osLazyOptional(Object? value);
+                  extension type Exports._(JSObject _) implements JSObject {
+                    external set os(JSAny? value);
+                    external set osLazyOptional(JSAny? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
                   @JS('os')
@@ -1432,22 +1351,19 @@ void main() {
                     "target: pkg.JSRequireTarget.node, lazy: true, "
                     "optional: true)",
                 """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+                  import 'dart:js_interop';
 
-                  @JS()
-                  class Exports {
-                    external set run(Object? value);
+                  extension type Exports._(JSObject _) implements JSObject {
+                    external set run(JSAny? value);
                   }
 
-                  @JS()
                   external Exports get exports;
 
                   @JS('module_not_found')
-                  external Object? get moduleNotFound;
+                  external JSAny? get moduleNotFound;
 
                   void main() {
-                    exports.run = allowInterop(() => moduleNotFound);
+                    exports.run = (() => moduleNotFound).toJS;
                   }
                 """,
                 """
@@ -1467,18 +1383,15 @@ void main() {
 /// The [expression] has access to an `osLoaded` field that's true if Node.js's
 /// `os` core library has been loaded and `false` otherwise.
 d.FileDescriptor _exportsHello(String expression) => d.file("exports.dart", """
-    import 'package:js/js.dart';
+    import 'dart:js_interop';
 
-    @JS()
-    class Exports {
-      external set hello(Object value);
+    extension type Exports._(JSObject _) implements JSObject {
+      external set hello(JSAny? value);
     }
 
-    @JS()
     external Exports get exports;
 
-    @JS('os')
-    external Object? os;
+    external JSObject? os;
 
     final osLoaded = os != null;
 
