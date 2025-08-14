@@ -51,6 +51,7 @@ jobs:
   browser-test:
     name: "Browser Tests | Dart ${{ matrix.dart-channel }}"
 
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         dart-channel: [stable]
