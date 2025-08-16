@@ -1,3 +1,8 @@
+## 2.13.0
+
+* Use `aot-snapshot` instead of `kernel` snapshot in `pkg-standalone-dev` task
+  on supported platforms.
+
 ## 2.12.0
 
 * Drop support for ia32 on Dart SDK >=3.8.0.

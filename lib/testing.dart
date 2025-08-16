@@ -21,6 +21,7 @@ import 'package:test/test.dart';
 import 'package:test_process/test_process.dart';
 
 import 'src/info.dart';
+import 'src/standalone/cli_platform.dart';
 import 'src/utils.dart';
 
 /// A set of executable targets whose up-to-date status has already been
@@ -173,7 +174,8 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
   if (node) {
     path = p.absolute("build/npm/$executable.js");
   } else {
-    path = p.absolute("build/$executable.snapshot");
+    path = p.absolute(
+        "build/$executable${CliPlatform.current.useNative ? '.native' : '.snapshot'}");
     if (!File(path).existsSync()) return;
   }
 

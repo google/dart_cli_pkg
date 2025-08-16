@@ -376,11 +376,6 @@ void main() {
     group("Linux", () {
       for (var musl in [false, true]) {
         group(musl ? "musl" : "glibc", () {
-          test("32-bit x86", () async {
-            await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
-            await archive("linux", "ia32", musl: musl).validate();
-          });
-
           test("64-bit x86", () async {
             await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
             await archive("linux", "x64", musl: musl).validate();
@@ -405,11 +400,6 @@ void main() {
     });
 
     group("Windows", () {
-      test("32-bit x86", () async {
-        await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
-        await archive("windows", "ia32").validate();
-      });
-
       test("64-bit x86", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
         await archive("windows", "x64").validate();
@@ -422,11 +412,6 @@ void main() {
     });
 
     group("Android", () {
-      test("32-bit x86", () async {
-        await (await grind(["pkg-standalone-android-ia32"])).shouldExit(0);
-        await archive("android", "ia32").validate();
-      });
-
       test("64-bit x86", () async {
         await (await grind(["pkg-standalone-android-x64"])).shouldExit(0);
         await archive("android", "x64").validate();

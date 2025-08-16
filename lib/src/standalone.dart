@@ -32,11 +32,9 @@ import 'utils.dart';
 /// This defaults to [name].
 final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
-/// For each executable entrypoint in [executables], builds a script snapshot
+/// For each executable entrypoint in [executables], builds a kernel snapshot
 /// to `build/${executable}.snapshot`.
-///
-/// If [release] is `false`, this compiles with `--enable-asserts`.
-void _compileSnapshot({required bool release}) {
+void _compileSnapshot() {
   ensureBuild();
   verifyEnvironmentConstants(forSubprocess: true);
 
@@ -48,11 +46,15 @@ void _compileSnapshot({required bool release}) {
       File('build/$existingName.snapshot').copySync('build/$name.snapshot');
     } else {
       existingSnapshots[path] = name;
-      Dart.run(path, vmArgs: [
-        if (!release) '--enable-asserts',
+      run('dart', arguments: [
+        'compile',
+        'kernel',
+        '--no-link-platform',
         for (var entry in environmentConstants.value.entries)
           '-D${entry.key}=${entry.value}',
-        '--snapshot=build/$name.snapshot'
+        '--output',
+        'build/$name.snapshot',
+        path
       ]);
     }
   });
@@ -60,7 +62,9 @@ void _compileSnapshot({required bool release}) {
 
 /// For each executable entrypoint in [executables], builds a native ("AOT")
 /// executable to `build/${executable}.native`.
-void _compileNative() {
+///
+/// If [release] is `false`, this compiles with `--enable-asserts`.
+void _compileNative({required bool release}) {
   ensureBuild();
   verifyEnvironmentConstants(forSubprocess: true, forDartCompileExe: true);
 
@@ -75,11 +79,12 @@ void _compileNative() {
       run('dart', arguments: [
         'compile',
         CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
-        path,
+        if (!release) '--enable-asserts',
         for (var entry in environmentConstants.value.entries)
           '-D${entry.key}=${entry.value}',
         '--output',
-        'build/$name.native'
+        'build/$name.native',
+        path
       ]);
     }
   });
@@ -97,23 +102,23 @@ void addStandaloneTasks() {
   standaloneName.freeze();
 
   addTask(GrinderTask('pkg-compile-snapshot',
-      taskFunction: () => _compileSnapshot(release: true),
-      description: 'Build Dart script snapshot(s) in release mode.'));
-
-  addTask(GrinderTask('pkg-compile-snapshot-dev',
-      taskFunction: () => _compileSnapshot(release: false),
-      description: 'Build Dart script snapshot(s) in dev mode.'));
+      taskFunction: _compileSnapshot,
+      description: 'Build Dart kernel snapshot(s).'));
 
   addTask(GrinderTask('pkg-compile-native',
-      taskFunction: _compileNative,
-      description: 'Build Dart native executable(s).'));
+      taskFunction: () => _compileNative(release: true),
+      description: 'Build Dart native executable(s) in release mode.'));
+
+  addTask(GrinderTask('pkg-compile-native-dev',
+      taskFunction: () => _compileNative(release: false),
+      description: 'Build Dart native executable(s) in dev mode.'));
 
   addTask(GrinderTask('pkg-standalone-dev',
       taskFunction: _buildDev,
       description: 'Build standalone executable(s) for testing.',
-      // TODO(nweiz): Build a native executable on platforms that support it
-      // when dart-lang/sdk#39973 is fixed.
-      depends: ['pkg-compile-snapshot-dev']));
+      depends: CliPlatform.current.useNative
+          ? ['pkg-compile-native-dev']
+          : ['pkg-compile-snapshot']));
 
   var tasks = {
     for (var platform in CliPlatform.all)
@@ -146,16 +151,22 @@ Future<void> _buildDev() async {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
         script,
-        renderTemplate(
-            "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
-          "dart": Platform.resolvedExecutable,
-          "environment-constants":
-              environmentConstants.value.entries.map((entry) {
-            var arg = "-D${entry.key}=${entry.value}";
-            return Platform.isWindows ? windowsArgEscape(arg) : shEscape(arg);
-          }).join(" "),
-          "executable": "$name.snapshot"
-        }));
+        CliPlatform.current.useNative
+            ? renderTemplate(
+                "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
+                {
+                    "dart": p.join(sdkDir.path,
+                        "bin/dartaotruntime${CliPlatform.current.binaryExtension}"),
+                    "dart-options": '',
+                    "executable": "${name}.native"
+                  })
+            : renderTemplate(
+                "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
+                {
+                    "dart": Platform.resolvedExecutable,
+                    "dart-options": '--enable-asserts',
+                    "executable": "${name}.snapshot"
+                  }));
 
     if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
   }

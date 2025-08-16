@@ -5,9 +5,9 @@ They're enabled by calling [`pkg.addStandaloneTasks()`][].
 
 [`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
-Standalone executables are built and executed in a context with the `version`
-environment declaration set to the package's version. This can be accessed with
-[`String.fromEnvironment()`][].
+Snapshots and standalone executables are built and executed in a context with
+the `version` environment declaration set to the package's version. This can be
+accessed with [`String.fromEnvironment()`][].
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
@@ -21,19 +21,9 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.snapshot`
 
-Compiles each executable in the package to a [kernel snapshot][snapshot] with
-asserts disabled.
+Compiles each executable in the package to a [kernel snapshot][snapshot].
 
 [snapshot]: https://github.com/dart-lang/sdk/wiki/Snapshots
-
-## `pkg-compile-snapshot-dev`
-
-Uses configuration: [`pkg.executables`][], [`pkg.version`][]
-
-Output: `build/$executable.snapshot`
-
-Compiles each executable in the package to a [kernel snapshot][snapshot] with
-asserts enabled.
 
 ## `pkg-compile-native`
 
@@ -42,19 +32,25 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 Output: `build/$executable.native`
 
 Compiles each executable in the package to a native code snapshot (what Dart
-calls an ["AOT Application snapshot"][snapshot]). This is unavailable on 32-bit
-host systems.
-
-Defines an environment constant named `version` set to [`pkg.version`][] that
-can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
+calls an ["aot-snapshot"][snapshot]) with asserts disabled.
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
+## `pkg-compile-native-dev`
+
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
+
+Output: `build/$executable.native`
+
+Compiles each executable in the package to a native code snapshot (what Dart
+calls an ["aot-snapshot"][snapshot]) with asserts enabled.
+
 ## `pkg-standalone-dev`
 
-Depends on: [`pkg-compile-snapshot-dev`][]
+Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native-dev`][]
 
-[`pkg-compile-snapshot-dev`]: #pkg-compile-snapshot-dev
+[`pkg-compile-snapshot`]: #pkg-compile-snapshot
+[`pkg-compile-native-dev`]: #pkg-compile-native-dev
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
@@ -80,7 +76,6 @@ kill its child process, which can cause unexpected errors when testing.
 
 Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native`][]
 
-[`pkg-compile-snapshot`]: #pkg-compile-snapshot
 [`pkg-compile-native`]: #pkg-compile-native
 
 Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executables`][]
