@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 
 import 'config_variable.dart';
 import 'info.dart';
@@ -31,6 +32,11 @@ import 'utils.dart';
 ///
 /// This defaults to [name].
 final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
+
+/// The name of dartvm executable without extension.
+///
+/// See https://dart-review.googlesource.com/c/sdk/+/441700
+final _dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
 
 /// For each executable entrypoint in [executables], builds a kernel snapshot
 /// to `build/${executable}.snapshot`.
@@ -158,14 +164,15 @@ Future<void> _buildDev() async {
                     "dart": p.join(sdkDir.path,
                         "bin/dartaotruntime${CliPlatform.current.binaryExtension}"),
                     "dart-options": '',
-                    "executable": "${name}.native"
+                    "executable": "$name.native"
                   })
             : renderTemplate(
                 "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
                 {
-                    "dart": Platform.resolvedExecutable,
+                    "dart": p.join(sdkDir.path,
+                        "bin/$_dartvm${CliPlatform.current.binaryExtension}"),
                     "dart-options": '--enable-asserts',
-                    "executable": "${name}.snapshot"
+                    "executable": "$name.snapshot"
                   }));
 
     if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
@@ -261,7 +268,7 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
         "${response.reasonPhrase}.");
   }
 
-  var filename = "/bin/dart${platform.binaryExtension}";
+  var filename = "/bin/$_dartvm${platform.binaryExtension}";
   return (url.endsWith(".zip")
           ? ZipDecoder().decodeBytes(response.bodyBytes)
           : TarDecoder()
