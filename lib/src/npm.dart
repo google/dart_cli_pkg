@@ -515,7 +515,14 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
       identifier = require.identifier;
     }
     return "self.$identifier";
-  });
+  })
+      // TODO - dart-lang/sdk#56898: Remove this when JS interop handles these
+      // errors better.
+      .replaceFirst(
+        "\"Dart exception thrown from converted Future. Use the properties "
+        "'error' to fetch the boxed error and 'stack' to recover the stack "
+        "trace.\"",
+        'stackTrace.toString\$0(0)');
 
   var buffer = StringBuffer();
 
