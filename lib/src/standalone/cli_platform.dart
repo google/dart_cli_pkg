@@ -38,8 +38,7 @@ final _abiStrings = {
         // There are no Dart SDKs for iOS
         !abi.toString().startsWith("ios_") &&
         // https://github.com/dart-lang/sdk/issues/59698
-        !(dartVersion >= Version(3, 8, 0, pre: '0') &&
-            abi.toString().endsWith("_ia32")))
+        !abi.toString().endsWith("_ia32"))
       abi.toString()
 };
 

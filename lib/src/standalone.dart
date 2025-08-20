@@ -33,11 +33,6 @@ import 'utils.dart';
 /// This defaults to [name].
 final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
-/// The name of dartvm executable without extension.
-///
-/// See https://dart-review.googlesource.com/c/sdk/+/441700
-final _dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
-
 /// For each executable entrypoint in [executables], builds a kernel snapshot
 /// to `build/${executable}.snapshot`.
 void _compileSnapshot() {
@@ -60,6 +55,7 @@ void _compileSnapshot() {
           '-D${entry.key}=${entry.value}',
         '--output',
         'build/$name.snapshot',
+        '--',
         path
       ]);
     }
@@ -90,6 +86,7 @@ void _compileNative({required bool release}) {
           '-D${entry.key}=${entry.value}',
         '--output',
         'build/$name.native',
+        '--',
         path
       ]);
     }
@@ -122,9 +119,7 @@ void addStandaloneTasks() {
   addTask(GrinderTask('pkg-standalone-dev',
       taskFunction: _buildDev,
       description: 'Build standalone executable(s) for testing.',
-      depends: CliPlatform.current.useNative
-          ? ['pkg-compile-native-dev']
-          : ['pkg-compile-snapshot']));
+      depends: ['pkg-compile-native-dev']));
 
   var tasks = {
     for (var platform in CliPlatform.all)
@@ -157,23 +152,13 @@ Future<void> _buildDev() async {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
         script,
-        CliPlatform.current.useNative
-            ? renderTemplate(
-                "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
-                {
-                    "dart": p.join(sdkDir.path,
-                        "bin/dartaotruntime${CliPlatform.current.binaryExtension}"),
-                    "dart-options": '',
-                    "executable": "$name.native"
-                  })
-            : renderTemplate(
-                "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
-                {
-                    "dart": p.join(sdkDir.path,
-                        "bin/$_dartvm${CliPlatform.current.binaryExtension}"),
-                    "dart-options": '--enable-asserts',
-                    "executable": "$name.snapshot"
-                  }));
+        renderTemplate(
+            "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
+          "dart": p.join(sdkDir.path, 'bin',
+              "dartaotruntime${CliPlatform.current.binaryExtension}"),
+          "dart-options": '',
+          "executable": "$name.native"
+        }));
 
     if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
   }
@@ -268,7 +253,9 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
         "${response.reasonPhrase}.");
   }
 
-  var filename = "/bin/$_dartvm${platform.binaryExtension}";
+  /// https://dart-review.googlesource.com/c/sdk/+/441700
+  var dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
+  var filename = "/bin/$dartvm${platform.binaryExtension}";
   return (url.endsWith(".zip")
           ? ZipDecoder().decodeBytes(response.bodyBytes)
           : TarDecoder()

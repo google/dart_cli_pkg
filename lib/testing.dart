@@ -15,6 +15,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:grinder/grinder.dart' show sdkDir;
 import 'package:path/path.dart' as p;
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'package:test/test.dart';
@@ -102,11 +103,12 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
 /// ```
 ///
 /// Note that in practice it's usually easier to use [start].
-String executableRunner(String executable, {bool node = false}) =>
-    // We take the [executable] argument because it's likely that we'll need to
-    // choose between `dart` and `dartaotrunner` once dart-lang/sdk#39973 is
-    // fixed.
-    node ? "node" : Platform.executable;
+String executableRunner(String executable, {bool node = false}) => node
+    ? "node"
+    : (File(p.absolute("build/$executable.native")).existsSync())
+        ? p.join(sdkDir.path,
+            "bin/dartaotruntime${CliPlatform.current.binaryExtension}")
+        : Platform.executable;
 
 /// Arguments that can be passed to [Process.start] and similar APIs along with
 /// the executable returned by [executableRunner] to run [executable], which is
@@ -148,7 +150,7 @@ List<String> executableArgs(String executable, {bool node = false}) {
 
   if (node) return [p.absolute("build/npm/$executable.js")];
 
-  var snapshot = p.absolute("build/$executable.snapshot");
+  var snapshot = p.absolute("build/$executable.native");
   if (File(snapshot).existsSync()) return [snapshot];
 
   var path = executables.value[executable];
@@ -174,8 +176,7 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
   if (node) {
     path = p.absolute("build/npm/$executable.js");
   } else {
-    path = p.absolute(
-        "build/$executable${CliPlatform.current.useNative ? '.native' : '.snapshot'}");
+    path = p.absolute("build/$executable.native");
     if (!File(path).existsSync()) return;
   }
 

@@ -47,9 +47,8 @@ calls an ["aot-snapshot"][snapshot]) with asserts enabled.
 
 ## `pkg-standalone-dev`
 
-Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native-dev`][]
+Depends on: [`pkg-compile-native-dev`][]
 
-[`pkg-compile-snapshot`]: #pkg-compile-snapshot
 [`pkg-compile-native-dev`]: #pkg-compile-native-dev
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
@@ -76,6 +75,7 @@ kill its child process, which can cause unexpected errors when testing.
 
 Depends on: [`pkg-compile-snapshot`][] or [`pkg-compile-native`][]
 
+[`pkg-compile-snapshot`]: #pkg-compile-snapshot
 [`pkg-compile-native`]: #pkg-compile-native
 
 Uses configuration: [`pkg.version`][], [`pkg.standaloneName`][], [`pkg.executables`][]

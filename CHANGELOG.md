@@ -1,7 +1,9 @@
 ## 2.13.0
 
-* Use `aot-snapshot` instead of `kernel` snapshot in `pkg-standalone-dev` task
-  on supported platforms.
+* Use `aot-snapshot` instead of `kernel` snapshot in `pkg-standalone-dev` task.
+  The previous task `pkg-compile-snapshot-dev` is replaced by a new task
+  `pkg-compile-native-dev`.
+
 * Add support for new `dartvm` executable on Dart SDK >=3.10.0.
 
 ## 2.12.0
