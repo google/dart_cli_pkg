@@ -105,7 +105,7 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
 /// Note that in practice it's usually easier to use [start].
 String executableRunner(String executable, {bool node = false}) => node
     ? "node"
-    : (File(p.absolute("build/$executable.native")).existsSync())
+    : File(p.absolute("build/$executable.native")).existsSync()
         ? p.join(sdkDir.path,
             "bin/dartaotruntime${CliPlatform.current.binaryExtension}")
         : Platform.executable;

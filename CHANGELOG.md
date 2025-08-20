@@ -1,8 +1,17 @@
 ## 2.13.0
 
-* Use `aot-snapshot` instead of `kernel` snapshot in `pkg-standalone-dev` task.
-  The previous task `pkg-compile-snapshot-dev` is replaced by a new task
-  `pkg-compile-native-dev`.
+* Generate an [AOT module] instead of a [portable module] in
+   `pkg-standalone-dev`. Because dev artifacts are only intended to be used on
+   the current machine, there's no need to trade speed for portability.
+
+* Add a `pkg-compile-native-dev` task to generate an AOT module with asserts
+  enabled.
+
+* Remove the `pkg-compile-snapshot-dev` task, since portable modules no longer
+  support being generated with asserts disabled.
+
+[AOT module]: https://dart.dev/tools/dart-compile#aot-snapshot
+[portable module]: https://dart.dev/tools/dart-compile#kernel
 
 * Add support for new `dartvm` executable on Dart SDK >=3.10.0.
 
