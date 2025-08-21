@@ -163,7 +163,6 @@ Future<void> _buildDev() async {
             "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
           "dart": p.join(sdkDir.path, 'bin',
               "dartaotruntime${CliPlatform.current.binaryExtension}"),
-          "dart-options": '',
           "executable": "$name.native"
         }));
 
