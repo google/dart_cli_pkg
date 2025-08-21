@@ -7,8 +7,9 @@
 * Add a `pkg-compile-native-dev` task to generate an AOT module with asserts
   enabled.
 
-* Remove the `pkg-compile-snapshot-dev` task, since portable modules no longer
-  support being generated with asserts disabled.
+* The `pkg-compile-snapshot-dev` task is now an alias of `pkg-compile-snapshot`
+   for backward compatibility. For portable modules asserts need be enabled at
+   runtime with `dart --enable-asserts`.
 
 [AOT module]: https://dart.dev/tools/dart-compile#aot-snapshot
 [portable module]: https://dart.dev/tools/dart-compile#kernel
