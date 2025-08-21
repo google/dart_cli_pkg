@@ -65,8 +65,8 @@ void _compileSnapshot() {
 /// For each executable entrypoint in [executables], builds a native ("AOT")
 /// executable to `build/${executable}.native`.
 ///
-/// If [release] is `false`, this compiles with `--enable-asserts`.
-void _compileNative({required bool release}) {
+/// If [enableAsserts] is `true`, this compiles with `--enable-asserts`.
+void _compileNative({bool enableAsserts = false}) {
   ensureBuild();
   verifyEnvironmentConstants(forSubprocess: true, forDartCompileExe: true);
 
@@ -81,7 +81,7 @@ void _compileNative({required bool release}) {
       run('dart', arguments: [
         'compile',
         CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
-        if (!release) '--enable-asserts',
+        if (enableAsserts) '--enable-asserts',
         for (var entry in environmentConstants.value.entries)
           '-D${entry.key}=${entry.value}',
         '--output',
@@ -106,19 +106,26 @@ void addStandaloneTasks() {
 
   addTask(GrinderTask('pkg-compile-snapshot',
       taskFunction: _compileSnapshot,
-      description: 'Build Dart kernel snapshot(s).'));
+      description: 'Build Dart portable modules (kernel).'));
+
+  addTask(GrinderTask('pkg-compile-snapshot-dev',
+      taskFunction: () => {},
+      description: 'Build Dart portable modules (kernel).',
+      depends: ['pkg-compile-snapshot']));
 
   addTask(GrinderTask('pkg-compile-native',
-      taskFunction: () => _compileNative(release: true),
-      description: 'Build Dart native executable(s) in release mode.'));
+      taskFunction: _compileNative,
+      description:
+          'Build Dart AOT modules (aot-snapshot) or self-contained exectuables (exe).'));
 
   addTask(GrinderTask('pkg-compile-native-dev',
-      taskFunction: () => _compileNative(release: false),
-      description: 'Build Dart native executable(s) in dev mode.'));
+      taskFunction: () => _compileNative(enableAsserts: true),
+      description:
+          'Build Dart AOT modules (aot-snapshot) or self-contained exectuables (exe) with asserts enabled.'));
 
   addTask(GrinderTask('pkg-standalone-dev',
       taskFunction: _buildDev,
-      description: 'Build standalone executable(s) for testing.',
+      description: 'Build standalone executable(s) with asserts enabled.',
       depends: ['pkg-compile-native-dev']));
 
   var tasks = {
