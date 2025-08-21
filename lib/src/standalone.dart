@@ -33,8 +33,8 @@ import 'utils.dart';
 /// This defaults to [name].
 final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
-/// For each executable entrypoint in [executables], builds a kernel snapshot
-/// to `build/${executable}.snapshot`.
+/// For each executable entrypoint in [executables], builds a portable module
+/// (kernel) to `build/${executable}.snapshot`.
 void _compileSnapshot() {
   ensureBuild();
   verifyEnvironmentConstants(forSubprocess: true);
@@ -62,8 +62,8 @@ void _compileSnapshot() {
   });
 }
 
-/// For each executable entrypoint in [executables], builds a native ("AOT")
-/// executable to `build/${executable}.native`.
+/// For each executable entrypoint in [executables], builds an AOT module
+/// (aot-snapshot) to `build/${executable}.native`.
 ///
 /// If [enableAsserts] is `true`, this compiles with `--enable-asserts`.
 void _compileNative({bool enableAsserts = false}) {
@@ -115,13 +115,12 @@ void addStandaloneTasks() {
 
   addTask(GrinderTask('pkg-compile-native',
       taskFunction: _compileNative,
-      description:
-          'Build Dart AOT modules (aot-snapshot) or self-contained exectuables (exe).'));
+      description: 'Build Dart AOT modules (aot-snapshot).'));
 
   addTask(GrinderTask('pkg-compile-native-dev',
       taskFunction: () => _compileNative(enableAsserts: true),
       description:
-          'Build Dart AOT modules (aot-snapshot) or self-contained exectuables (exe) with asserts enabled.'));
+          'Build Dart AOT modules (aot-snapshot) with asserts enabled.'));
 
   addTask(GrinderTask('pkg-standalone-dev',
       taskFunction: _buildDev,
@@ -259,7 +258,7 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
         "${response.reasonPhrase}.");
   }
 
-  /// https://dart-review.googlesource.com/c/sdk/+/441700
+  // https://dart-review.googlesource.com/c/sdk/+/441700
   var dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
   var filename = "/bin/$dartvm${platform.binaryExtension}";
   return (url.endsWith(".zip")

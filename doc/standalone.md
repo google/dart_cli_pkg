@@ -43,7 +43,7 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.native`
 
-Compiles each executable in the package to a
+Compiles each executable in the package to an
 [AOT module (aot-snapshot)][aot-snapshot] with asserts disabled.
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
@@ -56,7 +56,7 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.native`
 
-Compiles each executable in the package to a
+Compiles each executable in the package to an
 [AOT module (aot-snapshot)][aot-snapshot] with asserts enabled.
 
 ## `pkg-standalone-dev`
