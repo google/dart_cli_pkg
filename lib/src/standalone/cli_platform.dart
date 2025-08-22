@@ -72,11 +72,9 @@ class CliPlatform {
 
   /// Returns whether to use the natively-compiled executable for this platform.
   ///
-  /// We can only use the native executable on the current operating system
-  /// because Dart doesn't currently support cross-compilation
-  /// (dart-lang/sdk#28617). Dart also doesn't support native compilation on
-  /// ia32 in particular (dart-lang/sdk#47177).
-  bool get useNative => isCurrent && !arch.isIA32;
+  /// We use the native executable only on the current operating system because
+  /// Dart only has limited support for cross-compilation (dart-lang/sdk#28617).
+  bool get useNative => isCurrent;
 
   /// The binary file extension for this platform.
   String get binaryExtension => os.isWindows ? '.exe' : '';
