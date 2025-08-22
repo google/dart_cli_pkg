@@ -109,7 +109,6 @@ void addStandaloneTasks() {
       description: 'Build Dart portable modules (kernel).'));
 
   addTask(GrinderTask('pkg-compile-snapshot-dev',
-      taskFunction: () => {},
       description: 'Build Dart portable modules (kernel).',
       depends: ['pkg-compile-snapshot']));
 
