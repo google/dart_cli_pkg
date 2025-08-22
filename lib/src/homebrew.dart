@@ -22,7 +22,8 @@ import 'utils.dart';
 ///
 /// This must be set explicitly.
 final homebrewRepo = InternalConfigVariable.fn<String>(
-    () => fail("pkg.homebrewRepo must be set to deploy to Homebrew."));
+  () => fail("pkg.homebrewRepo must be set to deploy to Homebrew."),
+);
 
 /// The path to the formula file within the Homebrew repository to update with
 /// the new package version.
@@ -37,8 +38,9 @@ final homebrewFormula = InternalConfigVariable.value<String?>(null);
 /// `@`-versioned formula file for the current version number.
 ///
 /// By default, this is `true` if and only if [version] is a prerelease version.
-final homebrewCreateVersionedFormula =
-    InternalConfigVariable.fn(() => version.isPreRelease);
+final homebrewCreateVersionedFormula = InternalConfigVariable.fn(
+  () => version.isPreRelease,
+);
 
 /// A user-defined function that modifies the formula after the automatic edits
 /// have been applied.
@@ -48,7 +50,8 @@ final homebrewCreateVersionedFormula =
 /// been updated.
 final homebrewEditFormula =
     InternalConfigVariable.value<FutureOr<String> Function(String)>(
-        (formula) => formula);
+      (formula) => formula,
+    );
 
 /// Whether [addHomebrewTasks] has been called yet.
 var _addedHomebrewTasks = false;
@@ -70,77 +73,105 @@ void addHomebrewTasks() {
   homebrewCreateVersionedFormula.freeze();
   homebrewTag.freeze();
 
-  addTask(GrinderTask('pkg-homebrew-update',
+  addTask(
+    GrinderTask(
+      'pkg-homebrew-update',
       taskFunction: () => _update(),
-      description: 'Update the Homebrew formula.'));
+      description: 'Update the Homebrew formula.',
+    ),
+  );
 }
 
 /// Updates the Homebrew formula to point at the current version of the package.
 Future<void> _update() async {
   ensureBuild();
 
-  var digest = sha256.convert(await client.readBytes(
-      url("https://github.com/$githubRepo/archive/$homebrewTag.tar.gz")));
+  var digest = sha256.convert(
+    await client.readBytes(
+      url("https://github.com/$githubRepo/archive/$homebrewTag.tar.gz"),
+    ),
+  );
 
-  var repo =
-      await cloneOrPull(url("https://github.com/$homebrewRepo.git").toString());
+  var repo = await cloneOrPull(
+    url("https://github.com/$homebrewRepo.git").toString(),
+  );
 
   var formulaPath = _formulaFile(repo);
   var formula = _replaceFirstMappedMandatory(
-      File(formulaPath).readAsStringSync(),
-      RegExp(r'\n( *)url "[^"]+"'),
-      (match) => '\n${match[1]}url '
-          '"https://github.com/$githubRepo/archive/$homebrewTag.tar.gz"',
-      "Couldn't find a url field in $formulaPath.");
+    File(formulaPath).readAsStringSync(),
+    RegExp(r'\n( *)url "[^"]+"'),
+    (match) =>
+        '\n${match[1]}url '
+        '"https://github.com/$githubRepo/archive/$homebrewTag.tar.gz"',
+    "Couldn't find a url field in $formulaPath.",
+  );
   formula = _replaceFirstMappedMandatory(
-      formula,
-      RegExp(r'\n( *)sha256 "[^"]+"'),
-      (match) => '\n${match[1]}sha256 "$digest"',
-      "Couldn't find a sha256 field in $formulaPath.");
+    formula,
+    RegExp(r'\n( *)sha256 "[^"]+"'),
+    (match) => '\n${match[1]}sha256 "$digest"',
+    "Couldn't find a sha256 field in $formulaPath.",
+  );
 
   if (homebrewCreateVersionedFormula.value) {
     formula = _replaceFirstMappedMandatory(
-        formula,
-        RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
-        (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
-        "Couldn't find a Formula subclass in $formulaPath.");
+      formula,
+      RegExp(r'^ *class ([^ <]+) *< *Formula *$', multiLine: true),
+      (match) => 'class ${match[1]}AT${_classify(version)} < Formula',
+      "Couldn't find a Formula subclass in $formulaPath.",
+    );
 
-    var newFormulaPath = p.join(p.dirname(formulaPath),
-        "${p.basenameWithoutExtension(formulaPath)}@$version.rb");
+    var newFormulaPath = p.join(
+      p.dirname(formulaPath),
+      "${p.basenameWithoutExtension(formulaPath)}@$version.rb",
+    );
     writeString(newFormulaPath, await homebrewEditFormula.value(formula));
-    run("git",
-        arguments: ["add", p.relative(newFormulaPath, from: repo)],
-        workingDirectory: repo,
-        runOptions: botEnvironment);
+    run(
+      "git",
+      arguments: [
+        "add",
+        p.relative(newFormulaPath, from: repo),
+      ],
+      workingDirectory: repo,
+      runOptions: botEnvironment,
+    );
   } else {
     writeString(formulaPath, await homebrewEditFormula.value(formula));
   }
 
-  run("git",
-      arguments: [
-        "commit",
-        "--all",
-        "--message",
-        homebrewCreateVersionedFormula.value
-            ? "Add a formula for $humanName $version"
-            : "Update $humanName to $version"
-      ],
-      workingDirectory: repo,
-      runOptions: botEnvironment);
+  run(
+    "git",
+    arguments: [
+      "commit",
+      "--all",
+      "--message",
+      homebrewCreateVersionedFormula.value
+          ? "Add a formula for $humanName $version"
+          : "Update $humanName to $version",
+    ],
+    workingDirectory: repo,
+    runOptions: botEnvironment,
+  );
 
-  await runAsync("git",
-      arguments: [
-        "push",
-        url("https://$githubUser:$githubPassword@github.com/$homebrewRepo.git")
-            .toString(),
-        "HEAD:${await _originHead(repo)}"
-      ],
-      workingDirectory: repo);
+  await runAsync(
+    "git",
+    arguments: [
+      "push",
+      url(
+        "https://$githubUser:$githubPassword@github.com/$homebrewRepo.git",
+      ).toString(),
+      "HEAD:${await _originHead(repo)}",
+    ],
+    workingDirectory: repo,
+  );
 }
 
 /// Like [String.replaceFirstMapped], but fails with [error] if no match is found.
 String _replaceFirstMappedMandatory(
-    String string, Pattern from, String replace(Match match), String error) {
+  String string,
+  Pattern from,
+  String replace(Match match),
+  String error,
+) {
   var found = false;
   var result = string.replaceFirstMapped(from, (match) {
     found = true;
@@ -157,14 +188,16 @@ String _formulaFile(String repo) {
 
   var entries = [
     for (var entry in Glob('{,Formula/}*.rb').listSync(root: repo))
-      if (entry is File && !p.basename(entry.path).contains("@")) entry.path
+      if (entry is File && !p.basename(entry.path).contains("@")) entry.path,
   ];
 
   if (entries.isEmpty) {
     fail("No formulas found in the repo, please set pkg.homebrewFormula.");
   } else if (entries.length > 1) {
-    fail("Multiple formulas found in the repo, please set "
-        "pkg.homebrewFormula.");
+    fail(
+      "Multiple formulas found in the repo, please set "
+      "pkg.homebrewFormula.",
+    );
   } else {
     return entries.single;
   }
@@ -173,20 +206,25 @@ String _formulaFile(String repo) {
 /// Returns the name of HEAD in the origin remote (that is, the default branch
 /// name of the upstream repository).
 Future<String> _originHead(String repo) async {
-  var result = await Process.run(
-      "git", ["symbolic-ref", "refs/remotes/origin/HEAD"],
-      workingDirectory: repo);
+  var result = await Process.run("git", [
+    "symbolic-ref",
+    "refs/remotes/origin/HEAD",
+  ], workingDirectory: repo);
   if (result.exitCode != 0) {
-    fail('"git symbolic-ref refs/remotes/origin/HEAD" failed:\n'
-        '${result.stderr}');
+    fail(
+      '"git symbolic-ref refs/remotes/origin/HEAD" failed:\n'
+      '${result.stderr}',
+    );
   }
 
   var stdout = (result.stdout as String).trim();
   var prefix = "refs/remotes/origin/";
   if (!stdout.startsWith(prefix)) {
-    fail('Unexpected output from "git symbolic-ref refs/remotes/origin/HEAD":\n'
-        'Expected a string starting with "$prefix", got:\n'
-        '$stdout');
+    fail(
+      'Unexpected output from "git symbolic-ref refs/remotes/origin/HEAD":\n'
+      'Expected a string starting with "$prefix", got:\n'
+      '$stdout',
+    );
   }
 
   return stdout.substring(prefix.length);
@@ -197,5 +235,7 @@ Future<String> _originHead(String repo) async {
 String _classify(Version version) => version
     .toString()
     .replaceAllMapped(
-        RegExp(r'[-_.]([a-zA-Z0-9])'), (match) => match[1]!.toUpperCase())
+      RegExp(r'[-_.]([a-zA-Z0-9])'),
+      (match) => match[1]!.toUpperCase(),
+    )
     .replaceAll('+', 'x');

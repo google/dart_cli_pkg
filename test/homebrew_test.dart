@@ -37,9 +37,11 @@ void main() {
     var server = await _serveArchive();
     var process = await _homebrewUpdate(server);
     expect(
-        process.stdout,
-        emitsThrough(
-            contains("pkg.homebrewRepo must be set to deploy to Homebrew.")));
+      process.stdout,
+      emitsThrough(
+        contains("pkg.homebrewRepo must be set to deploy to Homebrew."),
+      ),
+    );
     await process.shouldExit(1);
     await server.close();
   });
@@ -54,16 +56,21 @@ void main() {
           class MyApp < Formula
             sha256 "original sha"
           end
-        """)
+        """),
     ]).create();
     await _makeRepo("me/homebrew.git");
 
     var server = await _serveArchive();
     var process = await _homebrewUpdate(server);
     expect(
-        process.stdout,
-        emitsThrough(contains("Couldn't find a url field in "
-            "${p.join('build', 'homebrew', 'my_app.rb')}.")));
+      process.stdout,
+      emitsThrough(
+        contains(
+          "Couldn't find a url field in "
+          "${p.join('build', 'homebrew', 'my_app.rb')}.",
+        ),
+      ),
+    );
     await process.shouldExit(1);
     await server.close();
   });
@@ -78,16 +85,21 @@ void main() {
           class MyApp < Formula
             url "original url"
           end
-        """)
+        """),
     ]).create();
     await _makeRepo("me/homebrew.git");
 
     var server = await _serveArchive();
     var process = await _homebrewUpdate(server);
     expect(
-        process.stdout,
-        emitsThrough(contains("Couldn't find a sha256 field in "
-            "${p.join('build', 'homebrew', 'my_app.rb')}.")));
+      process.stdout,
+      emitsThrough(
+        contains(
+          "Couldn't find a sha256 field in "
+          "${p.join('build', 'homebrew', 'my_app.rb')}.",
+        ),
+      ),
+    );
     await process.shouldExit(1);
     await server.close();
   });
@@ -102,20 +114,23 @@ void main() {
     await (await _homebrewUpdate(server)).shouldExit(0);
     await server.close();
 
-    await _assertFormula(allOf([
-      contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
-      matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
-    ]));
+    await _assertFormula(
+      allOf([
+        contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+        matches(RegExp(r'sha256 "[a-f0-9]{64}"')),
+      ]),
+    );
 
     expect(await _lastCommitMessage(), equals("Update my_app to 1.2.3"));
   });
 
   test("updates a Homebrew formula for a prerelease", () async {
     await d.package(
-        {...pubspec, "version": "1.2.3-beta.1"},
-        _enableHomebrew(
-            config:
-                "pkg.homebrewCreateVersionedFormula.value = false;")).create();
+      {...pubspec, "version": "1.2.3-beta.1"},
+      _enableHomebrew(
+        config: "pkg.homebrewCreateVersionedFormula.value = false;",
+      ),
+    ).create();
     await _makeRepo("my_app");
     await git(["tag", "1.2.3-beta.1"]);
 
@@ -124,10 +139,12 @@ void main() {
     await (await _homebrewUpdate(server)).shouldExit(0);
     await server.close();
 
-    await _assertFormula(allOf([
-      contains('url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
-      matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
-    ]));
+    await _assertFormula(
+      allOf([
+        contains('url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
+        matches(RegExp(r'sha256 "[a-f0-9]{64}"')),
+      ]),
+    );
 
     await d
         .nothing(p.join("me/homebrew.git", "my_app@1.2.3-beta.1.rb"))
@@ -138,8 +155,10 @@ void main() {
 
   group("creates a new Homebrew formula", () {
     test("for a pre-release version by default", () async {
-      await d.package(
-          {...pubspec, "version": "1.2.3-beta.1"}, _enableHomebrew()).create();
+      await d.package({
+        ...pubspec,
+        "version": "1.2.3-beta.1",
+      }, _enableHomebrew()).create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3-beta.1"]);
 
@@ -148,30 +167,38 @@ void main() {
       await (await _homebrewUpdate(server)).shouldExit(0);
       await server.close();
 
-      await _assertFormula(allOf([
-        contains('url "original url"'),
-        contains(r'sha256 "original sha"')
-      ]));
+      await _assertFormula(
+        allOf([
+          contains('url "original url"'),
+          contains(r'sha256 "original sha"'),
+        ]),
+      );
 
       await _assertFormula(
-          allOf([
-            contains('class MyAppAT123Beta1 < Formula'),
-            contains(
-                'url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"'),
-            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
-          ]),
-          path: "my_app@1.2.3-beta.1.rb");
+        allOf([
+          contains('class MyAppAT123Beta1 < Formula'),
+          contains(
+            'url "https://github.com/me/app/archive/1.2.3-beta.1.tar.gz"',
+          ),
+          matches(RegExp(r'sha256 "[a-f0-9]{64}"')),
+        ]),
+        path: "my_app@1.2.3-beta.1.rb",
+      );
 
-      expect(await _lastCommitMessage(),
-          equals("Add a formula for my_app 1.2.3-beta.1"));
+      expect(
+        await _lastCommitMessage(),
+        equals("Add a formula for my_app 1.2.3-beta.1"),
+      );
     });
 
     test("for a release version", () async {
       await d
           .package(
-              pubspec,
-              _enableHomebrew(
-                  config: "pkg.homebrewCreateVersionedFormula.value = true;"))
+            pubspec,
+            _enableHomebrew(
+              config: "pkg.homebrewCreateVersionedFormula.value = true;",
+            ),
+          )
           .create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3"]);
@@ -181,29 +208,35 @@ void main() {
       await (await _homebrewUpdate(server)).shouldExit(0);
       await server.close();
 
-      await _assertFormula(allOf([
-        contains('url "original url"'),
-        contains(r'sha256 "original sha"')
-      ]));
+      await _assertFormula(
+        allOf([
+          contains('url "original url"'),
+          contains(r'sha256 "original sha"'),
+        ]),
+      );
 
       await _assertFormula(
-          allOf([
-            contains('class MyAppAT123 < Formula'),
-            contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
-            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
-          ]),
-          path: "my_app@1.2.3.rb");
+        allOf([
+          contains('class MyAppAT123 < Formula'),
+          contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+          matches(RegExp(r'sha256 "[a-f0-9]{64}"')),
+        ]),
+        path: "my_app@1.2.3.rb",
+      );
 
       expect(
-          await _lastCommitMessage(), equals("Add a formula for my_app 1.2.3"));
+        await _lastCommitMessage(),
+        equals("Add a formula for my_app 1.2.3"),
+      );
     });
 
     test("for a release version with a build identifier", () async {
       await d.package(
-          {...pubspec, "version": "1.2.3+foo.1"},
-          _enableHomebrew(
-              config:
-                  "pkg.homebrewCreateVersionedFormula.value = true;")).create();
+        {...pubspec, "version": "1.2.3+foo.1"},
+        _enableHomebrew(
+          config: "pkg.homebrewCreateVersionedFormula.value = true;",
+        ),
+      ).create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3+foo.1"]);
 
@@ -212,29 +245,37 @@ void main() {
       await (await _homebrewUpdate(server)).shouldExit(0);
       await server.close();
 
-      await _assertFormula(allOf([
-        contains('url "original url"'),
-        contains(r'sha256 "original sha"')
-      ]));
+      await _assertFormula(
+        allOf([
+          contains('url "original url"'),
+          contains(r'sha256 "original sha"'),
+        ]),
+      );
 
       await _assertFormula(
-          allOf([
-            contains('class MyAppAT123xfoo1 < Formula'),
-            contains(
-                'url "https://github.com/me/app/archive/1.2.3+foo.1.tar.gz"'),
-            matches(RegExp(r'sha256 "[a-f0-9]{64}"'))
-          ]),
-          path: "my_app@1.2.3+foo.1.rb");
+        allOf([
+          contains('class MyAppAT123xfoo1 < Formula'),
+          contains(
+            'url "https://github.com/me/app/archive/1.2.3+foo.1.tar.gz"',
+          ),
+          matches(RegExp(r'sha256 "[a-f0-9]{64}"')),
+        ]),
+        path: "my_app@1.2.3+foo.1.rb",
+      );
 
-      expect(await _lastCommitMessage(),
-          equals("Add a formula for my_app 1.2.3+foo.1"));
+      expect(
+        await _lastCommitMessage(),
+        equals("Add a formula for my_app 1.2.3+foo.1"),
+      );
     });
   });
 
   test("uses the human name in the commit message", () async {
     await d
         .package(
-            pubspec, _enableHomebrew(config: 'pkg.humanName.value = "My App";'))
+          pubspec,
+          _enableHomebrew(config: 'pkg.humanName.value = "My App";'),
+        )
         .create();
     await _makeRepo("my_app");
     await git(["tag", "1.2.3"]);
@@ -249,8 +290,10 @@ void main() {
 
   test("can use a custom tag name", () async {
     await d
-        .package(pubspec,
-            _enableHomebrew(config: 'pkg.homebrewTag.value = "v1.2.3";'))
+        .package(
+          pubspec,
+          _enableHomebrew(config: 'pkg.homebrewTag.value = "v1.2.3";'),
+        )
         .create();
     await _makeRepo("my_app");
     await git(["tag", "v1.2.3"]);
@@ -261,7 +304,8 @@ void main() {
     await server.close();
 
     await _assertFormula(
-        contains('url "https://github.com/me/app/archive/v1.2.3.tar.gz"'));
+      contains('url "https://github.com/me/app/archive/v1.2.3.tar.gz"'),
+    );
 
     expect(await _lastCommitMessage(), equals("Update my_app to 1.2.3"));
   });
@@ -286,7 +330,8 @@ void main() {
       await server.close();
 
       await _assertFormula(
-          contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
+        contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+      );
       await d
           .file("me/homebrew.git/my_app@1.0.0.rb", "my_app@1.0.0 original")
           .validate();
@@ -310,7 +355,8 @@ void main() {
       await server.close();
 
       await _assertFormula(
-          contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
+        contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+      );
       await d.file("me/homebrew.git/my_app", "my_app original").validate();
       await d
           .file("me/homebrew.git/my_app.py", "my_app.py original")
@@ -320,9 +366,9 @@ void main() {
     test("uses the explicit formula", () async {
       await d
           .package(
-              pubspec,
-              _enableHomebrew(
-                  config: 'pkg.homebrewFormula.value = "my_app.rb";'))
+            pubspec,
+            _enableHomebrew(config: 'pkg.homebrewFormula.value = "my_app.rb";'),
+          )
           .create();
       await _makeRepo("my_app");
       await git(["tag", "1.2.3"]);
@@ -338,7 +384,8 @@ void main() {
       await server.close();
 
       await _assertFormula(
-          contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'));
+        contains('url "https://github.com/me/app/archive/1.2.3.tar.gz"'),
+      );
       await d
           .file("me/homebrew.git/other_app.rb", "other_app.rb original")
           .validate();
@@ -357,10 +404,14 @@ void main() {
         var server = await _serveArchive();
         var process = await _homebrewUpdate(server);
         expect(
-            process.stdout,
-            emitsThrough(
-                contains("Multiple formulas found in the repo, please set "
-                    "pkg.homebrewFormula.")));
+          process.stdout,
+          emitsThrough(
+            contains(
+              "Multiple formulas found in the repo, please set "
+              "pkg.homebrewFormula.",
+            ),
+          ),
+        );
         await process.shouldExit(1);
         await server.close();
       });
@@ -377,9 +428,14 @@ void main() {
         var server = await _serveArchive();
         var process = await _homebrewUpdate(server);
         expect(
-            process.stdout,
-            emitsThrough(contains("No formulas found in the repo, please set "
-                "pkg.homebrewFormula.")));
+          process.stdout,
+          emitsThrough(
+            contains(
+              "No formulas found in the repo, please set "
+              "pkg.homebrewFormula.",
+            ),
+          ),
+        );
         await process.shouldExit(1);
         await server.close();
       });
@@ -390,16 +446,22 @@ void main() {
         await git(["tag", "1.2.3"]);
 
         await _createHomebrewRepo();
-        File(d.path("me/homebrew.git/my_app.rb"))
-            .renameSync(d.path("me/homebrew.git/my_app@1.0.0.rb"));
+        File(
+          d.path("me/homebrew.git/my_app.rb"),
+        ).renameSync(d.path("me/homebrew.git/my_app@1.0.0.rb"));
         await _commitAll("me/homebrew.git", "Rename the formula");
 
         var server = await _serveArchive();
         var process = await _homebrewUpdate(server);
         expect(
-            process.stdout,
-            emitsThrough(contains("No formulas found in the repo, please set "
-                "pkg.homebrewFormula.")));
+          process.stdout,
+          emitsThrough(
+            contains(
+              "No formulas found in the repo, please set "
+              "pkg.homebrewFormula.",
+            ),
+          ),
+        );
         await process.shouldExit(1);
         await server.close();
       });
@@ -413,7 +475,8 @@ void main() {
 /// If [config] is passed, it's injected as code in `main()`.
 ///
 /// If [repo] is `false`, this won't set `pkg.homebrewRepo`.
-String _enableHomebrew({String? config, bool repo = true}) => """
+String _enableHomebrew({String? config, bool repo = true}) =>
+    """
   void main(List<String> args) {
     ${config ?? ''}
     ${repo ? 'pkg.homebrewRepo.value = "me/homebrew";' : ''}
@@ -433,7 +496,7 @@ Future<void> _createHomebrewRepo() async {
           url "original url"
           sha256 "original sha"
         end
-      """)
+      """),
   ]).create();
   await _makeRepo("me/homebrew.git");
 }
@@ -446,8 +509,11 @@ Future<void> _makeRepo(String path) async {
 
   // This is only necessary for the Homebrew repo, but it doesn't hurt to set
   // it elsewhere.
-  await git(["config", "receive.denyCurrentBranch", "false"],
-      workingDirectory: path);
+  await git([
+    "config",
+    "receive.denyCurrentBranch",
+    "false",
+  ], workingDirectory: path);
 }
 
 /// Commits all changes in the repository at [path] with the given [message].
@@ -461,32 +527,41 @@ Future<void> _commitAll(String path, String message) async {
 Future<ShelfTestServer> _serveArchive([String tag = "1.2.3"]) async {
   var server = await ShelfTestServer.create();
   server.handler.expect("GET", "/me/app/archive/$tag.tar.gz", (request) async {
-    var process = await Process.start(
-        "git", ["archive", "--prefix=app-$tag/", "--format=tar.gz", tag],
-        workingDirectory: appDir);
+    var process = await Process.start("git", [
+      "archive",
+      "--prefix=app-$tag/",
+      "--format=tar.gz",
+      tag,
+    ], workingDirectory: appDir);
 
     process.exitCode.then((exitCode) async {
       if (exitCode != 0) {
-        fail('git archive $tag failed:\n' +
-            await utf8.decodeStream(process.stderr));
+        fail(
+          'git archive $tag failed:\n' +
+              await utf8.decodeStream(process.stderr),
+        );
       }
     });
 
-    return shelf.Response.ok(process.stdout,
-        headers: {"content-type": "application/x-gzip"});
+    return shelf.Response.ok(
+      process.stdout,
+      headers: {"content-type": "application/x-gzip"},
+    );
   });
   return server;
 }
 
 /// Run Grinders `pkg-homebrew-update` task with the test host set so that it
 /// will treat `me/homebrew.git` as the Homebrew repository.
-Future<TestProcess> _homebrewUpdate(ShelfTestServer server) => grind([
-      "pkg-homebrew-update"
-    ], environment: {
-      // Trick Git into cloning from and pushing to a local path rather than an
-      // SSH URL.
-      "_CLI_PKG_TEST_GIT_HOST": p.toUri(d.sandbox).toString()
-    }, server: server);
+Future<TestProcess> _homebrewUpdate(ShelfTestServer server) => grind(
+  ["pkg-homebrew-update"],
+  environment: {
+    // Trick Git into cloning from and pushing to a local path rather than an
+    // SSH URL.
+    "_CLI_PKG_TEST_GIT_HOST": p.toUri(d.sandbox).toString(),
+  },
+  server: server,
+);
 
 /// Asserts that `me/homebrew.git/my_app.rb` matches [matcher] after being
 /// reset to the new `HEAD` state.
@@ -502,8 +577,11 @@ Future<void> _assertFormula(Object matcher, {String? path}) async {
 
 /// Returns the last commit message in `me/homebrew.git`.
 Future<String> _lastCommitMessage() async {
-  var git = await TestProcess.start("git", ["log", "-1", "--pretty=%B"],
-      workingDirectory: d.path("me/homebrew.git"));
+  var git = await TestProcess.start("git", [
+    "log",
+    "-1",
+    "--pretty=%B",
+  ], workingDirectory: d.path("me/homebrew.git"));
   await git.shouldExit(0);
   return (await git.stdout.rest.toList()).join("\n").trim();
 }

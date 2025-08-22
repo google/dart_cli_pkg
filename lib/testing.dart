@@ -34,7 +34,8 @@ final _executableUpToDateCache = p.PathSet();
 /// When a package has path dependencies, `dart run` updates the
 /// modification time on the `pubspec.lock` file after every run, which means
 /// [ensureUpToDate] can't reliably use it for freshness checking.
-final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
+final _hasPathDependency =
+    _dependenciesHasPath(pubspec.dependencies) ||
     _dependenciesHasPath(pubspec.devDependencies) ||
     _dependenciesHasPath(pubspec.dependencyOverrides);
 
@@ -55,24 +56,28 @@ final _hasPathDependency = _dependenciesHasPath(pubspec.dependencies) ||
 /// When using this in multiple tests, consider calling [setUpAll] with
 /// [ensureExecutableUpToDate] to avoid having many redundant test failures for
 /// an out-of-date executable.
-Future<TestProcess> start(String executable, Iterable<String> arguments,
-        {bool node = false,
-        String? workingDirectory,
-        Map<String, String>? environment,
-        bool includeParentEnvironment = true,
-        bool runInShell = false,
-        String? description,
-        required Encoding encoding,
-        bool forwardStdio = false}) async =>
-    await TestProcess.start(executableRunner(executable, node: node),
-        [...executableArgs(executable, node: node), ...arguments],
-        workingDirectory: workingDirectory,
-        environment: environment,
-        includeParentEnvironment: includeParentEnvironment,
-        runInShell: runInShell,
-        description: description,
-        encoding: encoding,
-        forwardStdio: forwardStdio);
+Future<TestProcess> start(
+  String executable,
+  Iterable<String> arguments, {
+  bool node = false,
+  String? workingDirectory,
+  Map<String, String>? environment,
+  bool includeParentEnvironment = true,
+  bool runInShell = false,
+  String? description,
+  required Encoding encoding,
+  bool forwardStdio = false,
+}) async => await TestProcess.start(
+  executableRunner(executable, node: node),
+  [...executableArgs(executable, node: node), ...arguments],
+  workingDirectory: workingDirectory,
+  environment: environment,
+  includeParentEnvironment: includeParentEnvironment,
+  runInShell: runInShell,
+  description: description,
+  encoding: encoding,
+  forwardStdio: forwardStdio,
+);
 
 /// Returns an executable that can be passed to [Process.start] and similar APIs
 /// along with the arguments returned by [executableArgs] to run [executable],
@@ -106,9 +111,11 @@ Future<TestProcess> start(String executable, Iterable<String> arguments,
 String executableRunner(String executable, {bool node = false}) => node
     ? "node"
     : File(p.absolute("build/$executable.native")).existsSync()
-        ? p.join(sdkDir.path,
-            "bin/dartaotruntime${CliPlatform.current.binaryExtension}")
-        : Platform.executable;
+    ? p.join(
+        sdkDir.path,
+        "bin/dartaotruntime${CliPlatform.current.binaryExtension}",
+      )
+    : Platform.executable;
 
 /// Arguments that can be passed to [Process.start] and similar APIs along with
 /// the executable returned by [executableRunner] to run [executable], which is
@@ -161,7 +168,7 @@ List<String> executableArgs(String executable, {bool node = false}) {
     for (var entry in environmentConstants.value.entries)
       '-D${entry.key}=${entry.value}',
     "--enable-asserts",
-    p.absolute(path)
+    p.absolute(path),
   ];
 }
 
@@ -182,8 +189,10 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
 
   if (!_executableUpToDateCache.contains(path)) {
     ensureUpToDate(
-        path, "dart run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
-        dependencies: [executables.value[executable]]);
+      path,
+      "dart run grinder pkg-${node ? 'npm' : 'standalone'}-dev",
+      dependencies: [executables.value[executable]],
+    );
 
     // Only add this after ensuring that the executable is up-to-date, so that
     // running it multiple times for out-of-date inputs will cause multiple
@@ -201,8 +210,11 @@ void ensureExecutableUpToDate(String executable, {bool node = false}) {
 ///
 /// If [path] doesn't exist or is out of date, throws a [TestFailure]
 /// encouraging the user to run [commandToRun].
-void ensureUpToDate(String path, String commandToRun,
-    {Iterable<String?>? dependencies}) {
+void ensureUpToDate(
+  String path,
+  String commandToRun, {
+  Iterable<String?>? dependencies,
+}) {
   // Ensure path is relative so the error messages are more readable.
   path = p.relative(path);
   if (!File(path).existsSync()) {
@@ -215,7 +227,7 @@ void ensureUpToDate(String path, String commandToRun,
         ...Directory(dependency).listSync(recursive: true)
       else if (File(dependency).existsSync())
         File(dependency),
-    _hasPathDependency ? File("pubspec.yaml") : File("pubspec.lock")
+    _hasPathDependency ? File("pubspec.yaml") : File("pubspec.lock"),
   ];
 
   var lastModified = File(path).lastModifiedSync();
@@ -224,9 +236,10 @@ void ensureUpToDate(String path, String commandToRun,
       var entryLastModified = entry.lastModifiedSync();
       if (lastModified.isBefore(entryLastModified)) {
         throw TestFailure(
-            "${entry.path} was modified after ${p.prettyUri(p.toUri(path))} "
-            "was generated.\n"
-            "Run $commandToRun.");
+          "${entry.path} was modified after ${p.prettyUri(p.toUri(path))} "
+          "was generated.\n"
+          "Run $commandToRun.",
+        );
       }
     }
   }

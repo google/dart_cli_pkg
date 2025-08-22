@@ -27,19 +27,25 @@ void main() {
   var pubspec = {
     "name": "my_app",
     "version": "1.2.3",
-    "executables": {"foo": "foo"}
+    "executables": {"foo": "foo"},
   };
 
   setUp(() async {
-    await d.package(pubspec, """
+    await d
+        .package(
+          pubspec,
+          """
       void main(List<String> args) {
         pkg.addNpmTasks();
         pkg.addStandaloneTasks();
         grind(args);
       }
-    """, [
-      d.file("package.json", json.encode({"name": "my_app"}))
-    ]).create();
+    """,
+          [
+            d.file("package.json", json.encode({"name": "my_app"})),
+          ],
+        )
+        .create();
   });
 
   group("start()", () {
@@ -57,16 +63,21 @@ void main() {
       });
 
       test("runs an executable with a different filename", () async {
-        await d.package({
-          ...pubspec,
-          "executables": {"bar": "foo"}
-        }, """
+        await d
+            .package(
+              {
+                ...pubspec,
+                "executables": {"bar": "foo"},
+              },
+              """
           void main(List<String> args) {
             pkg.addNpmTasks();
             pkg.addStandaloneTasks();
             grind(args);
           }
-        """).create();
+        """,
+            )
+            .create();
 
         await pubGet();
 
@@ -108,17 +119,19 @@ void main() {
         await (await _test()).shouldExit(0);
       });
 
-      test("refuses to run if a modification was made to the executable",
-          () async {
-        await (await grind(["pkg-standalone-dev"])).shouldExit(0);
-        await _touch("my_app/bin/foo.dart");
+      test(
+        "refuses to run if a modification was made to the executable",
+        () async {
+          await (await grind(["pkg-standalone-dev"])).shouldExit(0);
+          await _touch("my_app/bin/foo.dart");
 
-        await _testCase("""
+          await _testCase("""
           expect(pkg.start('foo', [], encoding: utf8),
             throwsA(isA<TestFailure>()));
         """).create();
-        await (await _test()).shouldExit(0);
-      });
+          await (await _test()).shouldExit(0);
+        },
+      );
     });
 
     group("in Node.js mode", () {
@@ -134,17 +147,19 @@ void main() {
         await (await _test()).shouldExit(0);
       });
 
-      test("refuses to run if a modification was made to the executable",
-          () async {
-        await (await grind(["pkg-npm-dev"])).shouldExit(0);
-        await _touch("my_app/bin/foo.dart");
+      test(
+        "refuses to run if a modification was made to the executable",
+        () async {
+          await (await grind(["pkg-npm-dev"])).shouldExit(0);
+          await _touch("my_app/bin/foo.dart");
 
-        await _testCase("""
+          await _testCase("""
           expect(pkg.start('foo', [], node: true, encoding: utf8),
             throwsA(isA<TestFailure>()));
         """).create();
-        await (await _test()).shouldExit(0);
-      });
+          await (await _test()).shouldExit(0);
+        },
+      );
     });
   });
 
@@ -232,18 +247,20 @@ void main() {
   });
 
   group("executableRunner and executableArgs", () {
-    test("in standalone source mode can be used to manually run an executable",
-        () async {
-      await pubGet();
-      await _testCase("""
+    test(
+      "in standalone source mode can be used to manually run an executable",
+      () async {
+        await pubGet();
+        await _testCase("""
           var result = Process.runSync(
               pkg.executableRunner("foo"), pkg.executableArgs("foo"));
           expect(result.stdout, startsWith("in foo 1.2.3"));
           expect(result.exitCode, equals(0));
         """).create();
 
-      await (await _test()).shouldExit(0);
-    });
+        await (await _test()).shouldExit(0);
+      },
+    );
 
     group("in standalone compiled mode", () {
       test("can be used to manually run an executable", () async {
@@ -354,8 +371,9 @@ void main() {
         await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
         // This just shouldn't throw an error.
-        await _testCase("pkg.ensureExecutableUpToDate('foo', node: true);")
-            .create();
+        await _testCase(
+          "pkg.ensureExecutableUpToDate('foo', node: true);",
+        ).create();
 
         await (await _test()).shouldExit(0);
       });
@@ -396,9 +414,11 @@ d.FileDescriptor _testCase(String code) {
 
 /// Starts a [TestProcess] running `dart run test` on the `test.dart` file in the
 /// sandbox app.
-Future<TestProcess> _test() =>
-    TestProcess.start("dart$dotExe", ["run", "test", "test.dart"],
-        workingDirectory: appDir);
+Future<TestProcess> _test() => TestProcess.start("dart$dotExe", [
+  "run",
+  "test",
+  "test.dart",
+], workingDirectory: appDir);
 
 /// Updates the modification time of the file at [path], within [d.sandbox].
 Future<void> _touch(String path) async {

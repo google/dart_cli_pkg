@@ -28,8 +28,10 @@ final _cache = p.PathMap<String>();
 /// support any additional Mustache features.
 String renderTemplate(String path, Map<String, String> variables) {
   path = p.join(cliPkgSrc, 'templates', path);
-  var text =
-      _cache.putIfAbsent(path, () => File("$path.mustache").readAsStringSync());
+  var text = _cache.putIfAbsent(
+    path,
+    () => File("$path.mustache").readAsStringSync(),
+  );
   for (var entry in variables.entries) {
     text = text.replaceAll('{{{${entry.key}}}}', entry.value);
   }

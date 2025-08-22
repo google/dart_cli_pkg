@@ -47,17 +47,20 @@ void _compileSnapshot() {
       File('build/$existingName.snapshot').copySync('build/$name.snapshot');
     } else {
       existingSnapshots[path] = name;
-      run('dart', arguments: [
-        'compile',
-        'kernel',
-        '--no-link-platform',
-        for (var entry in environmentConstants.value.entries)
-          '-D${entry.key}=${entry.value}',
-        '--output',
-        'build/$name.snapshot',
-        '--',
-        path
-      ]);
+      run(
+        'dart',
+        arguments: [
+          'compile',
+          'kernel',
+          '--no-link-platform',
+          for (var entry in environmentConstants.value.entries)
+            '-D${entry.key}=${entry.value}',
+          '--output',
+          'build/$name.snapshot',
+          '--',
+          path,
+        ],
+      );
     }
   });
 }
@@ -78,17 +81,20 @@ void _compileNative({bool enableAsserts = false}) {
       File('build/$existingName.native').copySync('build/$name.native');
     } else {
       existingSnapshots[path] = name;
-      run('dart', arguments: [
-        'compile',
-        CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
-        if (enableAsserts) '--enable-asserts',
-        for (var entry in environmentConstants.value.entries)
-          '-D${entry.key}=${entry.value}',
-        '--output',
-        'build/$name.native',
-        '--',
-        path
-      ]);
+      run(
+        'dart',
+        arguments: [
+          'compile',
+          CliPlatform.current.useExe ? 'exe' : 'aot-snapshot',
+          if (enableAsserts) '--enable-asserts',
+          for (var entry in environmentConstants.value.entries)
+            '-D${entry.key}=${entry.value}',
+          '--output',
+          'build/$name.native',
+          '--',
+          path,
+        ],
+      );
     }
   });
 }
@@ -104,48 +110,74 @@ void addStandaloneTasks() {
   freezeSharedVariables();
   standaloneName.freeze();
 
-  addTask(GrinderTask('pkg-compile-snapshot',
+  addTask(
+    GrinderTask(
+      'pkg-compile-snapshot',
       taskFunction: _compileSnapshot,
-      description: 'Build Dart portable modules (kernel).'));
-
-  addTask(GrinderTask('pkg-compile-snapshot-dev',
       description: 'Build Dart portable modules (kernel).',
-      depends: ['pkg-compile-snapshot']));
+    ),
+  );
 
-  addTask(GrinderTask('pkg-compile-native',
+  addTask(
+    GrinderTask(
+      'pkg-compile-snapshot-dev',
+      description: 'Build Dart portable modules (kernel).',
+      depends: ['pkg-compile-snapshot'],
+    ),
+  );
+
+  addTask(
+    GrinderTask(
+      'pkg-compile-native',
       taskFunction: _compileNative,
-      description: 'Build Dart AOT modules (aot-snapshot).'));
+      description: 'Build Dart AOT modules (aot-snapshot).',
+    ),
+  );
 
-  addTask(GrinderTask('pkg-compile-native-dev',
+  addTask(
+    GrinderTask(
+      'pkg-compile-native-dev',
       taskFunction: () => _compileNative(enableAsserts: true),
       description:
-          'Build Dart AOT modules (aot-snapshot) with asserts enabled.'));
+          'Build Dart AOT modules (aot-snapshot) with asserts enabled.',
+    ),
+  );
 
-  addTask(GrinderTask('pkg-standalone-dev',
+  addTask(
+    GrinderTask(
+      'pkg-standalone-dev',
       taskFunction: _buildDev,
       description: 'Build standalone executable(s) with asserts enabled.',
-      depends: ['pkg-compile-native-dev']));
+      depends: ['pkg-compile-native-dev'],
+    ),
+  );
 
   var tasks = {
     for (var platform in CliPlatform.all)
-      platform: GrinderTask('pkg-standalone-$platform',
-          taskFunction: () => _buildPackage(platform),
-          description:
-              'Build a standalone package for ${platform.toHumanString()}.',
-          depends: platform.useNative
-              ? ['pkg-compile-native']
-              : ['pkg-compile-snapshot'])
+      platform: GrinderTask(
+        'pkg-standalone-$platform',
+        taskFunction: () => _buildPackage(platform),
+        description:
+            'Build a standalone package for ${platform.toHumanString()}.',
+        depends: platform.useNative
+            ? ['pkg-compile-native']
+            : ['pkg-compile-snapshot'],
+      ),
   };
   tasks.values.forEach(addTask);
 
-  addTask(GrinderTask('pkg-standalone-all',
+  addTask(
+    GrinderTask(
+      'pkg-standalone-all',
       description: 'Build all standalone packages.',
       depends: [
         for (var MapEntry(key: platform, value: task) in tasks.entries)
           // Omit Fuchsia tasks because we can't run those unless we're actually
           // running on Fuchsia ourselves.
-          if (!platform.os.isFuchsia || platform.isCurrent) task.name
-      ]));
+          if (!platform.os.isFuchsia || platform.isCurrent) task.name,
+      ],
+    ),
+  );
 }
 
 /// Builds scripts for testing each executable on the current OS and
@@ -156,13 +188,19 @@ Future<void> _buildDev() async {
   for (var name in executables.value.keys) {
     var script = "build/$name${Platform.isWindows ? '.bat' : ''}";
     writeString(
-        script,
-        renderTemplate(
-            "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}", {
-          "dart": p.join(sdkDir.path, 'bin',
-              "dartaotruntime${CliPlatform.current.binaryExtension}"),
-          "executable": "$name.native"
-        }));
+      script,
+      renderTemplate(
+        "standalone/executable-dev.${Platform.isWindows ? 'bat' : 'sh'}",
+        {
+          "dart": p.join(
+            sdkDir.path,
+            'bin',
+            "dartaotruntime${CliPlatform.current.binaryExtension}",
+          ),
+          "executable": "$name.native",
+        },
+      ),
+    );
 
     if (!Platform.isWindows) run("chmod", arguments: ["a+x", script]);
   }
@@ -174,20 +212,31 @@ Future<void> _buildPackage(CliPlatform platform) async {
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
   if (!platform.useExe) {
-    archive.addFile(fileFromBytes(
+    archive.addFile(
+      fileFromBytes(
         "$standaloneName/src/dart${platform.binaryExtension}",
         await _dartExecutable(platform),
-        executable: true));
+        executable: true,
+      ),
+    );
   }
 
   for (var name in executables.value.keys) {
     if (platform.useExe) {
-      archive.addFile(file("$standaloneName/$name${platform.binaryExtension}",
+      archive.addFile(
+        file(
+          "$standaloneName/$name${platform.binaryExtension}",
           "build/$name.native",
-          executable: true));
+          executable: true,
+        ),
+      );
     } else {
-      archive.addFile(file("$standaloneName/src/$name.snapshot",
-          platform.useNative ? "build/$name.native" : "build/$name.snapshot"));
+      archive.addFile(
+        file(
+          "$standaloneName/src/$name.snapshot",
+          platform.useNative ? "build/$name.native" : "build/$name.snapshot",
+        ),
+      );
     }
   }
 
@@ -195,12 +244,16 @@ Future<void> _buildPackage(CliPlatform platform) async {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
-      archive.addFile(fileFromString(
+      archive.addFile(
+        fileFromString(
           "$standaloneName/$name${platform.os.isWindows ? '.bat' : ''}",
           renderTemplate(
-              "standalone/executable${platform.os.isWindows ? '.bat' : '.sh'}",
-              {"name": standaloneName.value, "executable": name}),
-          executable: true));
+            "standalone/executable${platform.os.isWindows ? '.bat' : '.sh'}",
+            {"name": standaloneName.value, "executable": name},
+          ),
+          executable: true,
+        ),
+      );
     }
   }
 
@@ -212,8 +265,9 @@ Future<void> _buildPackage(CliPlatform platform) async {
   } else {
     var output = "$prefix.tar.gz";
     log("Creating $output...");
-    File(output)
-        .writeAsBytesSync(GZipEncoder().encode(TarEncoder().encode(archive))!);
+    File(
+      output,
+    ).writeAsBytesSync(GZipEncoder().encode(TarEncoder().encode(archive))!);
   }
 }
 
@@ -223,9 +277,9 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
   // If we're building for the same SDK we're using, load its executable from
   // disk rather than downloading it fresh.
   if (platform.useNative) {
-    return File(p.join(
-            sdkDir.path, "bin/dartaotruntime${platform.binaryExtension}"))
-        .readAsBytesSync();
+    return File(
+      p.join(sdkDir.path, "bin/dartaotruntime${platform.binaryExtension}"),
+    ).readAsBytesSync();
   } else if (isTesting) {
     // Don't actually download full SDKs in test mode, just return a dummy
     // executable.
@@ -233,37 +287,45 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
   }
 
   var url = switch (platform) {
-    CliPlatform(isMusl: true) => "https://github.com/dart-musl/dart/releases/"
-        "download/$dartVersion/"
-        "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
-    CliPlatform(os: OperatingSystem.android) => "https://github.com/"
-        "dart-android/dart/releases/download/$dartVersion/"
-        "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
+    CliPlatform(isMusl: true) =>
+      "https://github.com/dart-musl/dart/releases/"
+          "download/$dartVersion/"
+          "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
+    CliPlatform(os: OperatingSystem.android) =>
+      "https://github.com/"
+          "dart-android/dart/releases/download/$dartVersion/"
+          "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
     CliPlatform(
-      os: var os && (OperatingSystem.fuchsia || OperatingSystem.ios)
+      os: var os && (OperatingSystem.fuchsia || OperatingSystem.ios),
     ) =>
       fail(
-          "${os.toHumanString()} executables can only be generated when running "
-          "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
-          "that platform."),
-    _ => "https://storage.googleapis.com/dart-archive/channels/"
-        "${SdkChannel.current}/release/$dartVersion/sdk/dartsdk-${platform.os}-"
-        "${platform.arch}-release.zip"
+        "${os.toHumanString()} executables can only be generated when running "
+        "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
+        "that platform.",
+      ),
+    _ =>
+      "https://storage.googleapis.com/dart-archive/channels/"
+          "${SdkChannel.current}/release/$dartVersion/sdk/dartsdk-${platform.os}-"
+          "${platform.arch}-release.zip",
   };
   log("Downloading $url...");
   var response = await client.get(Uri.parse(url));
   if (response.statusCode ~/ 100 != 2) {
-    fail("Failed to download package: ${response.statusCode} "
-        "${response.reasonPhrase}.");
+    fail(
+      "Failed to download package: ${response.statusCode} "
+      "${response.reasonPhrase}.",
+    );
   }
 
   // https://dart-review.googlesource.com/c/sdk/+/441700
   var dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
   var filename = "/bin/$dartvm${platform.binaryExtension}";
   return (url.endsWith(".zip")
-          ? ZipDecoder().decodeBytes(response.bodyBytes)
-          : TarDecoder()
-              .decodeBytes(GZipDecoder().decodeBytes(response.bodyBytes)))
-      .firstWhere((file) => file.name.endsWith(filename))
-      .content as List<int>;
+              ? ZipDecoder().decodeBytes(response.bodyBytes)
+              : TarDecoder().decodeBytes(
+                  GZipDecoder().decodeBytes(response.bodyBytes),
+                ))
+          .firstWhere((file) => file.name.endsWith(filename))
+          .content
+      as List<int>;
 }

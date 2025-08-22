@@ -31,12 +31,12 @@ void main() {
   var pubspec = {
     "name": "my_app",
     "version": "1.2.3",
-    "executables": {"foo": "foo"}
+    "executables": {"foo": "foo"},
   };
 
   var pubspecWithHomepage = {
     ...pubspec,
-    "homepage": "https://github.com/my_org/my_app"
+    "homepage": "https://github.com/my_org/my_app",
   };
 
   group("repo name", () {
@@ -46,21 +46,27 @@ void main() {
 
         var process = await grind(["pkg-github-release"]);
         expect(
-            process.stdout,
-            emitsThrough(
-                contains("pkg.githubRepo must be set to deploy to GitHub.")));
+          process.stdout,
+          emitsThrough(
+            contains("pkg.githubRepo must be set to deploy to GitHub."),
+          ),
+        );
         await process.shouldExit(1);
       });
 
       test("if it's not parsable from the pubspec homepage", () async {
-        await d.package({...pubspec, "homepage": "http://my-cool-package.pkg"},
-            _enableGithub()).create();
+        await d.package({
+          ...pubspec,
+          "homepage": "http://my-cool-package.pkg",
+        }, _enableGithub()).create();
 
         var process = await grind(["pkg-github-release"]);
         expect(
-            process.stdout,
-            emitsThrough(
-                contains("pkg.githubRepo must be set to deploy to GitHub.")));
+          process.stdout,
+          emitsThrough(
+            contains("pkg.githubRepo must be set to deploy to GitHub."),
+          ),
+        );
         await process.shouldExit(1);
       });
 
@@ -71,41 +77,51 @@ void main() {
 
         var process = await grind(["pkg-github-release"]);
         expect(
-            process.stdout,
-            emitsThrough(
-                contains("pkg.githubRepo must be set to deploy to GitHub.")));
+          process.stdout,
+          emitsThrough(
+            contains("pkg.githubRepo must be set to deploy to GitHub."),
+          ),
+        );
         await process.shouldExit(1);
       });
     });
 
     group("parses from the pubspec homepage", () {
       Future<void> assertParses(String homepage, String repo) async {
-        await d.package(
-            {...pubspec, "homepage": homepage}, _enableGithub()).create();
+        await d.package({
+          ...pubspec,
+          "homepage": homepage,
+        }, _enableGithub()).create();
         await _release(repo);
       }
 
       test("with an https URL", () async {
         await assertParses(
-            "https://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+          "https://github.com/google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an http URL", () async {
         await assertParses(
-            "http://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+          "http://github.com/google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with a URL with more nesting", () async {
         await assertParses(
-            "http://github.com/google/dart_cli_pkg/tree/master/lib",
-            "google/dart_cli_pkg");
+          "http://github.com/google/dart_cli_pkg/tree/master/lib",
+          "google/dart_cli_pkg",
+        );
       });
     });
 
     test("prefers the Git origin to the pubspec homepage", () async {
-      await d.package(
-          {...pubspec, "homepage": "http://github.com/google/wrong"},
-          _enableGithub()).create();
+      await d.package({
+        ...pubspec,
+        "homepage": "http://github.com/google/wrong",
+      }, _enableGithub()).create();
 
       await git(["init"]);
       await git(["remote", "add", "origin", "git://github.com/google/right"]);
@@ -123,42 +139,58 @@ void main() {
 
       test("with an https URL", () async {
         await assertParses(
-            "https://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+          "https://github.com/google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an https URL ending in .git", () async {
-        await assertParses("https://github.com/google/dart_cli_pkg.git",
-            "google/dart_cli_pkg");
+        await assertParses(
+          "https://github.com/google/dart_cli_pkg.git",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an http URL", () async {
         await assertParses(
-            "http://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+          "http://github.com/google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an http URL ending in .git", () async {
         await assertParses(
-            "http://github.com/google/dart_cli_pkg.git", "google/dart_cli_pkg");
+          "http://github.com/google/dart_cli_pkg.git",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with a git URL", () async {
         await assertParses(
-            "git://github.com/google/dart_cli_pkg", "google/dart_cli_pkg");
+          "git://github.com/google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with a git URL ending in .git", () async {
         await assertParses(
-            "git://github.com/google/dart_cli_pkg.git", "google/dart_cli_pkg");
+          "git://github.com/google/dart_cli_pkg.git",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an SSH identifier", () async {
         await assertParses(
-            "git@github.com:google/dart_cli_pkg", "google/dart_cli_pkg");
+          "git@github.com:google/dart_cli_pkg",
+          "google/dart_cli_pkg",
+        );
       });
 
       test("with an SSH identifier ending in .git", () async {
         await assertParses(
-            "git@github.com:google/dart_cli_pkg.git", "google/dart_cli_pkg");
+          "git@github.com:google/dart_cli_pkg.git",
+          "google/dart_cli_pkg",
+        );
       });
     });
 
@@ -180,11 +212,17 @@ void main() {
   });
 
   group("username", () {
-    Future<void> assertUsername(String expected,
-        {Map<String, String>? environment}) async {
-      await _release("my_org/my_app", verify: (request) {
-        expect(_getAuthorization(request).item1, equals(expected));
-      }, environment: environment);
+    Future<void> assertUsername(
+      String expected, {
+      Map<String, String>? environment,
+    }) async {
+      await _release(
+        "my_org/my_app",
+        verify: (request) {
+          expect(_getAuthorization(request).item1, equals(expected));
+        },
+        environment: environment,
+      );
     }
 
     test("throws an error if it's not set anywhere", () async {
@@ -192,10 +230,14 @@ void main() {
 
       var process = await grind(["pkg-github-release"]);
       expect(
-          process.stdout,
-          emitsThrough(
-              contains("pkg.githubUser or pkg.githubBearerToken must be set to "
-                  "deploy to GitHub.")));
+        process.stdout,
+        emitsThrough(
+          contains(
+            "pkg.githubUser or pkg.githubBearerToken must be set to "
+            "deploy to GitHub.",
+          ),
+        ),
+      );
       await process.shouldExit(1);
     });
 
@@ -204,19 +246,27 @@ void main() {
       await assertUsername("fblthp", environment: {"GITHUB_USER": "fblthp"});
     });
 
-    test("prefers an explicit username to the GITHUB_USER environment variable",
-        () async {
-      await d.package(pubspecWithHomepage, _enableGithub()).create();
-      await assertUsername("usr", environment: {"GITHUB_USER": "wrong"});
-    });
+    test(
+      "prefers an explicit username to the GITHUB_USER environment variable",
+      () async {
+        await d.package(pubspecWithHomepage, _enableGithub()).create();
+        await assertUsername("usr", environment: {"GITHUB_USER": "wrong"});
+      },
+    );
   });
 
   group("password", () {
-    Future<void> assertPassword(String expected,
-        {Map<String, String>? environment}) async {
-      await _release("my_org/my_app", verify: (request) {
-        expect(_getAuthorization(request).item2, equals(expected));
-      }, environment: environment);
+    Future<void> assertPassword(
+      String expected, {
+      Map<String, String>? environment,
+    }) async {
+      await _release(
+        "my_org/my_app",
+        verify: (request) {
+          expect(_getAuthorization(request).item2, equals(expected));
+        },
+        environment: environment,
+      );
     }
 
     test("throws an error if it's not set anywhere", () async {
@@ -226,10 +276,14 @@ void main() {
 
       var process = await grind(["pkg-github-release"]);
       expect(
-          process.stdout,
-          emitsThrough(
-              contains("pkg.githubPassword or pkg.githubBearerToken must be "
-                  "set to deploy to GitHub.")));
+        process.stdout,
+        emitsThrough(
+          contains(
+            "pkg.githubPassword or pkg.githubBearerToken must be "
+            "set to deploy to GitHub.",
+          ),
+        ),
+      );
       await process.shouldExit(1);
     });
 
@@ -240,76 +294,106 @@ void main() {
       await assertPassword("secret", environment: {"GITHUB_TOKEN": "secret"});
     });
 
-    test("prefers the GITHUB_PASSWORD environment variable to GITHUB_TOKEN",
-        () async {
-      await d
-          .package(pubspecWithHomepage, _enableGithub(password: false))
-          .create();
-      await assertPassword("right",
-          environment: {"GITHUB_PASSWORD": "right", "GITHUB_TOKEN": "wrong"});
-    });
+    test(
+      "prefers the GITHUB_PASSWORD environment variable to GITHUB_TOKEN",
+      () async {
+        await d
+            .package(pubspecWithHomepage, _enableGithub(password: false))
+            .create();
+        await assertPassword(
+          "right",
+          environment: {"GITHUB_PASSWORD": "right", "GITHUB_TOKEN": "wrong"},
+        );
+      },
+    );
 
     test(
-        "prefers an explicit username to the GITHUB_PASSWORD environment variable",
-        () async {
-      await d.package(pubspecWithHomepage, _enableGithub()).create();
-      await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
-    });
+      "prefers an explicit username to the GITHUB_PASSWORD environment variable",
+      () async {
+        await d.package(pubspecWithHomepage, _enableGithub()).create();
+        await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
+      },
+    );
   });
 
   group("bearer token", () {
-    Future<void> assertToken(String expected,
-        {Map<String, String>? environment}) async {
-      await _release("my_org/my_app", verify: (request) {
-        expect(request.headers, contains("authorization"));
-        var authorization = request.headers["authorization"]!;
-        expect(authorization, startsWith("Bearer "));
+    Future<void> assertToken(
+      String expected, {
+      Map<String, String>? environment,
+    }) async {
+      await _release(
+        "my_org/my_app",
+        verify: (request) {
+          expect(request.headers, contains("authorization"));
+          var authorization = request.headers["authorization"]!;
+          expect(authorization, startsWith("Bearer "));
 
-        expect(authorization.substring("Bearer ".length), equals(expected));
-      }, environment: environment);
+          expect(authorization.substring("Bearer ".length), equals(expected));
+        },
+        environment: environment,
+      );
     }
 
     test("parses from the GITHUB_BEARER_TOKEN environment variable", () async {
       await d
           .package(pubspecWithHomepage, _enableGithub(password: false))
           .create();
-      await assertToken("secret",
-          environment: {"GITHUB_BEARER_TOKEN": "secret"});
-    });
-
-    test("prefers the GITHUB_BEARER_TOKEN environment variable to GITHUB_TOKEN",
-        () async {
-      await d
-          .package(pubspecWithHomepage, _enableGithub(password: false))
-          .create();
-      await assertToken("right", environment: {
-        "GITHUB_BEARER_TOKEN": "right",
-        "GITHUB_TOKEN": "wrong"
-      });
+      await assertToken(
+        "secret",
+        environment: {"GITHUB_BEARER_TOKEN": "secret"},
+      );
     });
 
     test(
-        "prefers an explicit username to the GITHUB_PASSWORD environment variable",
-        () async {
-      await d
-          .package(
-              pubspecWithHomepage, _enableGithub(password: false, bearer: true))
-          .create();
-      await assertToken("secret",
-          environment: {"GITHUB_BEARER_TOKEN": "wrong"});
-    });
+      "prefers the GITHUB_BEARER_TOKEN environment variable to GITHUB_TOKEN",
+      () async {
+        await d
+            .package(pubspecWithHomepage, _enableGithub(password: false))
+            .create();
+        await assertToken(
+          "right",
+          environment: {
+            "GITHUB_BEARER_TOKEN": "right",
+            "GITHUB_TOKEN": "wrong",
+          },
+        );
+      },
+    );
+
+    test(
+      "prefers an explicit username to the GITHUB_PASSWORD environment variable",
+      () async {
+        await d
+            .package(
+              pubspecWithHomepage,
+              _enableGithub(password: false, bearer: true),
+            )
+            .create();
+        await assertToken(
+          "secret",
+          environment: {"GITHUB_BEARER_TOKEN": "wrong"},
+        );
+      },
+    );
   });
 
   group("release notes", () {
     Future<void> assertReleaseNotes(Object matcher) async {
-      await _release("my_org/my_app", verify: (request) async {
-        expect(json.decode(await request.readAsString())["body"] as String?,
-            matcher);
-      });
+      await _release(
+        "my_org/my_app",
+        verify: (request) async {
+          expect(
+            json.decode(await request.readAsString())["body"] as String?,
+            matcher,
+          );
+        },
+      );
     }
 
     Future<void> assertReleaseNotesFromChangelog(
-        String changelog, Object matcher) async {
+      String changelog,
+      Object matcher,
+    ) async {
       await d.package(pubspecWithHomepage, _enableGithub()).create();
       await d.file("my_app/CHANGELOG.md", changelog).create();
       await assertReleaseNotes(matcher);
@@ -318,28 +402,37 @@ void main() {
     test("isn't set in the request if it's not set anywhere", () async {
       await d.package(pubspecWithHomepage, _enableGithub()).create();
 
-      await _release("my_org/my_app", verify: (request) async {
-        expect(
-            json.decode(await request.readAsString()), isNot(contains("body")));
-      });
+      await _release(
+        "my_org/my_app",
+        verify: (request) async {
+          expect(
+            json.decode(await request.readAsString()),
+            isNot(contains("body")),
+          );
+        },
+      );
     });
 
     group("from the CHANGELOG", () {
       test("adds a post scriptum", () async {
         await assertReleaseNotesFromChangelog(
-            "## 1.2.3\n"
-            "asdf",
-            endsWith("\n\n"
-                "See the [full changelog](https://github.com/my_org/my_app/"
-                "blob/master/CHANGELOG.md#123) for changes in earlier "
-                "releases."));
+          "## 1.2.3\n"
+          "asdf",
+          endsWith(
+            "\n\n"
+            "See the [full changelog](https://github.com/my_org/my_app/"
+            "blob/master/CHANGELOG.md#123) for changes in earlier "
+            "releases.",
+          ),
+        );
       });
 
       test("includes the body of the last entry", () async {
         await assertReleaseNotesFromChangelog(
-            "## 1.2.3\n"
-            "This is a great release!",
-            startsWith("This is a great release!"));
+          "## 1.2.3\n"
+          "This is a great release!",
+          startsWith("This is a great release!"),
+        );
       });
     });
 
@@ -367,16 +460,19 @@ void main() {
     await server.close();
   });
 
-  test("pkg-github-macos-arm64 uploads standalone Mac OS arm64 archives",
-      () async {
-    await d.package(pubspecWithHomepage, _enableGithub()).create();
-    await _release("my_org/my_app");
+  test(
+    "pkg-github-macos-arm64 uploads standalone Mac OS arm64 archives",
+    () async {
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
+      await _release("my_org/my_app");
 
-    var server = await _assertUploadsPackage("macos", "arm64");
-    await (await grind(["pkg-github-macos-arm64"], server: server))
-        .shouldExit(0);
-    await server.close();
-  });
+      var server = await _assertUploadsPackage("macos", "arm64");
+      await (await grind([
+        "pkg-github-macos-arm64",
+      ], server: server)).shouldExit(0);
+      await server.close();
+    },
+  );
 
   test("pkg-github-linux-x64 uploads standalone Linux x64 archives", () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
@@ -387,30 +483,36 @@ void main() {
     await server.close();
   });
 
-  test("pkg-github-linux-arm64 uploads standalone Linux arm64 archives",
-      () async {
-    await d.package(pubspecWithHomepage, _enableGithub()).create();
-    await _release("my_org/my_app");
+  test(
+    "pkg-github-linux-arm64 uploads standalone Linux arm64 archives",
+    () async {
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
+      await _release("my_org/my_app");
 
-    var server = await _assertUploadsPackage("linux", "arm64");
-    await (await grind(["pkg-github-linux-arm64"], server: server))
-        .shouldExit(0);
-    await server.close();
-  });
-
-  test("pkg-github-windows-x64 uploads standalone Windows x64 archives",
-      () async {
-    await d.package(pubspecWithHomepage, _enableGithub()).create();
-    await _release("my_org/my_app");
-
-    var server = await _assertUploadsPackage("windows", "x64");
-    await (await grind(["pkg-github-windows-x64"], server: server))
-        .shouldExit(0);
-    await server.close();
-  }, onPlatform: {"windows": Skip("dart-lang/sdk#37897")});
+      var server = await _assertUploadsPackage("linux", "arm64");
+      await (await grind([
+        "pkg-github-linux-arm64",
+      ], server: server)).shouldExit(0);
+      await server.close();
+    },
+  );
 
   test(
-      "pkg-github-fix-permissions updates an archive to remove "
+    "pkg-github-windows-x64 uploads standalone Windows x64 archives",
+    () async {
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
+      await _release("my_org/my_app");
+
+      var server = await _assertUploadsPackage("windows", "x64");
+      await (await grind([
+        "pkg-github-windows-x64",
+      ], server: server)).shouldExit(0);
+      await server.close();
+    },
+    onPlatform: {"windows": Skip("dart-lang/sdk#37897")},
+  );
+
+  test("pkg-github-fix-permissions updates an archive to remove "
       "world-writeability", () async {
     await d.package(pubspecWithHomepage, _enableGithub()).create();
     await _release("my_org/my_app");
@@ -423,33 +525,41 @@ void main() {
 
       // These aren't the real GitHub URLs, but we want to verify that we use
       // the links rather than hard-coding.
-      return shelf.Response.ok(json.encode([
-        {
-          "upload_url": server.url.resolve("/upload").toString(),
-          "assets": [
-            // A zip file should be ignored.
-            {
-              "name": "foo.zip",
-              "url": "/assets/2",
-              "browser_download_url": "/assets/2/download/zip"
-            },
-            {
-              "name": "foo.tar.gz",
-              "url": "/assets/1",
-              "browser_download_url": "/assets/1/download/tar"
-            }
-          ]
-        }
-      ]));
+      return shelf.Response.ok(
+        json.encode([
+          {
+            "upload_url": server.url.resolve("/upload").toString(),
+            "assets": [
+              // A zip file should be ignored.
+              {
+                "name": "foo.zip",
+                "url": "/assets/2",
+                "browser_download_url": "/assets/2/download/zip",
+              },
+              {
+                "name": "foo.tar.gz",
+                "url": "/assets/1",
+                "browser_download_url": "/assets/1/download/tar",
+              },
+            ],
+          },
+        ]),
+      );
     });
 
     server.handler.expect(
-        "GET",
-        "/assets/1/download/tar",
-        (request) =>
-            shelf.Response.ok(GZipEncoder().encode(TarEncoder().encode(Archive()
+      "GET",
+      "/assets/1/download/tar",
+      (request) => shelf.Response.ok(
+        GZipEncoder().encode(
+          TarEncoder().encode(
+            Archive()
               ..addFile(fileFromString("foo", "foo contents")..mode = 495)
-              ..addFile(fileFromString("bar", "bar contents")..mode = 506)))));
+              ..addFile(fileFromString("bar", "bar contents")..mode = 506),
+          ),
+        ),
+      ),
+    );
 
     server.handler.expect("DELETE", "/assets/1", (request) async {
       return shelf.Response(204);
@@ -457,7 +567,8 @@ void main() {
 
     server.handler.expect("POST", "/upload", (request) async {
       var archive = TarDecoder().decodeBytes(
-          GZipDecoder().decodeBytes(await collectBytes(request.read())));
+        GZipDecoder().decodeBytes(await collectBytes(request.read())),
+      );
       expect(archive.files, hasLength(2));
 
       var foo = archive.files.first;
@@ -473,8 +584,9 @@ void main() {
       return shelf.Response(201);
     });
 
-    await (await grind(["pkg-github-fix-permissions"], server: server))
-        .shouldExit(0);
+    await (await grind([
+      "pkg-github-fix-permissions",
+    ], server: server)).shouldExit(0);
     await server.close();
   });
 }
@@ -484,8 +596,11 @@ void main() {
 /// If [user], [password], or [bearer] are `true`, this sets default values for
 /// `pkg.githubUser`, `pkg.githubPassword`, and `pkg.githubBearerToken`,
 /// respectively.
-String _enableGithub(
-    {bool user = true, bool password = true, bool bearer = false}) {
+String _enableGithub({
+  bool user = true,
+  bool password = true,
+  bool bearer = false,
+}) {
   var buffer = StringBuffer("""
     void main(List<String> args) {
   """);
@@ -503,18 +618,26 @@ String _enableGithub(
 /// Runs the release process, asserts that a POST is made to the URL for the
 /// given [repo], passes that POST request to [verify], and returns a 201
 /// CREATED response.
-Future<void> _release(String repo,
-    {FutureOr<void> verify(shelf.Request request)?,
-    Map<String, String>? environment}) async {
+Future<void> _release(
+  String repo, {
+  FutureOr<void> verify(shelf.Request request)?,
+  Map<String, String>? environment,
+}) async {
   var server = await ShelfTestServer.create();
-  server.handler.expect("POST", "/repos/$repo/releases",
-      expectAsync1((request) async {
-    if (verify != null) await verify(request);
-    return shelf.Response(201);
-  }));
+  server.handler.expect(
+    "POST",
+    "/repos/$repo/releases",
+    expectAsync1((request) async {
+      if (verify != null) await verify(request);
+      return shelf.Response(201);
+    }),
+  );
 
-  var grinder = await grind(["pkg-github-release"],
-      server: server, environment: environment);
+  var grinder = await grind(
+    ["pkg-github-release"],
+    server: server,
+    environment: environment,
+  );
   await grinder.shouldExit(0);
   await server.close();
 }
@@ -523,8 +646,9 @@ Future<void> _release(String repo,
 /// requests corresponding to uploading a package for the given [os] and [arch].
 Future<ShelfTestServer> _assertUploadsPackage(String os, String arch) async {
   var server = await ShelfTestServer.create();
-  server.handler.expect("GET", "/repos/my_org/my_app/releases/tags/1.2.3",
-      (request) async {
+  server.handler.expect("GET", "/repos/my_org/my_app/releases/tags/1.2.3", (
+    request,
+  ) async {
     var authorization = _getAuthorization(request);
     expect(authorization.item1, equals("usr"));
     expect(authorization.item2, equals("pwd"));
@@ -532,31 +656,42 @@ Future<ShelfTestServer> _assertUploadsPackage(String os, String arch) async {
     // This isn't the real GitHub upload URL, but we want to verify that we
     // use the template rather than hard-coding.
     return shelf.Response.ok(
-        json.encode({"upload_url": server.url.resolve("/upload").toString()}));
+      json.encode({"upload_url": server.url.resolve("/upload").toString()}),
+    );
   });
 
-  server.handler.expectAnything(expectAsync1((request) async {
-    expect(request.method, equals("POST"));
+  server.handler.expectAnything(
+    expectAsync1((request) async {
+      expect(request.method, equals("POST"));
 
-    var url = request.url.toString();
-    expect(url, startsWith("upload?name=my_app-1.2.3-$os-"));
-    expect(url, endsWith(os == "windows" ? ".zip" : ".tar.gz"));
+      var url = request.url.toString();
+      expect(url, startsWith("upload?name=my_app-1.2.3-$os-"));
+      expect(url, endsWith(os == "windows" ? ".zip" : ".tar.gz"));
 
-    expect(
+      expect(
         request.headers,
-        containsPair("content-type",
-            os == "windows" ? "application/zip" : "application/gzip"));
-    var archive = os == "windows"
-        ? ZipDecoder().decodeBytes(await collectBytes(request.read()))
-        : TarDecoder().decodeBytes(await collectBytes(
-            // Cast to work around dart-lang/shelf#189.
-            request.read().cast<List<int>>().transform(gzip.decoder)));
+        containsPair(
+          "content-type",
+          os == "windows" ? "application/zip" : "application/gzip",
+        ),
+      );
+      var archive = os == "windows"
+          ? ZipDecoder().decodeBytes(await collectBytes(request.read()))
+          : TarDecoder().decodeBytes(
+              await collectBytes(
+                // Cast to work around dart-lang/shelf#189.
+                request.read().cast<List<int>>().transform(gzip.decoder),
+              ),
+            );
 
-    expect(archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
-        isNotNull);
+      expect(
+        archive.findFile("my_app/foo${os == 'windows' ? '.bat' : ''}"),
+        isNotNull,
+      );
 
-    return shelf.Response(201);
-  }));
+      return shelf.Response(201);
+    }),
+  );
 
   return server;
 }
@@ -570,8 +705,9 @@ Tuple2<String, String> _getAuthorization(shelf.Request request) {
   var authorization = request.headers["authorization"]!;
   expect(authorization, startsWith("Basic "));
 
-  var decoded =
-      utf8.decode(base64.decode(authorization.substring("Basic ".length)));
+  var decoded = utf8.decode(
+    base64.decode(authorization.substring("Basic ".length)),
+  );
   expect(decoded, contains(":"));
 
   var components = decoded.split(":");

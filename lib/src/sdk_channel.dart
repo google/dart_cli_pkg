@@ -36,7 +36,7 @@ enum SdkChannel {
     Version(isPreRelease: false) => stable,
     Version(preRelease: ["beta", ...]) => beta,
     Version(preRelease: ["dev", ...]) => dev,
-    _ => fail("Unrecognized Dart SDK version $dartVersion")
+    _ => fail("Unrecognized Dart SDK version $dartVersion"),
   };
 
   String toString() => name;

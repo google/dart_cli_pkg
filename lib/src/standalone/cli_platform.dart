@@ -26,7 +26,7 @@ import 'operating_system.dart';
 /// reasons.
 const _unsupportedAbis = {
   // This is still experimental and Dart isn't shipping SDKs for it yet
-  Abi.linuxRiscv32
+  Abi.linuxRiscv32,
 };
 
 /// The set of all ABI strings known by this SDK.
@@ -37,7 +37,7 @@ final _abiStrings = {
         !abi.toString().startsWith("ios_") &&
         // https://github.com/dart-lang/sdk/issues/59698
         !abi.toString().endsWith("_ia32"))
-      abi.toString()
+      abi.toString(),
 };
 
 /// A struct representing a platform for which we can build standalone
@@ -86,8 +86,11 @@ class CliPlatform {
   static final Set<CliPlatform> all = {
     for (var [os, arch] in _abiStrings.map((abi) => abi.split('_')))
       for (var musl in [false, if (os == 'linux') true])
-        CliPlatform(OperatingSystem.parse(os), Architecture.parse(arch),
-            musl: musl)
+        CliPlatform(
+          OperatingSystem.parse(os),
+          Architecture.parse(arch),
+          musl: musl,
+        ),
   };
 
   /// The platform of the current Dart executable.
@@ -104,9 +107,9 @@ class CliPlatform {
 
   /// Returns whether the current platform is using musl LibC.
   static bool get _isCurrentPlatformMusl {
-    var section = Elf.fromFile(Platform.resolvedExecutable)
-        ?.namedSections('.interp')
-        .firstOrNull;
+    var section = Elf.fromFile(
+      Platform.resolvedExecutable,
+    )?.namedSections('.interp').firstOrNull;
     if (section == null) return false;
 
     var file = File(Platform.resolvedExecutable).openSync()

@@ -23,8 +23,10 @@ import 'config_variable.dart';
 import 'utils.dart';
 
 /// The parsed pubspec for the CLI package.
-final pubspec = Pubspec.parse(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: Uri(path: 'pubspec.yaml'));
+final pubspec = Pubspec.parse(
+  File('pubspec.yaml').readAsStringSync(),
+  sourceUrl: Uri(path: 'pubspec.yaml'),
+);
 
 /// The name of the package, as specified in the pubspec.
 final dartName = pubspec.name;
@@ -72,7 +74,7 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
 
   return {
     for (var entry in (executables ?? {}).entries)
-      entry.key as String: p.join('bin', '${entry.value}.dart')
+      entry.key as String: p.join('bin', '${entry.value}.dart'),
   };
 }, freeze: (map) => Map.unmodifiable(map));
 
@@ -115,9 +117,9 @@ final executables = InternalConfigVariable.fn<Map<String, String>>(() {
 /// [dart-lang/sdk#46067]: https://github.com/dart-lang/sdk/issues/46067
 /// [dart-lang/sdk#46079]: https://github.com/dart-lang/sdk/issues/46079
 final environmentConstants = InternalConfigVariable.fn<Map<String, String>>(
-    () =>
-        {"version": version.toString(), "dart-version": dartVersion.toString()},
-    freeze: (map) => Map.unmodifiable(map));
+  () => {"version": version.toString(), "dart-version": dartVersion.toString()},
+  freeze: (map) => Map.unmodifiable(map),
+);
 
 /// Freezes all the [ConfigVariable]s defined in `info.dart`.
 void freezeSharedVariables() {

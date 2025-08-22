@@ -50,7 +50,9 @@ bool get isBrowser =>
     !isNodeJs &&
     _document != null &&
     typeofEquals<Object?>(
-        getProperty<Object?>(_document!, 'querySelector'), 'function');
+      getProperty<Object?>(_document!, 'querySelector'),
+      'function',
+    );
 
 T wrapJSExceptions<T>(T Function() callback) {
   if (!_isStrictMode) return callback();

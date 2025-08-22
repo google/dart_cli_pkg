@@ -65,8 +65,9 @@ class ConfigVariable<T> {
   set value(T value) {
     if (_frozen) {
       throw StateError(
-          "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
-          "called.");
+        "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
+        "called.",
+      );
     }
 
     _callback = null;
@@ -94,8 +95,9 @@ class ConfigVariable<T> {
   set fn(T? callback()) {
     if (_frozen) {
       throw StateError(
-          "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
-          "called.");
+        "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
+        "called.",
+      );
     }
 
     _callback = callback;
@@ -104,14 +106,14 @@ class ConfigVariable<T> {
   }
 
   ConfigVariable._fn(T Function() callback, {T Function(T)? freeze})
-      : _callback = callback,
-        _defaultCallback = callback,
-        _freeze = freeze;
+    : _callback = callback,
+      _defaultCallback = callback,
+      _freeze = freeze;
 
   ConfigVariable._value(this._value, {T Function(T)? freeze})
-      : _defaultValue = _value,
-        _cached = true,
-        _freeze = freeze;
+    : _defaultValue = _value,
+      _cached = true,
+      _freeze = freeze;
 
   String toString() => value.toString();
 }

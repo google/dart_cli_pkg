@@ -27,9 +27,11 @@ import 'utils.dart';
 /// * Windows: `%APPDATA%/dart/pub-credentials.json`
 ///
 /// By default this comes from the `PUB_CREDENTIALS` environment variable.
-final pubCredentials = InternalConfigVariable.fn<String>(() =>
-    Platform.environment["PUB_CREDENTIALS"] ??
-    fail("pkg.pubCredentials must be set to deploy to pub."));
+final pubCredentials = InternalConfigVariable.fn<String>(
+  () =>
+      Platform.environment["PUB_CREDENTIALS"] ??
+      fail("pkg.pubCredentials must be set to deploy to pub."),
+);
 
 /// The path in which pub expects to find its credentials file.
 final String _credentialsPath = () {
@@ -64,9 +66,13 @@ void addPubTasks() {
 
   pubCredentials.freeze();
 
-  addTask(GrinderTask('pkg-pub-deploy',
+  addTask(
+    GrinderTask(
+      'pkg-pub-deploy',
       taskFunction: () => _deploy(),
-      description: 'Deploy the package to Pub.'));
+      description: 'Deploy the package to Pub.',
+    ),
+  );
 }
 
 // Deploy the Pub package to Pub.
@@ -78,8 +84,11 @@ Future<void> _deploy() async {
     ..closeSync();
 
   log("dart pub publish");
-  var process = await Process.start(
-      p.join(sdkDir.path, "bin/dart$dotExe"), ["pub", "publish", "--force"]);
+  var process = await Process.start(p.join(sdkDir.path, "bin/dart$dotExe"), [
+    "pub",
+    "publish",
+    "--force",
+  ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("dart pub publish failed");

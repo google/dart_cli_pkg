@@ -30,8 +30,12 @@ import 'package:yaml/yaml.dart';
 import 'info.dart';
 
 /// The raw YAML of the pubspec.
-final rawPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: Uri(path: 'pubspec.yaml')) as Map<dynamic, dynamic>;
+final rawPubspec =
+    loadYaml(
+          File('pubspec.yaml').readAsStringSync(),
+          sourceUrl: Uri(path: 'pubspec.yaml'),
+        )
+        as Map<dynamic, dynamic>;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
@@ -62,54 +66,59 @@ final dotExe = Platform.isWindows ? ".exe" : "";
 /// We include all dependency licenses because their code may be compiled into
 /// binary and JS releases.
 Future<String> get license => _licenseMemo.runOnce(() async {
-      // A map from license texts to the set of packages that have that same
-      // license. This allows us to de-duplicate repeated licenses, such as those
-      // from Dart Team packages.
-      var licenses = <String, List<String>>{};
-      var thisPackageLicense = _readLicense(".");
+  // A map from license texts to the set of packages that have that same
+  // license. This allows us to de-duplicate repeated licenses, such as those
+  // from Dart Team packages.
+  var licenses = <String, List<String>>{};
+  var thisPackageLicense = _readLicense(".");
 
-      if (thisPackageLicense != null) {
-        licenses[thisPackageLicense] = [humanName.value];
-      }
+  if (thisPackageLicense != null) {
+    licenses[thisPackageLicense] = [humanName.value];
+  }
 
-      licenses.putIfAbsent(_readSdkLicense(), () => []).add("Dart SDK");
+  licenses.putIfAbsent(_readSdkLicense(), () => []).add("Dart SDK");
 
-      // Parse the package config rather than the pubspec so we include transitive
-      // dependencies. This also includes dev dependencies, but it's possible those
-      // are compiled into the distribution anyway (especially for stuff like
-      // `node_preamble`).
-      var packageConfigUrl = await Isolate.packageConfig;
-      var packageConfig = await loadPackageConfigUri(packageConfigUrl!);
+  // Parse the package config rather than the pubspec so we include transitive
+  // dependencies. This also includes dev dependencies, but it's possible those
+  // are compiled into the distribution anyway (especially for stuff like
+  // `node_preamble`).
+  var packageConfigUrl = await Isolate.packageConfig;
+  var packageConfig = await loadPackageConfigUri(packageConfigUrl!);
 
-      // Sort the dependencies alphabetically to guarantee a consistent
-      // ordering.
-      var dependencies = packageConfig.packages.toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
-      for (var package in dependencies) {
-        // Don't double-include this package's license.
-        if (package.name == pubspec.name) continue;
+  // Sort the dependencies alphabetically to guarantee a consistent
+  // ordering.
+  var dependencies = packageConfig.packages.toList()
+    ..sort((a, b) => a.name.compareTo(b.name));
+  for (var package in dependencies) {
+    // Don't double-include this package's license.
+    if (package.name == pubspec.name) continue;
 
-        var dependencyLicense = _readLicense(p.fromUri(package.root));
-        if (dependencyLicense == null) {
-          log("WARNING: $package has no license and may not be legal to "
-              "redistribute.");
-        } else {
-          licenses.putIfAbsent(dependencyLicense, () => []).add(package.name);
-        }
-      }
+    var dependencyLicense = _readLicense(p.fromUri(package.root));
+    if (dependencyLicense == null) {
+      log(
+        "WARNING: $package has no license and may not be legal to "
+        "redistribute.",
+      );
+    } else {
+      licenses.putIfAbsent(dependencyLicense, () => []).add(package.name);
+    }
+  }
 
-      return licenses.entries
-          .map((entry) =>
-              wordWrap("${toSentence(entry.value)} license:") +
-              "\n\n${entry.key}")
-          .join("\n\n" + "-" * 80 + "\n\n");
-    });
+  return licenses.entries
+      .map(
+        (entry) =>
+            wordWrap("${toSentence(entry.value)} license:") +
+            "\n\n${entry.key}",
+      )
+      .join("\n\n" + "-" * 80 + "\n\n");
+});
 final _licenseMemo = AsyncMemoizer<String>();
 
 /// A regular expression that matches filenames that should be considered
 /// licenses.
-final _licenseRegExp =
-    RegExp(r"^(([a-zA-Z0-9]+[-_])?(LICENSE|COPYING)|UNLICENSE)(\..*)?$");
+final _licenseRegExp = RegExp(
+  r"^(([a-zA-Z0-9]+[-_])?(LICENSE|COPYING)|UNLICENSE)(\..*)?$",
+);
 
 /// Returns the contents of the `LICENSE` file in [sdkDir].
 String _readSdkLicense() {
@@ -139,8 +148,9 @@ String? _readLicense(String dir) {
 
   // If there are multiple possibilities, choose the shortest one because it's
   // most likely to be canonical.
-  return File(p.join(dir, minBy(possibilities, (path) => path.length)))
-      .readAsStringSync();
+  return File(
+    p.join(dir, minBy(possibilities, (path) => path.length)),
+  ).readAsStringSync();
 }
 
 /// Ensure that the `build/` directory exists.
@@ -151,26 +161,33 @@ void ensureBuild() {
 /// Creates an [ArchiveFile] with the given [path] and [data].
 ///
 /// If [executable] is `true`, this marks the file as executable.
-ArchiveFile fileFromBytes(String path, List<int> data,
-        {bool executable = false}) =>
-    ArchiveFile(path, data.length, data)
-      ..mode = executable ? 493 : 420
-      ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+ArchiveFile fileFromBytes(
+  String path,
+  List<int> data, {
+  bool executable = false,
+}) => ArchiveFile(path, data.length, data)
+  ..mode = executable ? 493 : 420
+  ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
 /// Creates a UTF-8-encoded [ArchiveFile] with the given [path] and [contents].
 ///
 /// If [executable] is `true`, this marks the file as executable.
-ArchiveFile fileFromString(String path, String contents,
-        {bool executable = false}) =>
-    fileFromBytes(path, utf8.encode(contents), executable: executable);
+ArchiveFile fileFromString(
+  String path,
+  String contents, {
+  bool executable = false,
+}) => fileFromBytes(path, utf8.encode(contents), executable: executable);
 
 /// Creates an [ArchiveFile] at the archive path [target] from the local file at
 /// [source].
 ///
 /// If [executable] is `true`, this marks the file as executable.
 ArchiveFile file(String target, String source, {bool executable = false}) =>
-    fileFromBytes(target, File(source).readAsBytesSync(),
-        executable: executable);
+    fileFromBytes(
+      target,
+      File(source).readAsBytesSync(),
+      executable: executable,
+    );
 
 /// Parses [url], replacing its hostname with a faked testing value if
 /// necessary.
@@ -185,7 +202,8 @@ ArchiveFile file(String target, String source, {bool executable = false}) =>
 ///   replaced. This allows a local server to take the place of a remote API.
 Uri url(String url) {
   var parsed = Uri.parse(url);
-  var host = (url.endsWith(".git")
+  var host =
+      (url.endsWith(".git")
           ? Platform.environment["_CLI_PKG_TEST_GIT_HOST"]
           : null) ??
       Platform.environment["_CLI_PKG_TEST_HOST"];
@@ -193,13 +211,13 @@ Uri url(String url) {
 
   var parsedHost = Uri.parse(host);
   return parsed.replace(
-      scheme: parsedHost.scheme,
-      // Git doesn't accept Windows `file:` URLs with user info components.
-      userInfo: parsedHost.scheme == 'file' ? "" : null,
-      host: parsedHost.host,
-      port: parsedHost.port,
-      path:
-          p.url.join(parsedHost.path, p.url.relative(parsed.path, from: "/")));
+    scheme: parsedHost.scheme,
+    // Git doesn't accept Windows `file:` URLs with user info components.
+    userInfo: parsedHost.scheme == 'file' ? "" : null,
+    host: parsedHost.host,
+    port: parsedHost.port,
+    path: p.url.join(parsedHost.path, p.url.relative(parsed.path, from: "/")),
+  );
 }
 
 /// Returns a sentence fragment listing the elements of [iter].
@@ -220,28 +238,31 @@ const _lineLength = 80;
 /// This preserves existing newlines and only splits words on spaces, not on
 /// other sorts of whitespace.
 String wordWrap(String text) {
-  return text.split("\n").map((originalLine) {
-    var buffer = StringBuffer();
-    var lengthSoFar = 0;
-    for (var word in originalLine.split(" ")) {
-      var wordLength = word.length;
-      if (wordLength > _lineLength) {
-        if (lengthSoFar != 0) buffer.writeln();
-        buffer.writeln(word);
-      } else if (lengthSoFar == 0) {
-        buffer.write(word);
-        lengthSoFar = wordLength;
-      } else if (lengthSoFar + 1 + wordLength > _lineLength) {
-        buffer.writeln();
-        buffer.write(word);
-        lengthSoFar = wordLength;
-      } else {
-        buffer.write(" $word");
-        lengthSoFar += 1 + wordLength;
-      }
-    }
-    return buffer.toString();
-  }).join("\n");
+  return text
+      .split("\n")
+      .map((originalLine) {
+        var buffer = StringBuffer();
+        var lengthSoFar = 0;
+        for (var word in originalLine.split(" ")) {
+          var wordLength = word.length;
+          if (wordLength > _lineLength) {
+            if (lengthSoFar != 0) buffer.writeln();
+            buffer.writeln(word);
+          } else if (lengthSoFar == 0) {
+            buffer.write(word);
+            lengthSoFar = wordLength;
+          } else if (lengthSoFar + 1 + wordLength > _lineLength) {
+            buffer.writeln();
+            buffer.write(word);
+            lengthSoFar = wordLength;
+          } else {
+            buffer.write(" $word");
+            lengthSoFar += 1 + wordLength;
+          }
+        }
+        return buffer.toString();
+      })
+      .join("\n");
 }
 
 /// Like [File.writeAsStringSync], but logs that the file is being written.
@@ -264,12 +285,14 @@ void safeCopy(String source, String destination) {
 }
 
 /// Options for [run] that tell Git to commit using [botName] and [botemail.
-final botEnvironment = RunOptions(environment: {
-  "GIT_AUTHOR_NAME": botName.value,
-  "GIT_AUTHOR_EMAIL": botEmail.value,
-  "GIT_COMMITTER_NAME": botName.value,
-  "GIT_COMMITTER_EMAIL": botEmail.value
-});
+final botEnvironment = RunOptions(
+  environment: {
+    "GIT_AUTHOR_NAME": botName.value,
+    "GIT_AUTHOR_EMAIL": botEmail.value,
+    "GIT_COMMITTER_NAME": botName.value,
+    "GIT_COMMITTER_EMAIL": botEmail.value,
+  },
+);
 
 /// Ensure that the repository at [url] is cloned into the build directory and
 /// pointing to the latest master revision.
@@ -283,17 +306,25 @@ Future<String> cloneOrPull(String url) async {
 
   if (Directory(p.join(path, '.git')).existsSync()) {
     log("Updating $url");
-    await runAsync("git",
-        arguments: ["fetch", "origin"], workingDirectory: path);
+    await runAsync(
+      "git",
+      arguments: ["fetch", "origin"],
+      workingDirectory: path,
+    );
   } else {
     delete(Directory(path));
     await runAsync("git", arguments: ["clone", url, path]);
-    await runAsync("git",
-        arguments: ["config", "advice.detachedHead", "false"],
-        workingDirectory: path);
+    await runAsync(
+      "git",
+      arguments: ["config", "advice.detachedHead", "false"],
+      workingDirectory: path,
+    );
   }
-  await runAsync("git",
-      arguments: ["checkout", "origin/HEAD"], workingDirectory: path);
+  await runAsync(
+    "git",
+    arguments: ["checkout", "origin/HEAD"],
+    workingDirectory: path,
+  );
   log("");
 
   return path;
@@ -311,8 +342,9 @@ dynamic freezeJson(dynamic object) {
 
 /// Like [freezeJson], but typed specifically for a map argument.
 Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
-    UnmodifiableMapView(
-        {for (var entry in map.entries) entry.key: freezeJson(entry.value)});
+    UnmodifiableMapView({
+      for (var entry in map.entries) entry.key: freezeJson(entry.value),
+    });
 
 /// Verifies that [environmentConstants] doesn't contain values that are broken
 /// in the given context.
@@ -321,24 +353,30 @@ Map<String, dynamic> freezeJsonMap(Map<String, dynamic> map) =>
 /// passed to subprocesses invoked through `dart:io`. If [forDartCompileExe] is
 /// `true`, this checks for values that are broken when passed to `dart compile
 /// exe`.
-void verifyEnvironmentConstants(
-    {bool forSubprocess = false, bool forDartCompileExe = false}) {
+void verifyEnvironmentConstants({
+  bool forSubprocess = false,
+  bool forDartCompileExe = false,
+}) {
   for (var entry in environmentConstants.value.entries) {
     if (Platform.isWindows) {
       if (entry.value.contains('"')) {
-        fail('Environment constant ${json.encode(entry.key)} contains '
-            '\'"\' which is broken on Windows.\n'
-            'See https://github.com/dart-lang/sdk/issues/46079\n'
-            'Full value: ${json.encode(entry.value)}');
+        fail(
+          'Environment constant ${json.encode(entry.key)} contains '
+          '\'"\' which is broken on Windows.\n'
+          'See https://github.com/dart-lang/sdk/issues/46079\n'
+          'Full value: ${json.encode(entry.value)}',
+        );
       }
 
       if (forSubprocess) {
         for (var character in const ["%", "<", ">", "|", "^", "&"]) {
           if (entry.value.contains(character)) {
-            fail('Environment constant ${json.encode(entry.key)} contains '
-                '"$character" which is broken on Windows.\n'
-                'See https://github.com/dart-lang/sdk/issues/46067\n'
-                'Full value: ${json.encode(entry.value)}');
+            fail(
+              'Environment constant ${json.encode(entry.key)} contains '
+              '"$character" which is broken on Windows.\n'
+              'See https://github.com/dart-lang/sdk/issues/46067\n'
+              'Full value: ${json.encode(entry.value)}',
+            );
           }
         }
       }
@@ -347,10 +385,12 @@ void verifyEnvironmentConstants(
     if (forDartCompileExe) {
       for (var entry in environmentConstants.value.entries) {
         if (entry.value.contains(",")) {
-          fail('Environment constant ${json.encode(entry.key)} contains " " '
-              'which is broken for dart compile exe.\n'
-              'See https://github.com/dart-lang/sdk/issues/44995\n'
-              'Full value: ${json.encode(entry.value)}');
+          fail(
+            'Environment constant ${json.encode(entry.key)} contains " " '
+            'which is broken for dart compile exe.\n'
+            'See https://github.com/dart-lang/sdk/issues/44995\n'
+            'Full value: ${json.encode(entry.value)}',
+          );
         }
       }
     }

@@ -62,7 +62,7 @@ void withNonNodeJsProcess(void Function() callback) {
     'an empty process': {},
     'a process with empty release': {'release': {}},
     'a process with non-Node.JS release name': {
-      'release': {'name': 'definitely-not-node'}
+      'release': {'name': 'definitely-not-node'},
     },
   };
 
@@ -84,7 +84,7 @@ void withNonNodeJsProcess(void Function() callback) {
 /// fake a Node.JS environment.
 void withFakedNodeJsProcess(void Function() callback) {
   const fakeNodeJsProcess = {
-    'release': {'name': 'node'}
+    'release': {'name': 'node'},
   };
 
   group('fake Node.JS environment', () {
