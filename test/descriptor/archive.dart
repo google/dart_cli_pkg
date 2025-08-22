@@ -42,34 +42,39 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   /// Returns [ArchiveFile]s for each file in [descriptors].
   ///
   /// If [parent] is passed, it's used as the parent directory for filenames.
-  Future<Iterable<ArchiveFile>> _files(Iterable<Descriptor> descriptors,
-      [String? parent]) async {
-    return (await waitAndReportErrors(descriptors.map((descriptor) async {
-      var fullName =
-          parent == null ? descriptor.name : '$parent/${descriptor.name}';
+  Future<Iterable<ArchiveFile>> _files(
+    Iterable<Descriptor> descriptors, [
+    String? parent,
+  ]) async {
+    return (await waitAndReportErrors(
+      descriptors.map((descriptor) async {
+        var fullName = parent == null
+            ? descriptor.name
+            : '$parent/${descriptor.name}';
 
-      if (descriptor is FileDescriptor) {
-        var bytes = await collectBytes(descriptor.readAsBytes());
-        return [
-          ArchiveFile(fullName, bytes.length, bytes)
-            // Setting the mode and mod time are necessary to work around
-            // brendan-duncan/archive#76.
-            ..mode = 428
-            ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000
-        ];
-      } else if (descriptor is DirectoryDescriptor) {
-        return await _files(descriptor.contents, fullName);
-      } else {
-        throw UnsupportedError(
+        if (descriptor is FileDescriptor) {
+          var bytes = await collectBytes(descriptor.readAsBytes());
+          return [
+            ArchiveFile(fullName, bytes.length, bytes)
+              // Setting the mode and mod time are necessary to work around
+              // brendan-duncan/archive#76.
+              ..mode = 428
+              ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          ];
+        } else if (descriptor is DirectoryDescriptor) {
+          return await _files(descriptor.contents, fullName);
+        } else {
+          throw UnsupportedError(
             'An archive can only be created from FileDescriptors and '
-            'DirectoryDescriptors.');
-      }
-    })))
-        .expand((files) => files);
+            'DirectoryDescriptors.',
+          );
+        }
+      }),
+    )).expand((files) => files);
   }
 
   ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
-      : contents = List.unmodifiable(contents);
+    : contents = List.unmodifiable(contents);
 
   Future<void> create([String? parent]) async {
     var path = p.join(parent ?? sandbox, name);
@@ -87,12 +92,13 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   }
 
   Future<String> read() async => throw UnsupportedError(
-      'ArchiveDescriptor.read() is not supported. Use Archive.readAsBytes() '
-      'instead.');
+    'ArchiveDescriptor.read() is not supported. Use Archive.readAsBytes() '
+    'instead.',
+  );
 
   Stream<List<int>> readAsBytes() => Stream.fromFuture(() async {
-        return _encodeFunction()(await archive);
-      }());
+    return _encodeFunction()(await archive);
+  }());
 
   Future<void> validate([String? parent]) async {
     // Access this first so we eaerly throw an error for a path with an invalid
@@ -121,21 +127,25 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
         .resolveSymbolicLinks();
 
     try {
-      await waitAndReportErrors(archive.files.map((file) async {
-        var path = p.join(tempDir, file.name);
-        await Directory(p.dirname(path)).create(recursive: true);
-        await File(path).writeAsBytes(file.content as List<int>);
-      }));
+      await waitAndReportErrors(
+        archive.files.map((file) async {
+          var path = p.join(tempDir, file.name);
+          await Directory(p.dirname(path)).create(recursive: true);
+          await File(path).writeAsBytes(file.content as List<int>);
+        }),
+      );
 
-      await waitAndReportErrors(contents.map((entry) async {
-        try {
-          await entry.validate(tempDir);
-        } on TestFailure catch (error) {
-          // Replace the temporary directory with the path to the archive to
-          // make the error more user-friendly.
-          fail(error.message?.replaceAll(tempDir, pretty) ?? '');
-        }
-      }));
+      await waitAndReportErrors(
+        contents.map((entry) async {
+          try {
+            await entry.validate(tempDir);
+          } on TestFailure catch (error) {
+            // Replace the temporary directory with the path to the archive to
+            // make the error more user-friendly.
+            fail(error.message?.replaceAll(tempDir, pretty) ?? '');
+          }
+        }),
+      );
     } finally {
       await Directory(tempDir).delete(recursive: true);
     }

@@ -18,8 +18,9 @@ import 'package:meta/meta.dart';
 import 'js_require.dart';
 
 /// The equality used to compare between [JSRequire]s in [JSRequireSet].
-final _equality =
-    EqualityBy<JSRequire, String>((require) => require.identifier);
+final _equality = EqualityBy<JSRequire, String>(
+  (require) => require.identifier,
+);
 
 /// A set of [JSRequire]s that's guaranteed to have at most one require for each
 /// identifier.
@@ -33,7 +34,7 @@ class JSRequireSet extends EqualitySet<JSRequire> {
   /// If a require with the same identifier appears multiple times in
   /// [requires], the first one takes precedence.
   JSRequireSet.of(Iterable<JSRequire> requires)
-      : super.from(_equality, requires);
+    : super.from(_equality, requires);
 
   JSRequireSet union(Set<JSRequire> other) =>
       JSRequireSet.of([...this, ...other]);

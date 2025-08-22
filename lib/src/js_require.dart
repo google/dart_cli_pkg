@@ -53,16 +53,18 @@ class JSRequire {
   /// This defaults to [JSRequireTarget.all].
   final JSRequireTarget target;
 
-  JSRequire(this.package,
-      {String? identifier,
-      JSRequireTarget? target,
-      this.lazy = false,
-      this.optional = false})
-      : identifier = identifier ??
-            package
-                .replaceFirst(RegExp(r'^@'), '')
-                .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_'),
-        target = target ?? JSRequireTarget.all;
+  JSRequire(
+    this.package, {
+    String? identifier,
+    JSRequireTarget? target,
+    this.lazy = false,
+    this.optional = false,
+  }) : identifier =
+           identifier ??
+           package
+               .replaceFirst(RegExp(r'^@'), '')
+               .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_'),
+       target = target ?? JSRequireTarget.all;
 
   String toString() => "const $identifier = require('$package') on $target";
 }

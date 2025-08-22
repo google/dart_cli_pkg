@@ -34,9 +34,11 @@ import 'utils.dart';
 /// sources.
 ///
 /// By default this comes from the `CHOCOLATEY_TOKEN` environment variable.
-final chocolateyToken = InternalConfigVariable.fn<String>(() =>
-    Platform.environment["CHOCOLATEY_TOKEN"] ??
-    fail("pkg.chocolateyToken must be set to deploy to Chocolatey."));
+final chocolateyToken = InternalConfigVariable.fn<String>(
+  () =>
+      Platform.environment["CHOCOLATEY_TOKEN"] ??
+      fail("pkg.chocolateyToken must be set to deploy to Chocolatey."),
+);
 
 /// The package version, formatted for Chocolatey which doesn't allow dots in
 /// prerelease versions.
@@ -68,7 +70,8 @@ String get chocolateyDartVersion {
   if (!dartVersion.isPreRelease) return dartVersion.toString();
 
   var result = StringBuffer(
-      "${dartVersion.major}.${dartVersion.minor}.${dartVersion.patch}");
+    "${dartVersion.major}.${dartVersion.minor}.${dartVersion.patch}",
+  );
 
   var prerelease = List.of(dartVersion.preRelease);
   if (prerelease.first is int) {
@@ -93,14 +96,16 @@ String get chocolateyDartVersion {
 ///
 /// The `pubspec.yaml` file is always included regardless of the contents of
 /// this field.
-final chocolateyFiles = InternalConfigVariable.fn<List<String>>(() => [
-      ...['lib', 'bin']
-          .where((dir) => Directory(dir).existsSync())
-          .expand((dir) => Directory(dir).listSync(recursive: true))
-          .whereType<File>()
-          .map((entry) => entry.path),
-      'pubspec.lock'
-    ]);
+final chocolateyFiles = InternalConfigVariable.fn<List<String>>(
+  () => [
+    ...['lib', 'bin']
+        .where((dir) => Directory(dir).existsSync())
+        .expand((dir) => Directory(dir).listSync(recursive: true))
+        .whereType<File>()
+        .map((entry) => entry.path),
+    'pubspec.lock',
+  ],
+);
 
 /// The text contents of the Chocolatey package's [`.nuspec` file][].
 ///
@@ -114,14 +119,16 @@ final chocolateyFiles = InternalConfigVariable.fn<List<String>>(() => [
 final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
   var possibleNuspecs = [
     for (var entry in Directory(".").listSync())
-      if (entry is File && entry.path.endsWith(".nuspec")) entry.path
+      if (entry is File && entry.path.endsWith(".nuspec")) entry.path,
   ];
 
   if (possibleNuspecs.isEmpty) {
     fail("pkg.chocolateyNuspec must be set to build a Chocolatey package.");
   } else if (possibleNuspecs.length > 1) {
-    fail("pkg.chocolateyNuspec found multiple .nuspec files: " +
-        possibleNuspecs.join(", "));
+    fail(
+      "pkg.chocolateyNuspec found multiple .nuspec files: " +
+          possibleNuspecs.join(", "),
+    );
   }
 
   return File(possibleNuspecs.single).readAsStringSync();
@@ -140,12 +147,15 @@ final XmlDocument _nuspec = () {
 
   var metadata = _findElement(nuspec.rootElement, "metadata");
   if (metadata.findElements("version").isNotEmpty) {
-    fail("The nuspec must not have a package > metadata > version element. One "
-        "will be added automatically.");
+    fail(
+      "The nuspec must not have a package > metadata > version element. One "
+      "will be added automatically.",
+    );
   }
 
-  metadata.children
-      .add(XmlElement(XmlName("version"), [], [XmlText(_chocolateyVersion)]));
+  metadata.children.add(
+    XmlElement(XmlName("version"), [], [XmlText(_chocolateyVersion)]),
+  );
 
   var dependencies = _findElementAllowNone(metadata, "dependencies");
   if (dependencies == null) {
@@ -153,13 +163,15 @@ final XmlDocument _nuspec = () {
     metadata.children.add(dependencies);
   }
 
-  dependencies.children.add(XmlElement(XmlName("dependency"), [
-    XmlAttribute(XmlName("id"), "dart-sdk"),
-    // Unfortunately we need the exact same Dart version as we built with,
-    // since we ship a snapshot which isn't cross-version compatible. Once
-    // we switch to native compilation this won't be an issue.
-    XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]")
-  ]));
+  dependencies.children.add(
+    XmlElement(XmlName("dependency"), [
+      XmlAttribute(XmlName("id"), "dart-sdk"),
+      // Unfortunately we need the exact same Dart version as we built with,
+      // since we ship a snapshot which isn't cross-version compatible. Once
+      // we switch to native compilation this won't be an issue.
+      XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]"),
+    ]),
+  );
 
   return nuspec;
 }();
@@ -183,19 +195,31 @@ void addChocolateyTasks() {
   chocolateyFiles.freeze();
   chocolateyNuspec.freeze();
 
-  addTask(GrinderTask('pkg-chocolatey',
+  addTask(
+    GrinderTask(
+      'pkg-chocolatey',
       taskFunction: () => _build(),
-      description: 'Build a Chocolatey package directory.'));
+      description: 'Build a Chocolatey package directory.',
+    ),
+  );
 
-  addTask(GrinderTask('pkg-chocolatey-pack',
+  addTask(
+    GrinderTask(
+      'pkg-chocolatey-pack',
       taskFunction: () => _nupkg(),
       description: 'Build a nupkg archive to upload to Chocolatey.',
-      depends: ['pkg-chocolatey']));
+      depends: ['pkg-chocolatey'],
+    ),
+  );
 
-  addTask(GrinderTask('pkg-chocolatey-deploy',
+  addTask(
+    GrinderTask(
+      'pkg-chocolatey-deploy',
       taskFunction: () => _deploy(),
       description: 'Deploy the Chocolatey package to Chocolatey.',
-      depends: ['pkg-chocolatey-pack']));
+      depends: ['pkg-chocolatey-pack'],
+    ),
+  );
 }
 
 /// Builds a package to upload to Chocolatey.
@@ -213,17 +237,22 @@ Future<void> _build() async {
   writeString("build/chocolatey/tools/LICENSE.txt", await license);
 
   writeString(
-      'build/chocolatey/tools/source/pubspec.yaml',
-      json.encode(Map.of(rawPubspec)
+    'build/chocolatey/tools/source/pubspec.yaml',
+    json.encode(
+      Map.of(rawPubspec)
         ..remove('dev_dependencies')
-        ..remove('dependency_overrides')));
+        ..remove('dependency_overrides'),
+    ),
+  );
 
   for (var path in chocolateyFiles.value) {
     var relative = p.relative(path);
     if (relative == 'pubspec.yaml') continue;
 
     safeCopy(
-        relative, p.join('build/chocolatey/tools/source', p.dirname(path)));
+      relative,
+      p.join('build/chocolatey/tools/source', p.dirname(path)),
+    );
   }
 
   var install = StringBuffer("""
@@ -248,26 +277,33 @@ Write-Host "Building executable${executables.value.length == 1 ? '' : 's'}..."
 dart compile exe $constants "\$SourceDir\\$path" -o \$ExePath
 Generate-BinFile "$name" \$ExePath
 """);
-    uninstall
-        .writeln('Remove-BinFile "$name" "\$PackageFolder\\bin\\$name.exe"');
+    uninstall.writeln(
+      'Remove-BinFile "$name" "\$PackageFolder\\bin\\$name.exe"',
+    );
   });
 
   writeString(
-      "build/chocolatey/tools/chocolateyInstall.ps1", install.toString());
+    "build/chocolatey/tools/chocolateyInstall.ps1",
+    install.toString(),
+  );
   writeString(
-      "build/chocolatey/tools/chocolateyUninstall.ps1", uninstall.toString());
+    "build/chocolatey/tools/chocolateyUninstall.ps1",
+    uninstall.toString(),
+  );
 }
 
 /// Builds a nupkg file to deploy to chocolatey.
 Future<void> _nupkg() async {
-  await runAsync("choco",
-      arguments: [
-        "pack",
-        "--yes",
-        "build/chocolatey/$_chocolateyName.nuspec",
-        "--out=build"
-      ],
-      quiet: false);
+  await runAsync(
+    "choco",
+    arguments: [
+      "pack",
+      "--yes",
+      "build/chocolatey/$_chocolateyName.nuspec",
+      "--out=build",
+    ],
+    quiet: false,
+  );
 }
 
 /// Deploys the Chocolatey package to Chocolatey.
@@ -280,7 +316,7 @@ Future<void> _deploy() async {
     "--source",
     "https://chocolatey.org",
     "--key",
-    "$chocolateyToken"
+    "$chocolateyToken",
   ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
@@ -293,9 +329,11 @@ XmlElement _findElement(XmlNode parent, String name) {
   if (elements.length == 1) return elements.single;
 
   var path = _pathToElement(parent, name);
-  fail(elements.isEmpty
-      ? "The nuspec must have a $path element."
-      : "The nuspec may not have multiple $path elements.");
+  fail(
+    elements.isEmpty
+        ? "The nuspec must have a $path element."
+        : "The nuspec may not have multiple $path elements.",
+  );
 }
 
 /// Like [findElement], but returns `null` if there are no children of [parent]

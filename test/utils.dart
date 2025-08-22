@@ -36,31 +36,37 @@ String get appDir => d.path("my_app");
 ///
 /// The [environment] and [forwardStdio] arguments have the same meanings as for
 /// [TestProcess.start].
-Future<TestProcess> grind(List<String> arguments,
-    {ShelfTestServer? server,
-    Map<String, String>? environment,
-    bool forwardStdio = false}) async {
+Future<TestProcess> grind(
+  List<String> arguments, {
+  ShelfTestServer? server,
+  Map<String, String>? environment,
+  bool forwardStdio = false,
+}) async {
   if (!File(d.path(p.join(appDir, ".packages"))).existsSync()) {
     await pubGet(forwardStdio: forwardStdio);
   }
 
   return await TestProcess.start(
-      "dart$dotExe", ["run", "grinder", ...arguments],
-      forwardStdio: forwardStdio,
-      workingDirectory: appDir,
-      environment: {
-        ...?environment,
-        "_CLI_PKG_TESTING": "true",
-        if (server != null) "_CLI_PKG_TEST_HOST": server.url.toString()
-      });
+    "dart$dotExe",
+    ["run", "grinder", ...arguments],
+    forwardStdio: forwardStdio,
+    workingDirectory: appDir,
+    environment: {
+      ...?environment,
+      "_CLI_PKG_TESTING": "true",
+      if (server != null) "_CLI_PKG_TEST_HOST": server.url.toString(),
+    },
+  );
 }
 
 /// Runs `dart pub get` in [appDir].
 Future<void> pubGet({bool forwardStdio = false}) async {
   await (await TestProcess.start(
-          "dart$dotExe", ["pub", "get", "--offline", "--no-precompile"],
-          forwardStdio: forwardStdio, workingDirectory: appDir))
-      .shouldExit(0);
+    "dart$dotExe",
+    ["pub", "get", "--offline", "--no-precompile"],
+    forwardStdio: forwardStdio,
+    workingDirectory: appDir,
+  )).shouldExit(0);
 }
 
 /// Runs Git in the application directory with the given [arguments].
@@ -68,9 +74,11 @@ Future<void> pubGet({bool forwardStdio = false}) async {
 /// The Git process is run in [workingDirectory], which should be relative to
 /// [d.sandbox]. If it's not passed, [appDir] is used instead.
 Future<void> git(List<String> arguments, {String? workingDirectory}) async {
-  await (await TestProcess.start("git", arguments,
-          workingDirectory: d.path(workingDirectory ?? appDir)))
-      .shouldExit(0);
+  await (await TestProcess.start(
+    "git",
+    arguments,
+    workingDirectory: d.path(workingDirectory ?? appDir),
+  )).shouldExit(0);
 }
 
 /// Extracts the contents of [archive] to [destination], both within `d.sandbox`.
@@ -107,27 +115,31 @@ Matcher after<T>(Object? Function(T) transformation, Object matcher) =>
 /// first using [registerException] rather than silently ignoring them.
 Future<List<T>> waitAndReportErrors<T>(Iterable<Future<T>> futures) {
   var errored = false;
-  return Future.wait(futures.map((future) {
-    // Avoid async/await so that we synchronously add error handlers for the
-    // futures to keep them from top-leveling.
-    return future.catchError((Object error, StackTrace stackTrace) {
-      if (!errored) {
-        errored = true;
-      } else {
-        registerException(error, stackTrace);
-      }
-      throw error; // ignore: only_throw_errors
-    });
-  }));
+  return Future.wait(
+    futures.map((future) {
+      // Avoid async/await so that we synchronously add error handlers for the
+      // futures to keep them from top-leveling.
+      return future.catchError((Object error, StackTrace stackTrace) {
+        if (!errored) {
+          errored = true;
+        } else {
+          registerException(error, stackTrace);
+        }
+        throw error; // ignore: only_throw_errors
+      });
+    }),
+  );
 }
 
 /// Returns a Dart string literal whose value is [riskyArg].
-String riskyArgStringLiteral(
-        {bool invokedByDart = false, bool dartCompileExe = false}) =>
-    json
-        .encode(riskyArg(
-            invokedByDart: invokedByDart, dartCompileExe: dartCompileExe))
-        .replaceAll(r'$', r'\$');
+String riskyArgStringLiteral({
+  bool invokedByDart = false,
+  bool dartCompileExe = false,
+}) => json
+    .encode(
+      riskyArg(invokedByDart: invokedByDart, dartCompileExe: dartCompileExe),
+    )
+    .replaceAll(r'$', r'\$');
 
 /// Returns a string that contains text that might need shell escaping.
 ///

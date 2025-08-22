@@ -60,6 +60,7 @@ jobs:
         # dart-channel: [stable, dev]
       fail-fast: false
 
+    runs-on: ubuntu-latest
     steps:
     - uses: browser-actions/setup-chrome@v1
       id: setup-chrome

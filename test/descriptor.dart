@@ -27,8 +27,10 @@ export 'package:test_descriptor/test_descriptor.dart';
 export 'descriptor/archive.dart';
 
 /// The `cli_pkg` package's pubpsec.
-final _ourPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
-    sourceUrl: Uri(path: 'pubspec.yaml'));
+final _ourPubspec = loadYaml(
+  File('pubspec.yaml').readAsStringSync(),
+  sourceUrl: Uri(path: 'pubspec.yaml'),
+);
 
 /// Returns a directory descriptor for a package in [appDir] with the given
 /// pubspec and `grind.dart` file, as well as other optional files.
@@ -41,8 +43,11 @@ final _ourPubspec = loadYaml(File('pubspec.yaml').readAsStringSync(),
 /// * Adds a dependency on grinder and `cli_pkg`.
 ///
 /// * Imports `package:grinder/grinder.dart` and `package:cli_pkg/cli_pkg.dart`.
-DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
-    [List<Descriptor>? files]) {
+DirectoryDescriptor package(
+  Map<String, dynamic> pubspec,
+  String grindDotDart, [
+  List<Descriptor>? files,
+]) {
   pubspec = {
     "environment": _ourPubspec["environment"],
     "executables": <String, dynamic>{},
@@ -74,11 +79,12 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
       for (var basename in executables.cast<String>())
         if (!_containsExecutable(files, basename))
           file(
-              "$basename.dart",
-              // Include the version variable to ensure that executables we
-              // invoke have access to it.
-              'void main() => print("in $basename '
-                  '\${const String.fromEnvironment("version")}");')
+            "$basename.dart",
+            // Include the version variable to ensure that executables we
+            // invoke have access to it.
+            'void main() => print("in $basename '
+                '\${const String.fromEnvironment("version")}");',
+          ),
     ]),
 
     dir("tool", [
@@ -87,29 +93,34 @@ DirectoryDescriptor package(Map<String, dynamic> pubspec, String grindDotDart,
         import 'package:grinder/grinder.dart';
 
         $grindDotDart
-      """)
+      """),
     ]),
 
-    ...?files
+    ...?files,
   ]);
 }
 
 /// Returns whether [files] defines an executable named [basename].
 bool _containsExecutable(List<Descriptor>? descriptors, String basename) {
   if (descriptors == null) return false;
-  return descriptors.any((descriptor) =>
-      (descriptor is DirectoryDescriptor &&
-          descriptor.name == "bin" &&
-          descriptor.contents.any((child) =>
-              child is FileDescriptor && child.name == "$basename.dart")) ||
-      (descriptor is FileDescriptor &&
-          descriptor.name == "bin/$basename.dart"));
+  return descriptors.any(
+    (descriptor) =>
+        (descriptor is DirectoryDescriptor &&
+            descriptor.name == "bin" &&
+            descriptor.contents.any(
+              (child) =>
+                  child is FileDescriptor && child.name == "$basename.dart",
+            )) ||
+        (descriptor is FileDescriptor &&
+            descriptor.name == "bin/$basename.dart"),
+  );
 }
 
 /// Returns the dependency description for `package` from `cli_pkg`'s own
 /// pubspec, as a map so it can be included in a map literal with `...`.
-Map<String, dynamic> _ourDependency(String package) =>
-    {package: _ourPubspec["dependencies"][package]};
+Map<String, dynamic> _ourDependency(String package) => {
+  package: _ourPubspec["dependencies"][package],
+};
 
 /// Returns the dependency override for `package` from `cli_pkg`'s own pubspec,
 /// as a map so it can be included in a map literal with `...?`.

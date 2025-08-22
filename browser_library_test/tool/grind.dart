@@ -21,7 +21,7 @@ import 'package:grinder/grinder.dart';
 void main(List<String> args) {
   pkg.npmPackageJson.value = {
     "name": "cli-pkg-test",
-    "dependencies": {"immutable": "^4.2.0", "lodash": "^4.17.0"}
+    "dependencies": {"immutable": "^4.2.0", "lodash": "^4.17.0"},
   };
   pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
   pkg.jsRequires.value = [
@@ -64,12 +64,17 @@ void raw() {
   Directory('lib/build/pkg').createSync(recursive: true);
 
   _forceLink('lib/build/cli-pkg-test', '../../build/npm');
-  File('lib/build/pkg/package.json').writeAsStringSync(json.encode({
-    "dependencies": {"cli-pkg-test": "file:../cli-pkg-test"}
-  }));
+  File('lib/build/pkg/package.json').writeAsStringSync(
+    json.encode({
+      "dependencies": {"cli-pkg-test": "file:../cli-pkg-test"},
+    }),
+  );
   run("npm", arguments: ["install"], workingDirectory: "lib/build/pkg");
-  run("npm",
-      arguments: ["install"], workingDirectory: "lib/build/cli-pkg-test");
+  run(
+    "npm",
+    arguments: ["install"],
+    workingDirectory: "lib/build/cli-pkg-test",
+  );
 }
 
 @Task('Build jspm')
@@ -92,18 +97,24 @@ void rollup() {
 
 @Task('Build esbuild bundles')
 void esbuild() {
-  run("npx", arguments: [
-    "esbuild",
-    "--bundle",
-    "lib/require.js",
-    "--outfile=lib/build/esbuild-require.js"
-  ]);
-  run("npx", arguments: [
-    "esbuild",
-    "--bundle",
-    "lib/import.js",
-    "--outfile=lib/build/esbuild-import.js"
-  ]);
+  run(
+    "npx",
+    arguments: [
+      "esbuild",
+      "--bundle",
+      "lib/require.js",
+      "--outfile=lib/build/esbuild-require.js",
+    ],
+  );
+  run(
+    "npx",
+    arguments: [
+      "esbuild",
+      "--bundle",
+      "lib/import.js",
+      "--outfile=lib/build/esbuild-import.js",
+    ],
+  );
 }
 
 @Task('Build rollup bundles')
@@ -113,13 +124,10 @@ void vite() {
 
 @Task('Format JS source')
 void format() {
-  run("npx", arguments: [
-    "prettier",
-    "--write",
-    "**/*.js",
-    "!lib/build/**",
-    "!build/**"
-  ]);
+  run(
+    "npx",
+    arguments: ["prettier", "--write", "**/*.js", "!lib/build/**", "!build/**"],
+  );
 }
 
 /// Creates a link from [location] to [target], overwriting an existing link if

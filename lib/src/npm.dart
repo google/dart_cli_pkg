@@ -29,13 +29,17 @@ import 'utils.dart';
 
 /// A modifiable list of additional flags to pass to `dart2js` when compiling
 /// executables.
-final jsFlags = InternalConfigVariable.value<List<String>>([],
-    freeze: (list) => List.unmodifiable(list));
+final jsFlags = InternalConfigVariable.value<List<String>>(
+  [],
+  freeze: (list) => List.unmodifiable(list),
+);
 
 /// A modifiable list of flags to pass to `dart2js` only when compiling
 /// executables in development mode.
-final jsDevFlags = InternalConfigVariable.value<List<String>>([],
-    freeze: (list) => List.unmodifiable(list));
+final jsDevFlags = InternalConfigVariable.value<List<String>>(
+  [],
+  freeze: (list) => List.unmodifiable(list),
+);
 
 /// A modifiable list of flags to pass to `dart2js` only when compiling
 /// executables in release mode.
@@ -44,9 +48,12 @@ final jsDevFlags = InternalConfigVariable.value<List<String>>([],
 /// `--fast-startup`. This doesn't minify by default because download size isn't
 /// especially important server-side and it's nice to get readable stack traces
 /// from bug reports.
-final jsReleaseFlags = InternalConfigVariable.value<List<String>>(
-    ["-O4", "--no-minify", "--no-source-maps", "--fast-startup"],
-    freeze: (list) => List.unmodifiable(list));
+final jsReleaseFlags = InternalConfigVariable.value<List<String>>([
+  "-O4",
+  "--no-minify",
+  "--no-source-maps",
+  "--fast-startup",
+], freeze: (list) => List.unmodifiable(list));
 
 /// A modifiable list of JavaScript packages to `require()` at the beginning of
 /// the generated JS file.
@@ -64,8 +71,10 @@ final jsReleaseFlags = InternalConfigVariable.value<List<String>>(
 /// If any requires have a target other than [JSRequireTarget.cli] or
 /// [JSRequireTarget.all], [jsModuleMainLibrary] must also be set, since
 /// otherwise there's no reason to split requires up by target.
-final jsRequires = InternalConfigVariable.value<List<JSRequire>>([],
-    freeze: (list) => List.unmodifiable(list));
+final jsRequires = InternalConfigVariable.value<List<JSRequire>>(
+  [],
+  freeze: (list) => List.unmodifiable(list),
+);
 
 // The way we handle imports and requires is moderately complicated, due to the
 // conflux of requirements from Node.js and browsers. If there are no
@@ -116,8 +125,10 @@ final jsRequires = InternalConfigVariable.value<List<JSRequire>>([],
 /// [`wrapJSExceptions`]: https://pub.dev/documentation/cli_pkg/latest/js/wrapJSExceptions.html
 ///
 /// If this is set, [jsModuleMainLibrary] must also be set.
-final jsEsmExports = InternalConfigVariable.value<Set<String>?>(null,
-    freeze: (set) => set == null ? null : Set.unmodifiable(set));
+final jsEsmExports = InternalConfigVariable.value<Set<String>?>(
+  null,
+  freeze: (set) => set == null ? null : Set.unmodifiable(set),
+);
 
 /// The path to a Dart library whose `main()` method will be called when the
 /// compiled JavaScript module is loaded.
@@ -159,19 +170,21 @@ final jsModuleMainLibrary = InternalConfigVariable.value<String?>(null);
 /// building the npm package. If [jsModuleMainLibrary] is set, it will also add
 /// a `"main"` field.
 final npmPackageJson = InternalConfigVariable.fn<Map<String, dynamic>>(
-    () => File("package.json").existsSync()
-        ? jsonDecode(File("package.json").readAsStringSync())
+  () => File("package.json").existsSync()
+      ? jsonDecode(File("package.json").readAsStringSync())
             as Map<String, dynamic>
-        : fail("pkg.npmPackageJson must be set to build an npm package."),
-    freeze: freezeJsonMap);
+      : fail("pkg.npmPackageJson must be set to build an npm package."),
+  freeze: freezeJsonMap,
+);
 
 /// A set of additional files to include in the npm package.
 ///
 /// This is a map from paths (relative to the root of the package) to the
 /// contents of those files. It defaults to an empty map.
 final npmAdditionalFiles = InternalConfigVariable.fn<Map<String, String>>(
-    () => {},
-    freeze: (map) => Map.unmodifiable(map));
+  () => {},
+  freeze: (map) => Map.unmodifiable(map),
+);
 
 /// Whether to force [strict mode] for the generated JS code.
 ///
@@ -197,10 +210,11 @@ String get _npmName {
 ///
 /// By default, this loads the contents of the `README.md` file at the root of
 /// the repository.
-final npmReadme = InternalConfigVariable.fn<String?>(() =>
-    File("README.md").existsSync()
-        ? File("README.md").readAsStringSync()
-        : null);
+final npmReadme = InternalConfigVariable.fn<String?>(
+  () => File("README.md").existsSync()
+      ? File("README.md").readAsStringSync()
+      : null,
+);
 
 /// The npm [authentication token][] to use when creating releases and making
 /// other changes.
@@ -211,9 +225,11 @@ final npmReadme = InternalConfigVariable.fn<String?>(() =>
 /// sources.
 ///
 /// By default this comes from the `NPM_TOKEN` environment variable.
-final npmToken = InternalConfigVariable.fn<String>(() =>
-    Platform.environment["NPM_TOKEN"] ??
-    fail("pkg.npmToken must be set to deploy to npm."));
+final npmToken = InternalConfigVariable.fn<String>(
+  () =>
+      Platform.environment["NPM_TOKEN"] ??
+      fail("pkg.npmToken must be set to deploy to npm."),
+);
 
 /// The [distribution tag][] to use when publishing the current `npm` package.
 ///
@@ -256,40 +272,64 @@ void addNpmTasks() {
   npmToken.freeze();
   npmDistTag.freeze();
 
-  var hasNonCliRequires = jsRequires.value.any((require) =>
-      require.target != JSRequireTarget.cli &&
-      require.target != JSRequireTarget.all);
+  var hasNonCliRequires = jsRequires.value.any(
+    (require) =>
+        require.target != JSRequireTarget.cli &&
+        require.target != JSRequireTarget.all,
+  );
   if (jsModuleMainLibrary.value == null) {
     if (hasNonCliRequires) {
-      fail("If jsModuleMainLibrary isn't set, all jsRequires must have "
-          "JSRequireTarget.cli or JSRequireTarget.all.");
+      fail(
+        "If jsModuleMainLibrary isn't set, all jsRequires must have "
+        "JSRequireTarget.cli or JSRequireTarget.all.",
+      );
     } else if (_supportsEsm) {
       fail("If jsEsmExports is set, jsModuleMainLibrary must be set as well.");
     }
   }
 
-  addTask(GrinderTask('pkg-js-dev',
+  addTask(
+    GrinderTask(
+      'pkg-js-dev',
       taskFunction: () => _js(release: false),
-      description: 'Compile executable(s) to JS in dev mode.'));
+      description: 'Compile executable(s) to JS in dev mode.',
+    ),
+  );
 
-  addTask(GrinderTask('pkg-js-release',
+  addTask(
+    GrinderTask(
+      'pkg-js-release',
       taskFunction: () => _js(release: true),
-      description: 'Compile executable(s) to JS in release mode.'));
+      description: 'Compile executable(s) to JS in release mode.',
+    ),
+  );
 
-  addTask(GrinderTask('pkg-npm-dev',
+  addTask(
+    GrinderTask(
+      'pkg-npm-dev',
       taskFunction: () => _buildPackage(),
       description: 'Build a pure-JS dev-mode package.',
-      depends: ['pkg-js-dev']));
+      depends: ['pkg-js-dev'],
+    ),
+  );
 
-  addTask(GrinderTask('pkg-npm-release',
+  addTask(
+    GrinderTask(
+      'pkg-npm-release',
       taskFunction: () => _buildPackage(),
       description: 'Build a pure-JS release-mode package.',
-      depends: ['pkg-js-release']));
+      depends: ['pkg-js-release'],
+    ),
+  );
 
-  addTask(GrinderTask('pkg-npm-deploy',
+  addTask(
+    GrinderTask(
+      'pkg-npm-deploy',
       taskFunction: () => _deploy(),
       description: 'Deploy the release-mode JS package to npm.',
-      depends: ['pkg-npm-release']));
+      depends: ['pkg-npm-release'],
+    ),
+  );
 }
 
 /// Compiles the package to JavaScript.
@@ -305,14 +345,18 @@ void _js({required bool release}) {
 
   var destination = File('build/$_npmName.dart.js');
 
-  Dart2js.compile(source, outFile: destination, extraArgs: [
-    '--server-mode',
-    '-Dnode=true',
-    for (var entry in environmentConstants.value.entries)
-      '-D${entry.key}=${entry.value}',
-    ...jsFlags.value,
-    if (release) ...jsReleaseFlags.value else ...jsDevFlags.value
-  ]);
+  Dart2js.compile(
+    source,
+    outFile: destination,
+    extraArgs: [
+      '--server-mode',
+      '-Dnode=true',
+      for (var entry in environmentConstants.value.entries)
+        '-D${entry.key}=${entry.value}',
+      ...jsFlags.value,
+      if (release) ...jsReleaseFlags.value else ...jsDevFlags.value,
+    ],
+  );
 }
 
 /// A map from executable names in [executables] to JS- and Dart-safe
@@ -322,7 +366,7 @@ final Map<String, String> _executableIdentifiers = () {
   return {
     // Add a trailing underscore to indicate that the name is intended to be
     // private without making it Dart-private.
-    for (var name in executables.value.keys) name: "cli_pkg_main_${i++}_"
+    for (var name in executables.value.keys) name: "cli_pkg_main_${i++}_",
   };
 }();
 
@@ -342,8 +386,9 @@ String get _wrapperLibrary {
     wrapper.writeln("import $import as ${_executableIdentifiers[name]};");
   });
   if (jsModuleMainLibrary.value != null) {
-    var target =
-        jsonEncode(p.toUri(p.join('..', jsModuleMainLibrary.value)).toString());
+    var target = jsonEncode(
+      p.toUri(p.join('..', jsModuleMainLibrary.value)).toString(),
+    );
     wrapper.writeln("import $target as module_main;");
   }
 
@@ -407,9 +452,12 @@ Future<void> _buildPackage() async {
   dir.createSync(recursive: true);
 
   var extractedRequires = _copyJSAndInjectDependencies(
-      'build/$_npmName.dart.js', p.join(dir.path, '$_npmName.dart.js'));
-  var allRequires =
-      _requiresForTarget(JSRequireTarget.all).union(extractedRequires);
+    'build/$_npmName.dart.js',
+    p.join(dir.path, '$_npmName.dart.js'),
+  );
+  var allRequires = _requiresForTarget(
+    JSRequireTarget.all,
+  ).union(extractedRequires);
 
   var nodeRequires = _requiresForTarget(JSRequireTarget.node);
   var cliRequires = _requiresForTarget(JSRequireTarget.cli).union(nodeRequires);
@@ -417,28 +465,29 @@ Future<void> _buildPackage() async {
   var defaultRequires = _requiresForTarget(JSRequireTarget.defaultTarget);
 
   writeString(
-      p.join('build', 'npm', 'package.json'),
-      jsonEncode({
-        ...npmPackageJson.value,
-        "version": version.toString(),
-        "bin": {for (var name in executables.value.keys) name: "$name.js"},
-        if (jsModuleMainLibrary.value != null)
-          "main": "$_npmName.${nodeRequires.isEmpty ? 'default' : 'node'}.js",
-        if (npmPackageJson.value["exports"] is Map ||
-            nodeRequires.isNotEmpty ||
-            browserRequires.isNotEmpty ||
-            _supportsEsm)
-          "exports": {
-            if (npmPackageJson.value["exports"] is Map)
-              ...npmPackageJson.value["exports"] as Map,
-            if (browserRequires.isNotEmpty)
-              "browser": _exportSpecifier("browser"),
-            if (nodeRequires.isNotEmpty || _supportsEsm)
-              "node": _exportSpecifier("node", node: true),
-            if (jsModuleMainLibrary.value != null)
-              "default": _exportSpecifier("default"),
-          },
-      }));
+    p.join('build', 'npm', 'package.json'),
+    jsonEncode({
+      ...npmPackageJson.value,
+      "version": version.toString(),
+      "bin": {for (var name in executables.value.keys) name: "$name.js"},
+      if (jsModuleMainLibrary.value != null)
+        "main": "$_npmName.${nodeRequires.isEmpty ? 'default' : 'node'}.js",
+      if (npmPackageJson.value["exports"] is Map ||
+          nodeRequires.isNotEmpty ||
+          browserRequires.isNotEmpty ||
+          _supportsEsm)
+        "exports": {
+          if (npmPackageJson.value["exports"] is Map)
+            ...npmPackageJson.value["exports"] as Map,
+          if (browserRequires.isNotEmpty)
+            "browser": _exportSpecifier("browser"),
+          if (nodeRequires.isNotEmpty || _supportsEsm)
+            "node": _exportSpecifier("node", node: true),
+          if (jsModuleMainLibrary.value != null)
+            "default": _exportSpecifier("default"),
+        },
+    }),
+  );
 
   for (var name in executables.value.keys) {
     var buffer = StringBuffer("""
@@ -458,23 +507,30 @@ if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
 
     buffer.writeln(_loadRequires(cliRequires.union(allRequires)));
     buffer.writeln(
-        "library.${_executableIdentifiers[name]}(process.argv.slice(2));");
+      "library.${_executableIdentifiers[name]}(process.argv.slice(2));",
+    );
     writeString(p.join('build', 'npm', '$name.js'), buffer.toString());
   }
 
   if (jsModuleMainLibrary.value != null) {
     if (nodeRequires.isNotEmpty || _supportsEsm) {
-      _writePlatformWrapper(p.join('build', 'npm', '$_npmName.node'),
-          nodeRequires.union(allRequires),
-          node: true);
+      _writePlatformWrapper(
+        p.join('build', 'npm', '$_npmName.node'),
+        nodeRequires.union(allRequires),
+        node: true,
+      );
     }
     if (browserRequires.isNotEmpty) {
-      _writePlatformWrapper(p.join('build', 'npm', '$_npmName.browser'),
-          browserRequires.union(allRequires));
+      _writePlatformWrapper(
+        p.join('build', 'npm', '$_npmName.browser'),
+        browserRequires.union(allRequires),
+      );
     }
 
-    _writePlatformWrapper(p.join('build', 'npm', '$_npmName.default'),
-        defaultRequires.union(allRequires));
+    _writePlatformWrapper(
+      p.join('build', 'npm', '$_npmName.default'),
+      defaultRequires.union(allRequires),
+    );
   }
 
   var readme = npmReadme.value;
@@ -484,8 +540,10 @@ if (globalThis._cliPkgExports.length === 0) delete globalThis._cliPkgExports;
 
   for (var entry in npmAdditionalFiles.value.entries) {
     if (!p.isRelative(entry.key)) {
-      fail('pkg.npmAdditionalFiles keys must be relative paths,\n'
-          'but "${entry.key}" is absolute.');
+      fail(
+        'pkg.npmAdditionalFiles keys must be relative paths,\n'
+        'but "${entry.key}" is absolute.',
+      );
     }
 
     var path = p.join(dir.path, entry.key);
@@ -507,20 +565,20 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
       // complain. We replace those with direct references to the modules, which
       // we load explicitly after the preamble.
       .replaceAllMapped(RegExp(r'self\.require\(("[^"]+")\)'), (match) {
-    var package = jsonDecode(match[1]!) as String;
+        var package = jsonDecode(match[1]!) as String;
 
-    // Don't add a new require for [package] unless there isn't an explicit one
-    // declared.
-    var identifier = jsRequires.value.reversed
-        .firstWhereOrNull((require) => require.package == package)
-        ?.identifier;
-    if (identifier == null) {
-      var require = JSRequire(package, target: JSRequireTarget.all);
-      extractedRequires.add(require);
-      identifier = require.identifier;
-    }
-    return "self.$identifier";
-  });
+        // Don't add a new require for [package] unless there isn't an explicit one
+        // declared.
+        var identifier = jsRequires.value.reversed
+            .firstWhereOrNull((require) => require.package == package)
+            ?.identifier;
+        if (identifier == null) {
+          var require = JSRequire(package, target: JSRequireTarget.all);
+          extractedRequires.add(require);
+          identifier = require.identifier;
+        }
+        return "self.$identifier";
+      });
 
   var buffer = StringBuffer();
 
@@ -544,26 +602,32 @@ globalThis._cliPkgExports.push(_cliPkgExports);
   }
 
   buffer.writeln(
-      "$exportsVariable.load = function(_cliPkgRequires, _cliPkgExportParam)"
-      " {");
+    "$exportsVariable.load = function(_cliPkgRequires, _cliPkgExportParam)"
+    " {",
+  );
 
-  buffer.writeln(preamble
-      .getPreamble()
-      // Allow library wrappers to pass in an explicit export variable.
-      .replaceFirst("""
+  buffer.writeln(
+    preamble.getPreamble()
+    // Allow library wrappers to pass in an explicit export variable.
+    .replaceFirst("""
 if (typeof exports !== "undefined") {
   self.exports = exports;
-}""", "self.exports = _cliPkgExportParam || $exportsVariable;"));
+}""", "self.exports = _cliPkgExportParam || $exportsVariable;"),
+  );
 
   for (var require in [...jsRequires.value, ...extractedRequires]) {
     // Rather than defining a module directly, a lazy require defines a function
     // that loads a module, so we need to expose those functions as getters.
     if (require.lazy) {
-      buffer.writeln("Object.defineProperty(self, '${require.identifier}', "
-          "{ get: _cliPkgRequires.${require.identifier} });");
+      buffer.writeln(
+        "Object.defineProperty(self, '${require.identifier}', "
+        "{ get: _cliPkgRequires.${require.identifier} });",
+      );
     } else {
-      buffer.writeln("self.${require.identifier} = "
-          "_cliPkgRequires.${require.identifier};");
+      buffer.writeln(
+        "self.${require.identifier} = "
+        "_cliPkgRequires.${require.identifier};",
+      );
     }
   }
 
@@ -583,7 +647,8 @@ JSRequireSet _requiresForTarget(JSRequireTarget target) =>
     // Add requires in reverse order so later matching requires take precedence
     // over earlier ones.
     JSRequireSet.of(
-        jsRequires.value.reversed.where((require) => require.target == target));
+      jsRequires.value.reversed.where((require) => require.target == target),
+    );
 
 /// Returns a single string specifier for `package.exports` if [jsEsmExports]
 /// isn't set, or a conditional export if it is.
@@ -592,7 +657,7 @@ JSRequireSet _requiresForTarget(JSRequireTarget target) =>
 Object _exportSpecifier(String name, {bool node = false}) => _supportsEsm
     ? {
         "require": "./$_npmName.$name.${node ? 'js' : 'cjs'}",
-        "default": "./$_npmName.$name.${node ? 'mjs' : 'js'}"
+        "default": "./$_npmName.$name.${node ? 'mjs' : 'js'}",
       }
     : "./$_npmName.$name.js";
 
@@ -603,8 +668,11 @@ Object _exportSpecifier(String name, {bool node = false}) => _supportsEsm
 /// before [jsEsmExports] for more detail on the file extensions at play here.
 ///
 /// This writes both an ESM and a CJS wrapper if [jsEsmExports] is set.
-void _writePlatformWrapper(String path, JSRequireSet requires,
-    {bool node = false}) {
+void _writePlatformWrapper(
+  String path,
+  JSRequireSet requires, {
+  bool node = false,
+}) {
   var exports = jsEsmExports.value;
   if (exports != null) {
     if (node) {
@@ -622,15 +690,16 @@ void _writePlatformWrapper(String path, JSRequireSet requires,
 /// with [requires] injected.
 void _writeRequireWrapper(String path, JSRequireSet requires) {
   writeString(
-      path,
-      (_supportsEsm
-              ? "require('./$_npmName.dart.js');\n"
+    path,
+    (_supportsEsm
+            ? "require('./$_npmName.dart.js');\n"
                   "const library = globalThis._cliPkgExports.pop();\n"
                   "if (globalThis._cliPkgExports.length === 0) delete "
                   "globalThis._cliPkgExports;\n"
-              : "const library = require('./$_npmName.dart.js');\n") +
-          "${_loadRequires(requires)}\n"
-              "module.exports = library;\n");
+            : "const library = require('./$_npmName.dart.js');\n") +
+        "${_loadRequires(requires)}\n"
+            "module.exports = library;\n",
+  );
 }
 
 /// Returns the text of a `library.load()` call that loads [requires].
@@ -640,37 +709,41 @@ String _loadRequires(JSRequireSet requires) {
   for (var require in requires) {
     // The functions returned by lazy requires will be wrapped in getters.
     var requireFn = switch (require) {
-      JSRequire(lazy: true, optional: true) => "(function(i){"
-          "let r;"
-          "return function ${require.identifier}(){"
-          "if(void 0!==r)return r;"
-          "try{"
-          "r=require(i)"
-          "}catch(e){"
-          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
-          "r=null"
-          "}"
-          "return r"
-          "}"
-          "})",
-      JSRequire(lazy: true) => "(function(i){"
-          "return function ${require.identifier}(){"
-          "return require(i)"
-          "}"
-          "})",
-      JSRequire(optional: true) => "(function(i){"
-          "try{"
-          "return require(i)"
-          "}catch(e){"
-          "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
-          "return null"
-          "}"
-          "})",
-      _ => "require"
+      JSRequire(lazy: true, optional: true) =>
+        "(function(i){"
+            "let r;"
+            "return function ${require.identifier}(){"
+            "if(void 0!==r)return r;"
+            "try{"
+            "r=require(i)"
+            "}catch(e){"
+            "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+            "r=null"
+            "}"
+            "return r"
+            "}"
+            "})",
+      JSRequire(lazy: true) =>
+        "(function(i){"
+            "return function ${require.identifier}(){"
+            "return require(i)"
+            "}"
+            "})",
+      JSRequire(optional: true) =>
+        "(function(i){"
+            "try{"
+            "return require(i)"
+            "}catch(e){"
+            "if('MODULE_NOT_FOUND'!==e.code)console.error(e);"
+            "return null"
+            "}"
+            "})",
+      _ => "require",
     };
 
     buffer.writeln(
-        "  ${require.identifier}: $requireFn(${json.encode(require.package)}),");
+      "  ${require.identifier}: $requireFn(${json.encode(require.package)}),",
+    );
   }
   buffer.writeln("});");
   return buffer.toString();
@@ -700,11 +773,16 @@ void _writeNodeImportWrapper(String path, Set<String> exports) {
 ///
 /// [exports] is the value of [jsEsmExports].
 void _writeImportWrapper(
-    String path, JSRequireSet requires, Set<String> exports) {
+  String path,
+  JSRequireSet requires,
+  Set<String> exports,
+) {
   var buffer = StringBuffer();
   for (var require in requires) {
-    buffer.writeln("import * as ${require.identifier} from "
-        "${json.encode(require.package)}");
+    buffer.writeln(
+      "import * as ${require.identifier} from "
+      "${json.encode(require.package)}",
+    );
   }
 
   buffer
@@ -736,8 +814,12 @@ Future<void> _deploy() async {
   // The trailing slash in "build/npm/" is necessary to avoid NPM trying to
   // treat the path name as a GitHub repository slug.
   log("npm publish --tag $npmDistTag build/npm/");
-  var process = await Process.start(
-      "npm", ["publish", "--tag", npmDistTag.value, "build/npm/"]);
+  var process = await Process.start("npm", [
+    "publish",
+    "--tag",
+    npmDistTag.value,
+    "build/npm/",
+  ]);
   LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
   LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
   if (await process.exitCode != 0) fail("npm publish failed");

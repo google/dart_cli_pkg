@@ -31,9 +31,11 @@ final _listItem = RegExp(r" *([*-]|\d+[.)]) ");
 ///
 /// The [version] is the version we expect to appear at the top of the
 /// changelog.
-String lastChangelogSection(String text, Version version,
-        {Object? sourceUrl}) =>
-    _Extractor(text, sourceUrl: sourceUrl).extract(version);
+String lastChangelogSection(
+  String text,
+  Version version, {
+  Object? sourceUrl,
+}) => _Extractor(text, sourceUrl: sourceUrl).extract(version);
 
 /// A class that extracts the first entry from a changelog, reformatted to
 /// remove line breaks that will show up in GitHub release notes.
@@ -54,14 +56,17 @@ class _Extractor {
   final _indentationLevels = <int>[];
 
   _Extractor(String text, {Object? sourceUrl})
-      : _scanner = StringScanner(text, sourceUrl: sourceUrl);
+    : _scanner = StringScanner(text, sourceUrl: sourceUrl);
 
   String extract(Version version) {
-    if (!_scanner
-        .scan(RegExp("## ${RegExp.escape(version.toString())}\r?\n"))) {
-      fail("Failed to extract GitHub release notes from CHANGELOG.md.\n"
-          'Expected it to start with "## $version".\n'
-          "Set pkg.githubReleaseNotes to explicitly declare release notes.");
+    if (!_scanner.scan(
+      RegExp("## ${RegExp.escape(version.toString())}\r?\n"),
+    )) {
+      fail(
+        "Failed to extract GitHub release notes from CHANGELOG.md.\n"
+        'Expected it to start with "## $version".\n'
+        "Set pkg.githubReleaseNotes to explicitly declare release notes.",
+      );
     }
 
     while (!_scanner.isDone && !_scanner.matches("## ")) {
@@ -94,7 +99,8 @@ class _Extractor {
         _buffer.writeln();
         if (!_tryIndentation()) {
           _scanner.error(
-              "Expected ${_indentationLevels.last} spaces of indentation.");
+            "Expected ${_indentationLevels.last} spaces of indentation.",
+          );
         }
       } while (!_scanner.matches(_codeBlock));
 

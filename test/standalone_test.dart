@@ -42,18 +42,20 @@ void main() {
   var pubspec = {
     "name": "my_app",
     "version": "1.2.3",
-    "executables": {"foo": "foo"}
+    "executables": {"foo": "foo"},
   };
 
   group("directory and archive name", () {
     test("default to pkg.dartName", () async {
       await d.package(pubspec, _enableStandalone).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
-      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix",
-          [d.dir("my_app")]).validate();
+      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
+        d.dir("my_app"),
+      ]).validate();
     });
 
     test("prefer pkg.name to pkg.dartName", () async {
@@ -65,11 +67,13 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
-      await d.archive("my_app/build/my-app-1.2.3-$_archiveSuffix",
-          [d.dir("my-app")]).validate();
+      await d.archive("my_app/build/my-app-1.2.3-$_archiveSuffix", [
+        d.dir("my-app"),
+      ]).validate();
     });
 
     test("prefer pkg.standaloneName to pkg.name", () async {
@@ -82,11 +86,13 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
-      await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix",
-          [d.dir("my-sa-app")]).validate();
+      await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix", [
+        d.dir("my-sa-app"),
+      ]).validate();
     });
   });
 
@@ -94,13 +100,14 @@ void main() {
     var pubspec = {
       "name": "my_app",
       "version": "1.2.3",
-      "executables": {"foo": "foo", "bar": "bar", "qux": "bar"}
+      "executables": {"foo": "foo", "bar": "bar", "qux": "bar"},
     };
 
     test("default to the pubspec's executables", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -112,8 +119,8 @@ void main() {
               d.file("foo.snapshot", anything),
               d.file("bar.snapshot", anything),
               d.file("qux.snapshot", anything),
-            ])
-        ])
+            ]),
+        ]),
       ]).validate();
     });
 
@@ -126,8 +133,9 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -135,9 +143,11 @@ void main() {
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
           if (!CliPlatform.current.useExe)
-            d.dir("src",
-                [d.nothing("foo.snapshot"), d.file("bar.snapshot", anything)])
-        ])
+            d.dir("src", [
+              d.nothing("foo.snapshot"),
+              d.file("bar.snapshot", anything),
+            ]),
+        ]),
       ]).validate();
     });
 
@@ -150,8 +160,9 @@ void main() {
         }
       """).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -164,24 +175,27 @@ void main() {
               d.file("foo.snapshot", anything),
               d.file("bar.snapshot", anything),
               d.file("zip.snapshot", anything),
-            ])
-        ])
+            ]),
+        ]),
       ]).validate();
     });
 
     // Normally each of these would be separate test cases, but running grinder
     // takes so long that we collapse them for efficiency.
     test("can be invoked", () async {
-      await d.package({
-        "name": "my_app",
-        "version": "1.2.3",
-        "executables": {
-          "foo": "foo",
-          "bar": "bar",
-          "qux": "bar",
-          "const": "const"
-        },
-      }, """
+      await d
+          .package(
+            {
+              "name": "my_app",
+              "version": "1.2.3",
+              "executables": {
+                "foo": "foo",
+                "bar": "bar",
+                "qux": "bar",
+                "const": "const",
+              },
+            },
+            """
           void main(List<String> args) {
             // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
             // #44995 are fixed.
@@ -191,27 +205,37 @@ void main() {
             pkg.addStandaloneTasks();
             grind(args);
           }
-        """).create();
+        """,
+          )
+          .create();
 
       await d.dir("my_app/bin", [
-        d.file("const.dart",
-            "void main() => print(const String.fromEnvironment('my-const'));")
+        d.file(
+          "const.dart",
+          "void main() => print(const String.fromEnvironment('my-const'));",
+        ),
       ]).create();
 
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
       // Directly
       var executable = await TestProcess.start(
-          d.path("out/my_app/foo$dotBat"), [],
-          workingDirectory: d.sandbox);
+        d.path("out/my_app/foo$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
       expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
 
       // Through a redirect
-      executable = await TestProcess.start(d.path("out/my_app/qux$dotBat"), [],
-          workingDirectory: d.sandbox);
+      executable = await TestProcess.start(
+        d.path("out/my_app/qux$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
       expect(executable.stdout, emits("in bar 1.2.3"));
       await executable.shouldExit(0);
 
@@ -224,34 +248,49 @@ void main() {
       if (!Platform.isWindows) {
         // Through a relative symlink
         Link(d.path("foo-relative$dotBat")).createSync("out/my_app/foo$dotBat");
-        executable = await TestProcess.start(d.path("foo-relative$dotBat"), [],
-            workingDirectory: d.sandbox);
+        executable = await TestProcess.start(
+          d.path("foo-relative$dotBat"),
+          [],
+          workingDirectory: d.sandbox,
+        );
         expect(executable.stdout, emits("in foo 1.2.3"));
         await executable.shouldExit(0);
 
         // Through an absolute symlink
-        Link(d.path("foo-absolute$dotBat"))
-            .createSync(d.path("out/my_app/foo$dotBat"));
-        executable = await TestProcess.start(d.path("foo-absolute$dotBat"), [],
-            workingDirectory: d.sandbox);
+        Link(
+          d.path("foo-absolute$dotBat"),
+        ).createSync(d.path("out/my_app/foo$dotBat"));
+        executable = await TestProcess.start(
+          d.path("foo-absolute$dotBat"),
+          [],
+          workingDirectory: d.sandbox,
+        );
         expect(executable.stdout, emits("in foo 1.2.3"));
         await executable.shouldExit(0);
 
         // Through a nested symlink
-        Link(d.path("foo-nested$dotBat"))
-            .createSync(d.path("foo-relative$dotBat"));
-        executable = await TestProcess.start(d.path("foo-nested$dotBat"), [],
-            workingDirectory: d.sandbox);
+        Link(
+          d.path("foo-nested$dotBat"),
+        ).createSync(d.path("foo-relative$dotBat"));
+        executable = await TestProcess.start(
+          d.path("foo-nested$dotBat"),
+          [],
+          workingDirectory: d.sandbox,
+        );
         expect(executable.stdout, emits("in foo 1.2.3"));
         await executable.shouldExit(0);
       }
 
       // Escapes environment constants
       executable = await TestProcess.start(
-          d.path("out/my_app/const$dotBat"), [],
-          workingDirectory: d.sandbox);
-      expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
+        d.path("out/my_app/const$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
+      expect(
+        executable.stdout,
+        emits(riskyArg(invokedByDart: true, dartCompileExe: true)),
+      );
       await executable.shouldExit(0);
     });
   });
@@ -259,105 +298,117 @@ void main() {
   group("the LICENSE file", () {
     // Normally each of these would be separate test cases, but running grinder
     // takes so long that we collapse them for efficiency.
-    test(
-        "includes the license for the package, Dart, direct dependencies, and "
+    test("includes the license for the package, Dart, direct dependencies, and "
         "transitive dependencies", () async {
       await d.dir("direct_dep", [
         d.file(
-            "pubspec.yaml",
-            json.encode({
-              "name": "direct_dep",
-              "version": "1.0.0",
-              "environment": {"sdk": ">=2.0.0 <4.0.0"},
-              "dependencies": {
-                "indirect_dep": {"path": "../indirect_dep"}
-              }
-            })),
-        d.file("LICENSE.md", "Direct dependency license")
+          "pubspec.yaml",
+          json.encode({
+            "name": "direct_dep",
+            "version": "1.0.0",
+            "environment": {"sdk": ">=2.0.0 <4.0.0"},
+            "dependencies": {
+              "indirect_dep": {"path": "../indirect_dep"},
+            },
+          }),
+        ),
+        d.file("LICENSE.md", "Direct dependency license"),
       ]).create();
 
       await d.dir("indirect_dep", [
         d.file(
-            "pubspec.yaml",
-            json.encode({
-              "name": "indirect_dep",
-              "version": "1.0.0",
-              "environment": {"sdk": ">=2.0.0 <4.0.0"}
-            })),
-        d.file("COPYING", "Indirect dependency license")
+          "pubspec.yaml",
+          json.encode({
+            "name": "indirect_dep",
+            "version": "1.0.0",
+            "environment": {"sdk": ">=2.0.0 <4.0.0"},
+          }),
+        ),
+        d.file("COPYING", "Indirect dependency license"),
       ]).create();
 
       await d
           .package(
-              {
-                ...pubspec,
-                "dependencies": {
-                  "direct_dep": {"path": "../direct_dep"}
-                }
+            {
+              ...pubspec,
+              "dependencies": {
+                "direct_dep": {"path": "../direct_dep"},
               },
-              _enableStandalone,
-              [d.file("LICENSE", "Please use my code")])
+            },
+            _enableStandalone,
+            [d.file("LICENSE", "Please use my code")],
+          )
           .create();
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
           d.file(
-              "LICENSE",
-              allOf([
-                contains("Please use my code"),
-                contains("Copyright 2012, the Dart project authors."),
-                contains("Direct dependency license"),
-                contains("Indirect dependency license")
-              ]))
-        ])
+            "LICENSE",
+            allOf([
+              contains("Please use my code"),
+              contains("Copyright 2012, the Dart project authors."),
+              contains("Direct dependency license"),
+              contains("Indirect dependency license"),
+            ]),
+          ),
+        ]),
       ]).validate();
     });
 
     test("is still generated if the package doesn't have a license", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
-          .shouldExit(0);
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
           d.file(
-              "LICENSE", contains("Copyright 2012, the Dart project authors."))
-        ])
+            "LICENSE",
+            contains("Copyright 2012, the Dart project authors."),
+          ),
+        ]),
       ]).validate();
     });
   });
 
   group("creates a package for", () {
-    setUp(() => d.package({
-          "name": "my_app",
-          "version": "1.2.3",
-          "executables": {"foo": "foo"}
-        }, _enableStandalone).create());
+    setUp(
+      () => d.package({
+        "name": "my_app",
+        "version": "1.2.3",
+        "executables": {"foo": "foo"},
+      }, _enableStandalone).create(),
+    );
 
     d.Descriptor archive(String os, String arch, {bool musl = false}) {
       var platform = CliPlatform(
-          OperatingSystem.parse(os), Architecture.parse(arch),
-          musl: musl);
+        OperatingSystem.parse(os),
+        Architecture.parse(arch),
+        musl: musl,
+      );
       var name =
           "my_app/build/my_app-1.2.3-$os-$arch${platform.archiveExtension}";
 
       return d.archive(name, [
         d.dir("my_app", [
           d.file(
-              "foo" +
-                  (platform.os.isWindows
-                      ? (platform.useExe ? '.exe' : '.bat')
-                      : ''),
-              anything),
+            "foo" +
+                (platform.os.isWindows
+                    ? (platform.useExe ? '.exe' : '.bat')
+                    : ''),
+            anything,
+          ),
           if (!platform.useExe)
             d.dir("src", [
               d.file("LICENSE", anything),
               d.file("dart${platform.binaryExtension}", anything),
-              d.file("foo.snapshot", anything)
-            ])
-        ])
+              d.file("foo.snapshot", anything),
+            ]),
+        ]),
       ]);
     }
 
@@ -376,11 +427,6 @@ void main() {
     group("Linux", () {
       for (var musl in [false, true]) {
         group(musl ? "musl" : "glibc", () {
-          test("32-bit x86", () async {
-            await (await grind(["pkg-standalone-linux-ia32"])).shouldExit(0);
-            await archive("linux", "ia32", musl: musl).validate();
-          });
-
           test("64-bit x86", () async {
             await (await grind(["pkg-standalone-linux-x64"])).shouldExit(0);
             await archive("linux", "x64", musl: musl).validate();
@@ -405,11 +451,6 @@ void main() {
     });
 
     group("Windows", () {
-      test("32-bit x86", () async {
-        await (await grind(["pkg-standalone-windows-ia32"])).shouldExit(0);
-        await archive("windows", "ia32").validate();
-      });
-
       test("64-bit x86", () async {
         await (await grind(["pkg-standalone-windows-x64"])).shouldExit(0);
         await archive("windows", "x64").validate();
@@ -422,11 +463,6 @@ void main() {
     });
 
     group("Android", () {
-      test("32-bit x86", () async {
-        await (await grind(["pkg-standalone-android-ia32"])).shouldExit(0);
-        await archive("android", "ia32").validate();
-      });
-
       test("64-bit x86", () async {
         await (await grind(["pkg-standalone-android-x64"])).shouldExit(0);
         await archive("android", "x64").validate();
@@ -450,8 +486,10 @@ void main() {
       await (await grind(["pkg-standalone-dev"])).shouldExit(0);
 
       var executable = await TestProcess.start(
-          d.path("my_app/build/foo$dotBat"), [],
-          workingDirectory: d.sandbox);
+        d.path("my_app/build/foo$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
       expect(executable.stdout, emits("in foo 1.2.3"));
       await executable.shouldExit(0);
     });
@@ -465,18 +503,23 @@ void main() {
       await (await grind(["pkg-standalone-dev"])).shouldExit(0);
 
       var executable = await TestProcess.start(
-          d.path("my_app/build/foo$dotBat"), [],
-          workingDirectory: d.sandbox);
+        d.path("my_app/build/foo$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
       expect(executable.stderr, emitsThrough(contains("Failed assertion")));
       await executable.shouldExit(255);
     });
 
     test("and escapes a custom environment constants", () async {
-      await d.package({
-        "name": "my_app",
-        "version": "1.2.3",
-        "executables": {"const": "const"}
-      }, """
+      await d
+          .package(
+            {
+              "name": "my_app",
+              "version": "1.2.3",
+              "executables": {"const": "const"},
+            },
+            """
           void main(List<String> args) {
             pkg.environmentConstants.value["my-const"] =
                 ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
@@ -484,20 +527,28 @@ void main() {
             pkg.addStandaloneTasks();
             grind(args);
           }
-        """).create();
+        """,
+          )
+          .create();
 
       await d.dir("my_app/bin", [
-        d.file("const.dart",
-            "void main() => print(const String.fromEnvironment('my-const'));")
+        d.file(
+          "const.dart",
+          "void main() => print(const String.fromEnvironment('my-const'));",
+        ),
       ]).create();
 
       await (await grind(["pkg-standalone-dev"])).shouldExit(0);
 
       var executable = await TestProcess.start(
-          d.path("my_app/build/const$dotBat"), [],
-          workingDirectory: d.sandbox);
-      expect(executable.stdout,
-          emits(riskyArg(invokedByDart: true, dartCompileExe: true)));
+        d.path("my_app/build/const$dotBat"),
+        [],
+        workingDirectory: d.sandbox,
+      );
+      expect(
+        executable.stdout,
+        emits(riskyArg(invokedByDart: true, dartCompileExe: true)),
+      );
       await executable.shouldExit(0);
     });
   });

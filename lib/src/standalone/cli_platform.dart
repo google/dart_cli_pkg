@@ -18,9 +18,7 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 import 'package:native_stack_traces/elf.dart';
 import 'package:path/path.dart' as p;
-import 'package:pub_semver/pub_semver.dart';
 
-import '../utils.dart';
 import 'architecture.dart';
 import 'operating_system.dart';
 
@@ -28,7 +26,7 @@ import 'operating_system.dart';
 /// reasons.
 const _unsupportedAbis = {
   // This is still experimental and Dart isn't shipping SDKs for it yet
-  Abi.linuxRiscv32
+  Abi.linuxRiscv32,
 };
 
 /// The set of all ABI strings known by this SDK.
@@ -38,9 +36,8 @@ final _abiStrings = {
         // There are no Dart SDKs for iOS
         !abi.toString().startsWith("ios_") &&
         // https://github.com/dart-lang/sdk/issues/59698
-        !(dartVersion >= Version(3, 8, 0, pre: '0') &&
-            abi.toString().endsWith("_ia32")))
-      abi.toString()
+        !abi.toString().endsWith("_ia32"))
+      abi.toString(),
 };
 
 /// A struct representing a platform for which we can build standalone
@@ -75,11 +72,9 @@ class CliPlatform {
 
   /// Returns whether to use the natively-compiled executable for this platform.
   ///
-  /// We can only use the native executable on the current operating system
-  /// because Dart doesn't currently support cross-compilation
-  /// (dart-lang/sdk#28617). Dart also doesn't support native compilation on
-  /// ia32 in particular (dart-lang/sdk#47177).
-  bool get useNative => isCurrent && !arch.isIA32;
+  /// We use the native executable only on the current operating system because
+  /// Dart only has limited support for cross-compilation (dart-lang/sdk#28617).
+  bool get useNative => isCurrent;
 
   /// The binary file extension for this platform.
   String get binaryExtension => os.isWindows ? '.exe' : '';
@@ -91,8 +86,11 @@ class CliPlatform {
   static final Set<CliPlatform> all = {
     for (var [os, arch] in _abiStrings.map((abi) => abi.split('_')))
       for (var musl in [false, if (os == 'linux') true])
-        CliPlatform(OperatingSystem.parse(os), Architecture.parse(arch),
-            musl: musl)
+        CliPlatform(
+          OperatingSystem.parse(os),
+          Architecture.parse(arch),
+          musl: musl,
+        ),
   };
 
   /// The platform of the current Dart executable.
@@ -109,9 +107,9 @@ class CliPlatform {
 
   /// Returns whether the current platform is using musl LibC.
   static bool get _isCurrentPlatformMusl {
-    var section = Elf.fromFile(Platform.resolvedExecutable)
-        ?.namedSections('.interp')
-        .firstOrNull;
+    var section = Elf.fromFile(
+      Platform.resolvedExecutable,
+    )?.namedSections('.interp').firstOrNull;
     if (section == null) return false;
 
     var file = File(Platform.resolvedExecutable).openSync()

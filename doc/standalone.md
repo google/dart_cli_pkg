@@ -5,9 +5,9 @@ They're enabled by calling [`pkg.addStandaloneTasks()`][].
 
 [`pkg.addStandaloneTasks()`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/addStandaloneTasks.html
 
-Standalone executables are built and executed in a context with the `version`
-environment declaration set to the package's version. This can be accessed with
-[`String.fromEnvironment()`][].
+Modules (snapshots) and self-contained executables are built and executed in a
+context with the `version` environment declaration set to the package's version.
+This can be accessed with [`String.fromEnvironment()`][].
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
@@ -21,10 +21,9 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.snapshot`
 
-Compiles each executable in the package to a [kernel snapshot][snapshot] with
-asserts disabled.
+Compiles each executable in the package to a [portable module (kernel)][kernel].
 
-[snapshot]: https://github.com/dart-lang/sdk/wiki/Snapshots
+[kernel]: https://dart.dev/tools/dart-compile#kernel
 
 ## `pkg-compile-snapshot-dev`
 
@@ -32,8 +31,11 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.snapshot`
 
-Compiles each executable in the package to a [kernel snapshot][snapshot] with
-asserts enabled.
+This is an alias of [`pkg-compile-snapshot`][] for backward compatibility.
+
+Depends on: [`pkg-compile-snapshot`][]
+
+[`pkg-compile-snapshot`]: #pkg-compile-snapshot
 
 ## `pkg-compile-native`
 
@@ -41,20 +43,27 @@ Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
 Output: `build/$executable.native`
 
-Compiles each executable in the package to a native code snapshot (what Dart
-calls an ["AOT Application snapshot"][snapshot]). This is unavailable on 32-bit
-host systems.
-
-Defines an environment constant named `version` set to [`pkg.version`][] that
-can be accessed from within each entrypoint via [`String.fromEnvironment()`][].
+Compiles each executable in the package to an
+[AOT module (aot-snapshot)][aot-snapshot] with asserts disabled.
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
+[aot-snapshot]: https://dart.dev/tools/dart-compile#aot-snapshot
+
+## `pkg-compile-native-dev`
+
+Uses configuration: [`pkg.executables`][], [`pkg.version`][]
+
+Output: `build/$executable.native`
+
+Compiles each executable in the package to an
+[AOT module (aot-snapshot)][aot-snapshot] with asserts enabled.
+
 ## `pkg-standalone-dev`
 
-Depends on: [`pkg-compile-snapshot-dev`][]
+Depends on: [`pkg-compile-native-dev`][]
 
-[`pkg-compile-snapshot-dev`]: #pkg-compile-snapshot-dev
+[`pkg-compile-native-dev`]: #pkg-compile-native-dev
 
 Uses configuration: [`pkg.executables`][], [`pkg.version`][]
 
@@ -95,7 +104,7 @@ that can be used to invoke them.
 
 Any OS's packages can be built regardless of the OS running the task, but if the
 host OS matches the target OS *and* the architecture is 64-bit, executables will
-be built as native (["AOT"][snapshot]) executables, which are substantially
+be built as [AOT modules (aot-snapshot)][aot-snapshot], which are substantially
 faster and smaller than the kernel snapshots that are generated otherwise.
 
 The target for the current OS and architecture is always available. However, for
