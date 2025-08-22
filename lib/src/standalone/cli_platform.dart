@@ -18,9 +18,7 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 import 'package:native_stack_traces/elf.dart';
 import 'package:path/path.dart' as p;
-import 'package:pub_semver/pub_semver.dart';
 
-import '../utils.dart';
 import 'architecture.dart';
 import 'operating_system.dart';
 
