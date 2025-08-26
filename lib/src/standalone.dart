@@ -221,7 +221,9 @@ Future<void> _buildPackage(CliPlatform platform) async {
   var archive = Archive()
     ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
 
-  if (!(platform.useNative && useExe.value(platform))) {
+  var nativeExe = useExe.value(platform);
+
+  if (!(platform.useNative && nativeExe)) {
     archive.addFile(
       fileFromBytes(
         "$standaloneName/src/dart${platform.binaryExtension}",
@@ -232,7 +234,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
   }
 
   for (var name in executables.value.keys) {
-    if (platform.useNative && useExe.value(platform)) {
+    if (platform.useNative && nativeExe) {
       archive.addFile(
         file(
           "$standaloneName/$name${platform.binaryExtension}",
@@ -250,7 +252,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
     }
   }
 
-  if (!(platform.useNative && useExe.value(platform))) {
+  if (!(platform.useNative && nativeExe)) {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
