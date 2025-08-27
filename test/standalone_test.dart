@@ -142,11 +142,11 @@ void main() {
           d.file("foo$dotBat", anything),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-            d.dir("src", [
-              d.nothing("foo.snapshot"),
-              d.nothing("bar.snapshot"),
-              d.nothing("qux.snapshot"),
-            ]),
+          d.dir("src", [
+            d.nothing("foo.snapshot"),
+            d.nothing("bar.snapshot"),
+            d.nothing("qux.snapshot"),
+          ]),
         ]),
       ]).validate();
     });
@@ -169,11 +169,11 @@ void main() {
           d.file("foo$dotBat", anything),
           d.file("bar$dotBat", anything),
           d.file("qux$dotBat", anything),
-            d.dir("src", [
-              d.file("foo.snapshot", anything),
-              d.file("bar.snapshot", anything),
-              d.file("qux.snapshot", anything),
-            ]),
+          d.dir("src", [
+            d.file("foo.snapshot", anything),
+            d.file("bar.snapshot", anything),
+            d.file("qux.snapshot", anything),
+          ]),
         ]),
       ]).validate();
     });

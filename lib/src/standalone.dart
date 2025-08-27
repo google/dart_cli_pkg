@@ -39,7 +39,9 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 /// different platforms.
 ///
 /// This defaults to `CliPlatform::useExe`.
-final useExe = InternalConfigVariable.value<bool Function(CliPlatform)>((CliPlatform platform) => platform.useExe);
+final useExe = InternalConfigVariable.value<bool Function(CliPlatform)>(
+  (CliPlatform platform) => platform.useExe,
+);
 
 /// For each executable entrypoint in [executables], builds a portable module
 /// (kernel) to `build/${executable}.snapshot`.
