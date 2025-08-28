@@ -125,6 +125,7 @@ void main() {
     });
 
     test("can be standalone executables on current platform", () async {
+      print('CliPlatform.current: ${CliPlatform.current}');
       await d.package(pubspec, """
         void main(List<String> args) {
           pkg.useExe.value = (_) => true;
