@@ -125,7 +125,6 @@ void main() {
     });
 
     test("can be standalone executables on current platform", () async {
-      print('CliPlatform.current: ${CliPlatform.current}');
       await d.package(pubspec, """
         void main(List<String> args) {
           pkg.useExe.value = (_) => true;
@@ -140,9 +139,9 @@ void main() {
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
-          d.file("foo$dotBat", anything),
-          d.file("bar$dotBat", anything),
-          d.file("qux$dotBat", anything),
+          d.file("foo$dotExe", anything),
+          d.file("bar$dotExe", anything),
+          d.file("qux$dotExe", anything),
           d.dir("src", [
             d.nothing("foo.snapshot"),
             d.nothing("bar.snapshot"),
