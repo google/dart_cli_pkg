@@ -35,10 +35,11 @@ final standaloneName = InternalConfigVariable.fn<String>(() => name.value);
 
 /// Whether to build a native executable for the current platform instead of an
 /// AOT snapshot.
-/// Defined as a function of a [CliPlatform] to allow different behavior on
-/// different platforms.
 ///
-/// This defaults to `CliPlatform::useExe`.
+/// This is a function that's passed the [CliPlatform] that's being built to
+/// allow for different behavior on different platforms.
+///
+/// This defaults to returning [CliPlatform.useExe] unmodified.
 final useExe = InternalConfigVariable.value<bool Function(CliPlatform)>(
   (CliPlatform platform) => platform.useExe,
 );
