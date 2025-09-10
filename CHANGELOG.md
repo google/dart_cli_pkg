@@ -1,18 +1,23 @@
+## 2.14.0
+
+* Add a `pkg.useExe` config variable to allow users to customize exactly when
+  single-file standalone executables are generated.
+
 ## 2.13.0
 
 * Generate an [AOT module] instead of a [portable module] in
-   `pkg-standalone-dev`. Because dev artifacts are only intended to be used on
-   the current machine, there's no need to trade speed for portability.
+  `pkg-standalone-dev`. Because dev artifacts are only intended to be used on
+  the current machine, there's no need to trade speed for portability.
 
 * Add a `pkg-compile-native-dev` task to generate an AOT module with asserts
   enabled.
 
 * The `pkg-compile-snapshot-dev` task is now an alias of `pkg-compile-snapshot`
-   for backward compatibility. For portable modules asserts need be enabled at
-   runtime with `dart --enable-asserts`.
+  for backward compatibility. For portable modules asserts need be enabled at
+  runtime with `dart --enable-asserts`.
 
-[AOT module]: https://dart.dev/tools/dart-compile#aot-snapshot
-[portable module]: https://dart.dev/tools/dart-compile#kernel
+  [AOT module]: https://dart.dev/tools/dart-compile#aot-snapshot
+  [portable module]: https://dart.dev/tools/dart-compile#kernel
 
 * Add support for new `dartvm` executable on Dart SDK >=3.10.0.
 
