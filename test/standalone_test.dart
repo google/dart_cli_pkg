@@ -124,6 +124,60 @@ void main() {
       ]).validate();
     });
 
+    test("can be standalone executables on current platform", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.useExe.value = (_) => true;
+          pkg.addStandaloneTasks();
+          grind(args);
+        }
+      """).create();
+
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
+
+      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
+        d.dir("my_app", [
+          d.file("foo$dotExe", anything),
+          d.file("bar$dotExe", anything),
+          d.file("qux$dotExe", anything),
+          d.dir("src", [
+            d.nothing("foo.snapshot"),
+            d.nothing("bar.snapshot"),
+            d.nothing("qux.snapshot"),
+          ]),
+        ]),
+      ]).validate();
+    });
+
+    test("can be aot snapshots on current platform", () async {
+      await d.package(pubspec, """
+        void main(List<String> args) {
+          pkg.useExe.value = (_) => false;
+          pkg.addStandaloneTasks();
+          grind(args);
+        }
+      """).create();
+
+      await (await grind([
+        "pkg-standalone-${CliPlatform.current}",
+      ])).shouldExit(0);
+
+      await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
+        d.dir("my_app", [
+          d.file("foo$dotBat", anything),
+          d.file("bar$dotBat", anything),
+          d.file("qux$dotBat", anything),
+          d.dir("src", [
+            d.file("foo.snapshot", anything),
+            d.file("bar.snapshot", anything),
+            d.file("qux.snapshot", anything),
+          ]),
+        ]),
+      ]).validate();
+    });
+
     test("can be removed by the user", () async {
       await d.package(pubspec, """
         void main(List<String> args) {

@@ -39,12 +39,18 @@ Depends on: [`pkg-compile-snapshot`][]
 
 ## `pkg-compile-native`
 
-Uses configuration: [`pkg.executables`][], [`pkg.version`][]
+Uses configuration: [`pkg.executables`][], [`pkg.version`][], [`pkg.useExe`][],
+
+[`pkg.useExe`]: https://pub.dev/documentation/cli_pkg/latest/cli_pkg/useExe.html
 
 Output: `build/$executable.native`
 
 Compiles each executable in the package to an
-[AOT module (aot-snapshot)][aot-snapshot] with asserts disabled.
+[AOT module (aot-snapshot)][aot-snapshot] or a 
+[self-contained executable][exe] (depending on the current platform and
+[`pkg.useExe`][]) with asserts disabled.
+
+[exe]: https://dart.dev/tools/dart-compile#exe
 
 [`String.fromEnvironment()`]: https://api.dartlang.org/stable/dart-core/String/String.fromEnvironment.html
 
@@ -104,8 +110,9 @@ that can be used to invoke them.
 
 Any OS's packages can be built regardless of the OS running the task, but if the
 host OS matches the target OS *and* the architecture is 64-bit, executables will
-be built as [AOT modules (aot-snapshot)][aot-snapshot], which are substantially
-faster and smaller than the kernel snapshots that are generated otherwise.
+be built as [AOT modules (aot-snapshot)][aot-snapshot] or ["exe"][exe], which
+are substantially faster and smaller than the kernel snapshots that are
+generated otherwise.
 
 The target for the current OS and architecture is always available. However, for
 any OS or architecture under experimental Dart SDK support, such task is only
