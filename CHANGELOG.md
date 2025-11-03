@@ -1,3 +1,10 @@
+## 2.15.0
+
+* Allow `pkg.npmToken` to be null. This causes npm deployment to use the system
+  token if one is available, which is necessary for using [trusted publishing].
+
+[trusted publishing]: https://docs.npmjs.com/trusted-publishers
+
 ## 2.14.0
 
 * Add a `pkg.useExe` config variable to allow users to customize exactly when
