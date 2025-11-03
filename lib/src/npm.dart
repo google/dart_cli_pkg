@@ -224,11 +224,13 @@ final npmReadme = InternalConfigVariable.fn<String?>(
 /// **Do not check this in directly.** This should only come from secure
 /// sources.
 ///
-/// By default this comes from the `NPM_TOKEN` environment variable.
-final npmToken = InternalConfigVariable.fn<String>(
-  () =>
-      Platform.environment["NPM_TOKEN"] ??
-      fail("pkg.npmToken must be set to deploy to npm."),
+/// By default this comes from the `NPM_TOKEN` environment variable. If it's not
+/// set, npm will use whatever tokens the system has available; this is
+/// necessary for using [trusted publishing].
+///
+/// [trusted publishing]: https://docs.npmjs.com/trusted-publishers
+final npmToken = InternalConfigVariable.fn<String?>(
+  () => Platform.environment["NPM_TOKEN"],
 );
 
 /// The [distribution tag][] to use when publishing the current `npm` package.
@@ -807,9 +809,13 @@ const _cliPkgExports = {};
 
 /// Publishes the contents of `build/npm` to npm.
 Future<void> _deploy() async {
-  var file = File(".npmrc").openSync(mode: FileMode.writeOnlyAppend);
-  file.writeStringSync("\n//registry.npmjs.org/:_authToken=$npmToken");
-  file.closeSync();
+  if (npmToken.value case var token?) {
+    var file = File(".npmrc").openSync(mode: FileMode.writeOnlyAppend);
+    file.writeStringSync("\n//registry.npmjs.org/:_authToken=$token");
+    file.closeSync();
+  } else {
+    log("npmToken not set, using system credentials");
+  }
 
   // The trailing slash in "build/npm/" is necessary to avoid NPM trying to
   // treat the path name as a GitHub repository slug.
