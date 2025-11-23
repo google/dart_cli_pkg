@@ -392,7 +392,7 @@ Future<void> _fixPermissions() async {
               await _uploadToRelease(
                 release,
                 archiveName,
-                GZipEncoder().encode(TarEncoder().encode(archive))!,
+                GZipEncoder().encodeBytes(TarEncoder().encodeBytes(archive)),
               );
               print("Fixed $archiveName");
             },

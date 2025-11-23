@@ -91,7 +91,7 @@ Future<void> extract(String path, String destination) async {
   for (var file in archive.files) {
     var filePath = p.join(d.path(destination), file.name);
     Directory(p.dirname(filePath)).createSync(recursive: true);
-    File(filePath).writeAsBytesSync(file.content as List<int>);
+    File(filePath).writeAsBytesSync(file.content);
 
     // Mark the file executable if necessary.
     if (!Platform.isWindows && file.mode & 1 == 1) {

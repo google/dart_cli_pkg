@@ -7,7 +7,7 @@ environment:
   sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
-  archive: ^3.1.2
+  archive: ^4.0.6
   async: ^2.5.0
   charcode: ^1.2.0
   cli_util: ^0.4.0
