@@ -22,7 +22,6 @@ import 'package:cli_pkg/src/utils.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf_test_handler/shelf_test_handler.dart';
 import 'package:test/test.dart';
-import 'package:tuple/tuple.dart';
 
 import 'descriptor.dart' as d;
 import 'utils.dart';
@@ -219,7 +218,7 @@ void main() {
       await _release(
         "my_org/my_app",
         verify: (request) {
-          expect(_getAuthorization(request).item1, equals(expected));
+          expect(_getAuthorization(request).username, equals(expected));
         },
         environment: environment,
       );
@@ -263,7 +262,7 @@ void main() {
       await _release(
         "my_org/my_app",
         verify: (request) {
-          expect(_getAuthorization(request).item2, equals(expected));
+          expect(_getAuthorization(request).password, equals(expected));
         },
         environment: environment,
       );
@@ -520,8 +519,8 @@ void main() {
     var server = await ShelfTestServer.create();
     server.handler.expect("GET", "/repos/my_org/my_app/releases", (request) {
       var authorization = _getAuthorization(request);
-      expect(authorization.item1, equals("usr"));
-      expect(authorization.item2, equals("pwd"));
+      expect(authorization.username, equals("usr"));
+      expect(authorization.password, equals("pwd"));
 
       // These aren't the real GitHub URLs, but we want to verify that we use
       // the links rather than hard-coding.
@@ -650,8 +649,8 @@ Future<ShelfTestServer> _assertUploadsPackage(String os, String arch) async {
     request,
   ) async {
     var authorization = _getAuthorization(request);
-    expect(authorization.item1, equals("usr"));
-    expect(authorization.item2, equals("pwd"));
+    expect(authorization.username, equals("usr"));
+    expect(authorization.password, equals("pwd"));
 
     // This isn't the real GitHub upload URL, but we want to verify that we
     // use the template rather than hard-coding.
@@ -700,7 +699,7 @@ Future<ShelfTestServer> _assertUploadsPackage(String os, String arch) async {
 ///
 /// Throws a [TestFailure] if [request] doesn't have a well-formed basic
 /// authentication header.
-Tuple2<String, String> _getAuthorization(shelf.Request request) {
+({String username, String password}) _getAuthorization(shelf.Request request) {
   expect(request.headers, contains("authorization"));
   var authorization = request.headers["authorization"]!;
   expect(authorization, startsWith("Basic "));
@@ -712,5 +711,5 @@ Tuple2<String, String> _getAuthorization(shelf.Request request) {
 
   var components = decoded.split(":");
   expect(components, hasLength(2));
-  return Tuple2(components.first, components.last);
+  return (username: components.first, password: components.last);
 }
