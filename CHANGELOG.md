@@ -1,7 +1,6 @@
-## 2.16.0-wip
+## 2.15.1
 
-* Update to v4 of `package:archive`,
-  increasing the dependency constraint to `^4.0.6` from `^3.1.2`.
+* Expand and upgrade some dependency versions.
 
 ## 2.15.0
 
