@@ -34,7 +34,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   /// this file.
   Future<Archive> get archive async {
     var archive = Archive();
-    (await _files(contents)).forEach(archive.addFile);
+    (await _files(contents)).forEach(archive.add);
     return archive;
   }
 

@@ -553,8 +553,8 @@ void main() {
         GZipEncoder().encodeBytes(
           TarEncoder().encodeBytes(
             Archive()
-              ..addFile(fileFromString("foo", "foo contents")..mode = 495)
-              ..addFile(fileFromString("bar", "bar contents")..mode = 506),
+              ..add(fileFromString("foo", "foo contents")..mode = 495)
+              ..add(fileFromString("bar", "bar contents")..mode = 506),
           ),
         ),
       ),

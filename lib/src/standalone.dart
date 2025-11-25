@@ -222,12 +222,12 @@ Future<void> _buildDev() async {
 /// Builds a package for the given [platform].
 Future<void> _buildPackage(CliPlatform platform) async {
   var archive = Archive()
-    ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
+    ..add(fileFromString("$standaloneName/src/LICENSE", await license));
 
   var nativeExe = useExe.value(platform);
 
   if (!(platform.useNative && nativeExe)) {
-    archive.addFile(
+    archive.add(
       fileFromBytes(
         "$standaloneName/src/dart${platform.binaryExtension}",
         await _dartExecutable(platform),
@@ -238,7 +238,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
 
   for (var name in executables.value.keys) {
     if (platform.useNative && nativeExe) {
-      archive.addFile(
+      archive.add(
         file(
           "$standaloneName/$name${platform.binaryExtension}",
           "build/$name.native",
@@ -246,7 +246,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
         ),
       );
     } else {
-      archive.addFile(
+      archive.add(
         file(
           "$standaloneName/src/$name.snapshot",
           platform.useNative ? "build/$name.native" : "build/$name.snapshot",
@@ -259,7 +259,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
-      archive.addFile(
+      archive.add(
         fileFromString(
           "$standaloneName/$name${platform.os.isWindows ? '.bat' : ''}",
           renderTemplate(
