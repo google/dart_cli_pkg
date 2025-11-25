@@ -1,3 +1,8 @@
+## 2.16.0-wip
+
+* Update to v4 of `package:archive`,
+  increasing the dependency constraint to `^4.0.6` from `^3.1.2`.
+
 ## 2.15.0
 
 * Allow `pkg.npmToken` to be null. This causes npm deployment to use the system
