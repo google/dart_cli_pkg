@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:async/async.dart';
@@ -33,7 +34,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   /// this file.
   Future<Archive> get archive async {
     var archive = Archive();
-    (await _files(contents)).forEach(archive.addFile);
+    (await _files(contents)).forEach(archive.add);
     return archive;
   }
 
@@ -101,7 +102,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   }());
 
   Future<void> validate([String? parent]) async {
-    // Access this first so we eaerly throw an error for a path with an invalid
+    // Access this first so we eagerly throw an error for a path with an invalid
     // extension.
     var decoder = _decodeFunction();
 
@@ -131,7 +132,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
         archive.files.map((file) async {
           var path = p.join(tempDir, file.name);
           await Directory(p.dirname(path)).create(recursive: true);
-          await File(path).writeAsBytes(file.content as List<int>);
+          await File(path).writeAsBytes(file.content);
         }),
       );
 
@@ -155,15 +156,17 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   /// [name].
   List<int> Function(Archive) _encodeFunction() {
     if (name.endsWith('.zip')) {
-      return (archive) => ZipEncoder().encode(archive)!;
+      return ZipEncoder().encodeBytes;
     } else if (name.endsWith('.tar')) {
-      return TarEncoder().encode;
+      return TarEncoder().encodeBytes;
     } else if (name.endsWith('.tar.gz') ||
         name.endsWith('.tar.gzip') ||
         name.endsWith('.tgz')) {
-      return (archive) => GZipEncoder().encode(TarEncoder().encode(archive))!;
+      return (archive) =>
+          GZipEncoder().encodeBytes(TarEncoder().encodeBytes(archive));
     } else if (name.endsWith('.tar.bz2') || name.endsWith('.tar.bzip2')) {
-      return (archive) => BZip2Encoder().encode(TarEncoder().encode(archive));
+      return (archive) =>
+          BZip2Encoder().encodeBytes(TarEncoder().encodeBytes(archive));
     } else {
       throw UnsupportedError('Unknown file format $name.');
     }
@@ -171,7 +174,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
 
   /// Returns the function to use to decode this file from binary, based on its
   /// [name].
-  Archive Function(List<int>) _decodeFunction() {
+  Archive Function(Uint8List) _decodeFunction() {
     if (name.endsWith('.zip')) {
       return ZipDecoder().decodeBytes;
     } else if (name.endsWith('.tar')) {

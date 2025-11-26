@@ -550,11 +550,11 @@ void main() {
       "GET",
       "/assets/1/download/tar",
       (request) => shelf.Response.ok(
-        GZipEncoder().encode(
-          TarEncoder().encode(
+        GZipEncoder().encodeBytes(
+          TarEncoder().encodeBytes(
             Archive()
-              ..addFile(fileFromString("foo", "foo contents")..mode = 495)
-              ..addFile(fileFromString("bar", "bar contents")..mode = 506),
+              ..add(fileFromString("foo", "foo contents")..mode = 495)
+              ..add(fileFromString("bar", "bar contents")..mode = 506),
           ),
         ),
       ),

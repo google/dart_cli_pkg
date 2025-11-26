@@ -358,13 +358,17 @@ Future<void> _fixPermissions() async {
                 );
               }
 
-              var archive = TarDecoder().decodeBytes(
+              var originalArchive = TarDecoder().decodeBytes(
                 GZipDecoder().decodeBytes(getResponse.bodyBytes),
               );
-              for (var file in archive.files) {
+              var fixedArchive = Archive();
+              for (var file in originalArchive.files) {
                 // 0o755: ensure that the write permission bits aren't set for
                 // non-owners.
-                file.mode &= 493;
+                fixedArchive.add(
+                  ArchiveFile.bytes(file.name, file.content)
+                    ..mode = file.mode & 493, // 0o755
+                );
               }
 
               var deleteResponse = await client.delete(
@@ -392,7 +396,9 @@ Future<void> _fixPermissions() async {
               await _uploadToRelease(
                 release,
                 archiveName,
-                GZipEncoder().encode(TarEncoder().encode(archive))!,
+                GZipEncoder().encodeBytes(
+                  TarEncoder().encodeBytes(fixedArchive),
+                ),
               );
               print("Fixed $archiveName");
             },

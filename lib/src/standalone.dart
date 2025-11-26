@@ -222,12 +222,12 @@ Future<void> _buildDev() async {
 /// Builds a package for the given [platform].
 Future<void> _buildPackage(CliPlatform platform) async {
   var archive = Archive()
-    ..addFile(fileFromString("$standaloneName/src/LICENSE", await license));
+    ..add(fileFromString("$standaloneName/src/LICENSE", await license));
 
   var nativeExe = useExe.value(platform);
 
   if (!(platform.useNative && nativeExe)) {
-    archive.addFile(
+    archive.add(
       fileFromBytes(
         "$standaloneName/src/dart${platform.binaryExtension}",
         await _dartExecutable(platform),
@@ -238,7 +238,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
 
   for (var name in executables.value.keys) {
     if (platform.useNative && nativeExe) {
-      archive.addFile(
+      archive.add(
         file(
           "$standaloneName/$name${platform.binaryExtension}",
           "build/$name.native",
@@ -246,7 +246,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
         ),
       );
     } else {
-      archive.addFile(
+      archive.add(
         file(
           "$standaloneName/src/$name.snapshot",
           platform.useNative ? "build/$name.native" : "build/$name.snapshot",
@@ -259,7 +259,7 @@ Future<void> _buildPackage(CliPlatform platform) async {
     // Do this separately from adding entrypoints because multiple executables
     // may have the same entrypoint.
     for (var name in executables.value.keys) {
-      archive.addFile(
+      archive.add(
         fileFromString(
           "$standaloneName/$name${platform.os.isWindows ? '.bat' : ''}",
           renderTemplate(
@@ -276,17 +276,17 @@ Future<void> _buildPackage(CliPlatform platform) async {
   if (platform.os.isWindows) {
     var output = "$prefix.zip";
     log("Creating $output...");
-    File(output).writeAsBytesSync(ZipEncoder().encode(archive)!);
+    File(output).writeAsBytesSync(ZipEncoder().encodeBytes(archive));
   } else {
     var output = "$prefix.tar.gz";
     log("Creating $output...");
-    File(
-      output,
-    ).writeAsBytesSync(GZipEncoder().encode(TarEncoder().encode(archive))!);
+    File(output).writeAsBytesSync(
+      GZipEncoder().encodeBytes(TarEncoder().encodeBytes(archive)),
+    );
   }
 }
 
-/// Returns the binary contents of the `dart` or `dartaotruntime` exectuable for
+/// Returns the binary contents of the `dart` or `dartaotruntime` executable for
 /// the given [platform].
 Future<List<int>> _dartExecutable(CliPlatform platform) async {
   // If we're building for the same SDK we're using, load its executable from
@@ -336,11 +336,10 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
   var dartvm = dartVersion >= Version(3, 10, 0, pre: '0') ? 'dartvm' : 'dart';
   var filename = "/bin/$dartvm${platform.binaryExtension}";
   return (url.endsWith(".zip")
-              ? ZipDecoder().decodeBytes(response.bodyBytes)
-              : TarDecoder().decodeBytes(
-                  GZipDecoder().decodeBytes(response.bodyBytes),
-                ))
-          .firstWhere((file) => file.name.endsWith(filename))
-          .content
-      as List<int>;
+          ? ZipDecoder().decodeBytes(response.bodyBytes)
+          : TarDecoder().decodeBytes(
+              GZipDecoder().decodeBytes(response.bodyBytes),
+            ))
+      .firstWhere((file) => file.name.endsWith(filename))
+      .content;
 }

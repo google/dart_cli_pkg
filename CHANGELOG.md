@@ -1,3 +1,7 @@
+## 2.15.1
+
+* Expand and upgrade some dependency versions.
+
 ## 2.15.0
 
 * Allow `pkg.npmToken` to be null. This causes npm deployment to use the system

@@ -165,7 +165,7 @@ ArchiveFile fileFromBytes(
   String path,
   List<int> data, {
   bool executable = false,
-}) => ArchiveFile(path, data.length, data)
+}) => ArchiveFile.bytes(path, data)
   ..mode = executable ? 493 : 420
   ..lastModTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
