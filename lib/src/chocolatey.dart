@@ -15,6 +15,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cli_pkg/cli_pkg.dart';
 import 'package:grinder/grinder.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
@@ -88,6 +89,21 @@ String get chocolateyDartVersion {
   }
   return result.toString();
 }
+
+/// The Chocolatey Repo Url
+///
+/// This is used for the Chocolatey verification file.
+/// It defaults to [githubRepo].
+final chocolateyRepoUrl = InternalConfigVariable.fn<String>(
+  () => 'https://github.com/${githubRepo.value}',
+);
+
+/// The Chocolatey Release URL
+///
+/// This is the Release URL used for the verification file.
+/// It defaults to https://github.com/[githubRepo]/releases/tag/[tag].
+final chocolateyReleaseUrl = InternalConfigVariable.fn<String>(() =>
+    'https://github.com/${githubRepo.value}/releases/tag/${version.toString()}');
 
 /// The set of files to include directly in the Chocolatey package.
 ///
@@ -236,6 +252,8 @@ Future<void> _build() async {
 
   writeString("build/chocolatey/tools/LICENSE.txt", await license);
 
+  writeString("build/chocolatey/tools/VERIFICATION.txt", _verificationFile);
+
   writeString(
     'build/chocolatey/tools/source/pubspec.yaml',
     json.encode(
@@ -357,4 +375,42 @@ String _pathToElement(XmlNode? parent, String name) {
   }
 
   return nesting.reversed.join(" > ");
+}
+
+// Generates verification file
+String get _verificationFile {
+  final os = Platform.operatingSystem;
+  final osVersion = Platform.operatingSystemVersion;
+  final dartInfo = Platform.version;
+  final tag = version.toString();
+  final repo = chocolateyRepoUrl.value;
+  final releaseUrl = chocolateyReleaseUrl.value;
+
+  final dartVersion = dartInfo.split(' ')[0];
+  final contents = '''VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+The executables in this package are built from source:
+
+Repository: $repo
+Tag: $tag
+Release URL: $releaseUrl
+
+On the following environment:
+
+* $os - $osVersion
+* Dart - $dartInfo
+
+The following steps are used to build.
+1. Install Dart (choco install dart-sdk --version $dartVersion)
+2. git clone -b $tag $repo.git 
+3. Get project dependencies (dart pub get) in project root
+4. Install Grinder (dart pub global activate grinder)
+5. grind pkg-chocolatey-pack
+6. Go to build/chocolatey
+
+''';
+
+  return contents;
 }
