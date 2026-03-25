@@ -17,4 +17,8 @@ library;
 
 import 'package:test/test.dart';
 
-export 'browser_test_shared.dart';
+import 'browser_test_shared.dart' as shared_browser_tests;
+
+void main() {
+  shared_browser_tests.main();
+}
