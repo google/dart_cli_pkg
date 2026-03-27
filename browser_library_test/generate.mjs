@@ -12,9 +12,9 @@ await generator.install('./cli-pkg-test');
 
 const map = generator.getMap();
 
-// @jspm/genearator resolve symlinks to their concrete paths without a way to
-// preserve them (unless file URLs are used). So, we have to manually replace
-// the concrete path back to a path that the test package can resolve.
+// The @jspm/genearator resolves symlinks without a way to preserve them (unless
+// file URLs are used). We have to manually restore the paths for the dart
+// browser tests to work. This is a bit hacky, but it works for our use case. 
 const prefix = './packages/cli_pkg_test/build/cli-pkg-test/';
 const concretePathPrefix = '../../build/npm/';
 function addPrefixToValues(map) {
