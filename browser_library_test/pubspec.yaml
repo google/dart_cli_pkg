@@ -7,7 +7,7 @@ environment:
 
 dependencies:
   js: ^0.6.3
-  grinder: ^0.9.0
+  grinder: ">=0.9.0 <0.11.0"
   cli_pkg: {path: ..}
   test: ^1.16.7
 dev_dependencies:
