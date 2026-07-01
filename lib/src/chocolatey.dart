@@ -154,22 +154,22 @@ final XmlDocument _nuspec = () {
   }
 
   metadata.children.add(
-    XmlElement(XmlName("version"), [], [XmlText(_chocolateyVersion)]),
+    XmlElement(XmlName.parts("version"), [], [XmlText(_chocolateyVersion)]),
   );
 
   var dependencies = _findElementAllowNone(metadata, "dependencies");
   if (dependencies == null) {
-    dependencies = XmlElement(XmlName("dependencies"));
+    dependencies = XmlElement(XmlName.parts("dependencies"));
     metadata.children.add(dependencies);
   }
 
   dependencies.children.add(
-    XmlElement(XmlName("dependency"), [
-      XmlAttribute(XmlName("id"), "dart-sdk"),
+    XmlElement(XmlName.parts("dependency"), [
+      XmlAttribute(XmlName.parts("id"), "dart-sdk"),
       // Unfortunately we need the exact same Dart version as we built with,
       // since we ship a snapshot which isn't cross-version compatible. Once
       // we switch to native compilation this won't be an issue.
-      XmlAttribute(XmlName("version"), "[$chocolateyDartVersion]"),
+      XmlAttribute(XmlName.parts("version"), "[$chocolateyDartVersion]"),
     ]),
   );
 

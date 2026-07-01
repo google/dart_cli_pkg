@@ -1,6 +1,6 @@
 ## 2.15.2
 
-- Support `cli_util` versions `0.5.x`.
+* Expand and upgrade some dependency versions.
 
 ## 2.15.1
 
