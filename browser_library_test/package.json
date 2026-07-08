@@ -16,7 +16,7 @@
     "@jspm/generator": "^2.12.0",
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
-    "browserify": "^17.0.0",
+    "browserify": "^17.0.1",
     "cli-pkg-test": "file:build/npm",
     "esbuild": "^0.28.1",
     "esmify": "^2.1.1",
