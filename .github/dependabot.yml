@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "pub"
+    directories:
+      - "/"
+      - "/browser_library_test"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "npm"
+    directories:
+      - "/browser_library_test"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
