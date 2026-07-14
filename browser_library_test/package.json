@@ -21,7 +21,7 @@
     "esbuild": "^0.28.1",
     "esmify": "^2.1.1",
     "prettier": "^3.9.4",
-    "rollup": "^3.30.0",
+    "rollup": "^4.62.2",
     "vite": "^8.0.16",
     "webpack": "^5.105.4",
     "webpack-cli": "^7.1.0"
