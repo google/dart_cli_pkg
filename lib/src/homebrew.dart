@@ -169,7 +169,7 @@ Future<void> _update() async {
 String _replaceFirstMappedMandatory(
   String string,
   Pattern from,
-  String replace(Match match),
+  String Function(Match match) replace,
   String error,
 ) {
   var found = false;

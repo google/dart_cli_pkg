@@ -127,8 +127,10 @@ class CliPlatform {
     if (musl && !os.isLinux) fail("musl LibC only supports Linux.");
   }
 
+  @override
   int get hashCode => Object.hash(os.hashCode, arch.hashCode, isMusl.hashCode);
 
+  @override
   bool operator ==(Object other) =>
       other is CliPlatform &&
       other.os == os &&
@@ -137,7 +139,8 @@ class CliPlatform {
 
   /// Returns a human-friendly description of this platform.
   String toHumanString() =>
-      "${os.toHumanString()} $arch" + (isMusl ? " with musl LibC" : "");
+      "${os.toHumanString()} $arch${isMusl ? " with musl LibC" : ""}";
 
-  String toString() => "$os-$arch" + (isMusl ? "-musl" : "");
+  @override
+  String toString() => "$os-$arch${isMusl ? "-musl" : ""}";
 }

@@ -92,7 +92,7 @@ class ConfigVariable<T> {
   ///
   /// If `T` is non-nullable and [callback] returns `null`, the default value
   /// for this variable will be used.
-  set fn(T? callback()) {
+  set fn(T? Function() callback) {
     if (_frozen) {
       throw StateError(
         "Can't modify a ConfigVariable after pkg.add*Tasks() has been "
@@ -115,6 +115,7 @@ class ConfigVariable<T> {
       _cached = true,
       _freeze = freeze;
 
+  @override
   String toString() => value.toString();
 }
 
@@ -125,8 +126,10 @@ extension InternalConfigVariable<T> on ConfigVariable<T> {
   ///
   /// If [freeze] is passed, it's called when the variable is frozen to make the
   /// value unmodifiable as well.
-  static ConfigVariable<T> fn<T>(T callback(), {T Function(T)? freeze}) =>
-      ConfigVariable._fn(callback, freeze: freeze);
+  static ConfigVariable<T> fn<T>(
+    T Function() callback, {
+    T Function(T)? freeze,
+  }) => ConfigVariable._fn(callback, freeze: freeze);
 
   /// Creates a configuration variable with the given [value].
   ///

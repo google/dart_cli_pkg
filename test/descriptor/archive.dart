@@ -38,6 +38,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     return archive;
   }
 
+  @override
   File get io => File(p.join(sandbox, name));
 
   /// Returns [ArchiveFile]s for each file in [descriptors].
@@ -77,6 +78,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
   ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
     : contents = List.unmodifiable(contents);
 
+  @override
   Future<void> create([String? parent]) async {
     var path = p.join(parent ?? sandbox, name);
     var file = File(path).openWrite();
@@ -92,15 +94,18 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     }
   }
 
+  @override
   Future<String> read() async => throw UnsupportedError(
     'ArchiveDescriptor.read() is not supported. Use Archive.readAsBytes() '
     'instead.',
   );
 
+  @override
   Stream<List<int>> readAsBytes() => Stream.fromFuture(() async {
     return _encodeFunction()(await archive);
   }());
 
+  @override
   Future<void> validate([String? parent]) async {
     // Access this first so we eagerly throw an error for a path with an invalid
     // extension.
@@ -192,5 +197,6 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     }
   }
 
+  @override
   String describe() => dir(name, contents).toString();
 }

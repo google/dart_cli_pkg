@@ -107,10 +107,11 @@ Future<String> get license => _licenseMemo.runOnce(() async {
   return licenses.entries
       .map(
         (entry) =>
-            wordWrap("${toSentence(entry.value)} license:") +
-            "\n\n${entry.key}",
+            "${wordWrap("${toSentence(entry.value)} license:")}\n"
+            "\n"
+            "${entry.key}",
       )
-      .join("\n\n" + "-" * 80 + "\n\n");
+      .join("\n\n${"-" * 80}\n\n");
 });
 final _licenseMemo = AsyncMemoizer<String>();
 
@@ -227,7 +228,7 @@ Uri url(String url) {
 String toSentence(Iterable<dynamic> iter, {String? conjunction}) {
   if (iter.length == 1) return iter.first.toString();
   conjunction ??= 'and';
-  return iter.take(iter.length - 1).join(", ") + " $conjunction ${iter.last}";
+  return "${iter.take(iter.length - 1).join(", ")} $conjunction ${iter.last}";
 }
 
 /// The maximum line length for [wordWrap]
@@ -401,10 +402,10 @@ void verifyEnvironmentConstants({
 String powershellEscape(String value) =>
     // In addition to escaping the argument for PowerShell, we also need to escape
     // it for Windows's built-in argument parsing.
-    "'" + windowsArgEscape(value).replaceAll("'", "''") + "'";
+    "'${windowsArgEscape(value).replaceAll("'", "''")}'";
 
 /// Escapes [value] so it can be passed as an argument in a Unix shell.
-String shEscape(String value) => "'" + value.replaceAll("'", r"'\''") + "'";
+String shEscape(String value) => "'${value.replaceAll("'", r"'\''")}'";
 
 /// Escapes [value] so it can be passed as an argument to a Windows executable.
 ///

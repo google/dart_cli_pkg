@@ -36,12 +36,15 @@ class JSRequireSet extends EqualitySet<JSRequire> {
   JSRequireSet.of(Iterable<JSRequire> requires)
     : super.from(_equality, requires);
 
+  @override
   JSRequireSet union(Set<JSRequire> other) =>
       JSRequireSet.of([...this, ...other]);
 
+  @override
   JSRequireSet difference(Set<Object?> other) =>
       JSRequireSet.of(super.difference(other));
 
+  @override
   JSRequireSet intersection(Set<Object?> other) =>
       JSRequireSet.of(super.intersection(other));
 }

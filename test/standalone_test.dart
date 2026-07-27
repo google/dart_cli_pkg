@@ -447,15 +447,12 @@ void main() {
       var name =
           "my_app/build/my_app-1.2.3-$os-$arch${platform.archiveExtension}";
 
+      var dotExt = platform.os.isWindows
+          ? (platform.useExe ? '.exe' : '.bat')
+          : '';
       return d.archive(name, [
         d.dir("my_app", [
-          d.file(
-            "foo" +
-                (platform.os.isWindows
-                    ? (platform.useExe ? '.exe' : '.bat')
-                    : ''),
-            anything,
-          ),
+          d.file("foo$dotExt", anything),
           if (!platform.useExe)
             d.dir("src", [
               d.file("LICENSE", anything),

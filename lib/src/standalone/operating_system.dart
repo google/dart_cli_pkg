@@ -57,5 +57,6 @@ enum OperatingSystem {
     _ => name[0].toUpperCase() + name.substring(1).toLowerCase(),
   };
 
+  @override
   String toString() => name;
 }

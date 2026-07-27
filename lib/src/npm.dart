@@ -691,16 +691,17 @@ void _writePlatformWrapper(
 /// Writes a wrapper to [path] that loads and re-exports `$_npmName.dart.js`
 /// with [requires] injected.
 void _writeRequireWrapper(String path, JSRequireSet requires) {
+  var require = _supportsEsm
+      ? "require('./$_npmName.dart.js');\n"
+            "const library = globalThis._cliPkgExports.pop();\n"
+            "if (globalThis._cliPkgExports.length === 0) delete "
+            "globalThis._cliPkgExports;"
+      : "const library = require('./$_npmName.dart.js');";
   writeString(
     path,
-    (_supportsEsm
-            ? "require('./$_npmName.dart.js');\n"
-                  "const library = globalThis._cliPkgExports.pop();\n"
-                  "if (globalThis._cliPkgExports.length === 0) delete "
-                  "globalThis._cliPkgExports;\n"
-            : "const library = require('./$_npmName.dart.js');\n") +
-        "${_loadRequires(requires)}\n"
-            "module.exports = library;\n",
+    "$require\n"
+    "${_loadRequires(requires)}\n"
+    "module.exports = library;\n",
   );
 }
 
@@ -760,7 +761,7 @@ String _loadRequires(JSRequireSet requires) {
 ///
 /// [exports] is the value of [jsEsmExports].
 void _writeNodeImportWrapper(String path, Set<String> exports) {
-  var cjsUrl = './' + p.setExtension(p.basename(path), '.js');
+  var cjsUrl = './${p.setExtension(p.basename(path), '.js')}';
   var buffer = StringBuffer("import cjs from ${json.encode(cjsUrl)};\n\n");
 
   for (var export in exports) {

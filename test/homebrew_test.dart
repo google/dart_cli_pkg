@@ -537,8 +537,8 @@ Future<ShelfTestServer> _serveArchive([String tag = "1.2.3"]) async {
     process.exitCode.then((exitCode) async {
       if (exitCode != 0) {
         fail(
-          'git archive $tag failed:\n' +
-              await utf8.decodeStream(process.stderr),
+          'git archive $tag failed:\n'
+          '${await utf8.decodeStream(process.stderr)}',
         );
       }
     });

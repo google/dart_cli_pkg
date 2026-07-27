@@ -170,15 +170,18 @@ String get _authorization {
 final githubReleaseNotes = InternalConfigVariable.fn<String?>(() {
   if (!File("CHANGELOG.md").existsSync()) return null;
 
-  return lastChangelogSection(
-        File("CHANGELOG.md").readAsStringSync(),
-        version,
-        sourceUrl: "CHANGELOG.md",
-      ) +
-      "\n\n"
-          "See the [full changelog](https://github.com/$githubRepo/blob/"
-          "master/CHANGELOG.md#${version.toString().replaceAll(".", "")}) "
-          "for changes in earlier releases.";
+  var section = lastChangelogSection(
+    File("CHANGELOG.md").readAsStringSync(),
+    version,
+    sourceUrl: "CHANGELOG.md",
+  );
+  var versionAnchor = version.toString().replaceAll(".", "");
+  var changelogUrl =
+      "https://github.com/$githubRepo/blob/master/CHANGELOG.md#$versionAnchor";
+  return "$section\n"
+      "\n"
+      "See the [full changelog]($changelogUrl) for changes in earlier "
+      "releases.";
 });
 
 /// Creates a GitHub release for [version] of this package.
@@ -305,8 +308,8 @@ Future<void> _uploadToRelease(
 ) async {
   var uploadUrlTemplate = release["upload_url"];
   if (uploadUrlTemplate == null) {
-    throw 'Unexpected GitHub response, expected "upload_url" field:\n' +
-        JsonEncoder.withIndent("  ").convert(release);
+    throw 'Unexpected GitHub response, expected "upload_url" field:\n'
+        '${JsonEncoder.withIndent("  ").convert(release)}';
   }
 
   // Remove the URL template.
