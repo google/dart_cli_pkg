@@ -388,7 +388,7 @@ void main() {
         if (dartVersion.isPreRelease) "--pre",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        "--source=" + d.path("my_app/build"),
+        "--source=${d.path("my_app/build")}",
       ])).shouldExit(0);
 
       try {
@@ -441,7 +441,7 @@ void main() {
         if (dartVersion.isPreRelease) "--pre",
         // We already have Dart installed, and sometimes this fails to find it.
         "--ignore-dependencies",
-        "--source=" + d.path("my_app/build"),
+        "--source=${d.path("my_app/build")}",
       ])).shouldExit(0);
 
       try {

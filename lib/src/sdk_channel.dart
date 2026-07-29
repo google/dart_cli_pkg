@@ -39,5 +39,6 @@ enum SdkChannel {
     _ => fail("Unrecognized Dart SDK version $dartVersion"),
   };
 
+  @override
   String toString() => name;
 }

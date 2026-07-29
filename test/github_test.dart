@@ -619,7 +619,7 @@ String _enableGithub({
 /// CREATED response.
 Future<void> _release(
   String repo, {
-  FutureOr<void> verify(shelf.Request request)?,
+  FutureOr<void> Function(shelf.Request request)? verify,
   Map<String, String>? environment,
 }) async {
   var server = await ShelfTestServer.create();

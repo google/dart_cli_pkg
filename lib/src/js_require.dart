@@ -66,5 +66,6 @@ class JSRequire {
                .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_'),
        target = target ?? JSRequireTarget.all;
 
+  @override
   String toString() => "const $identifier = require('$package') on $target";
 }

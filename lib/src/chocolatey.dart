@@ -126,8 +126,8 @@ final chocolateyNuspec = InternalConfigVariable.fn<String>(() {
     fail("pkg.chocolateyNuspec must be set to build a Chocolatey package.");
   } else if (possibleNuspecs.length > 1) {
     fail(
-      "pkg.chocolateyNuspec found multiple .nuspec files: " +
-          possibleNuspecs.join(", "),
+      "pkg.chocolateyNuspec found multiple .nuspec files: "
+      "${possibleNuspecs.join(", ")}",
     );
   }
 

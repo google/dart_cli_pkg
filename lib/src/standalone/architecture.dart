@@ -51,5 +51,6 @@ enum Architecture {
     _ => fail('Unknown architecture "$name"'),
   };
 
+  @override
   String toString() => name;
 }
