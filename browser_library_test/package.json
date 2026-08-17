@@ -20,7 +20,7 @@
     "cli-pkg-test": "file:build/npm",
     "esbuild": "^0.28.1",
     "esmify": "^2.1.1",
-    "prettier": "^3.9.4",
+    "prettier": "^3.9.6",
     "rollup": "^4.62.4",
     "vite": "^8.1.5",
     "webpack": "^5.109.2",
