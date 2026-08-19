@@ -126,13 +126,13 @@ void main() {
           "it contains multiple <dependencies>s",
           () => assertNuspecError(
             """
-                <package>
-                  <metadata>
-                    <dependencies></dependencies>
-                    <dependencies></dependencies>
-                  </metadata>
-                </package>
-              """,
+              <package>
+                <metadata>
+                  <dependencies></dependencies>
+                  <dependencies></dependencies>
+                </metadata>
+              </package>
+            """,
             "The nuspec may not have multiple package > metadata > "
                 "dependencies elements.",
           ),
@@ -148,20 +148,20 @@ void main() {
             .file(
               "my_app/build/chocolatey/my_app_choco.nuspec",
               _equalsXml("""
-            <?xml version="1.0" encoding="utf-8"?>
-            <package
-                xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-              <metadata>
-                <id>my_app_choco</id>
-                <description>A good app</description>
-                <authors>Natalie Weizenbaum</authors>
-                <version>1.2.3</version>
-                <dependencies>
-                  <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
-                </dependencies>
-              </metadata>
-            </package>
-          """),
+                <?xml version="1.0" encoding="utf-8"?>
+                <package
+                    xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+                  <metadata>
+                    <id>my_app_choco</id>
+                    <description>A good app</description>
+                    <authors>Natalie Weizenbaum</authors>
+                    <version>1.2.3</version>
+                    <dependencies>
+                      <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
+                    </dependencies>
+                  </metadata>
+                </package>
+              """),
             )
             .validate();
       });
@@ -171,10 +171,10 @@ void main() {
         () async {
           await d.package(pubspec, _enableChocolatey(), [
             _nuspec("""
-            <dependencies>
-              <dependency id="something" version="[1.2.3]"/>
-            </dependencies>
-          """),
+              <dependencies>
+                <dependency id="something" version="[1.2.3]"/>
+              </dependencies>
+            """),
           ]).create();
 
           await (await grind(["pkg-chocolatey"])).shouldExit(0);
@@ -183,21 +183,21 @@ void main() {
               .file(
                 "my_app/build/chocolatey/my_app_choco.nuspec",
                 _equalsXml("""
-          <?xml version="1.0" encoding="utf-8"?>
-          <package
-              xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-            <metadata>
-              <id>my_app_choco</id>
-              <description>A good app</description>
-              <authors>Natalie Weizenbaum</authors>
-              <dependencies>
-                <dependency id="something" version="[1.2.3]"/>
-                <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
-              </dependencies>
-              <version>1.2.3</version>
-            </metadata>
-          </package>
-        """),
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <package
+                      xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+                    <metadata>
+                      <id>my_app_choco</id>
+                      <description>A good app</description>
+                      <authors>Natalie Weizenbaum</authors>
+                      <dependencies>
+                        <dependency id="something" version="[1.2.3]"/>
+                        <dependency id="dart-sdk" version="[$chocolateyDartVersion]"/>
+                      </dependencies>
+                      <version>1.2.3</version>
+                    </metadata>
+                  </package>
+                """),
               )
               .validate();
         },

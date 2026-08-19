@@ -107,9 +107,9 @@ class CliPlatform {
 
   /// Returns whether the current platform is using musl LibC.
   static bool get _isCurrentPlatformMusl {
-    var section = Elf.fromFile(
-      Platform.resolvedExecutable,
-    )?.namedSections('.interp').firstOrNull;
+    var section = Elf.fromFile(Platform.resolvedExecutable)
+        ?.namedSections('.interp')
+        .firstOrNull;
     if (section == null) return false;
 
     var file = File(Platform.resolvedExecutable).openSync()

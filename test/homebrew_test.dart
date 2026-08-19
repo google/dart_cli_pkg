@@ -53,10 +53,10 @@ void main() {
 
     await d.dir("me/homebrew.git", [
       d.file("my_app.rb", """
-          class MyApp < Formula
-            sha256 "original sha"
-          end
-        """),
+        class MyApp < Formula
+          sha256 "original sha"
+        end
+      """),
     ]).create();
     await _makeRepo("me/homebrew.git");
 
@@ -82,10 +82,10 @@ void main() {
 
     await d.dir("me/homebrew.git", [
       d.file("my_app.rb", """
-          class MyApp < Formula
-            url "original url"
-          end
-        """),
+        class MyApp < Formula
+          url "original url"
+        end
+      """),
     ]).create();
     await _makeRepo("me/homebrew.git");
 
@@ -446,9 +446,8 @@ void main() {
         await git(["tag", "1.2.3"]);
 
         await _createHomebrewRepo();
-        File(
-          d.path("me/homebrew.git/my_app.rb"),
-        ).renameSync(d.path("me/homebrew.git/my_app@1.0.0.rb"));
+        File(d.path("me/homebrew.git/my_app.rb"))
+            .renameSync(d.path("me/homebrew.git/my_app@1.0.0.rb"));
         await _commitAll("me/homebrew.git", "Rename the formula");
 
         var server = await _serveArchive();
@@ -477,26 +476,26 @@ void main() {
 /// If [repo] is `false`, this won't set `pkg.homebrewRepo`.
 String _enableHomebrew({String? config, bool repo = true}) =>
     """
-  void main(List<String> args) {
-    ${config ?? ''}
-    ${repo ? 'pkg.homebrewRepo.value = "me/homebrew";' : ''}
-    pkg.githubRepo.value = "me/app";
-    pkg.githubUser.value = "usr";
-    pkg.githubPassword.value = "pwd";
-    pkg.addHomebrewTasks();
-    grind(args);
-  }
-""";
+      void main(List<String> args) {
+        ${config ?? ''}
+        ${repo ? 'pkg.homebrewRepo.value = "me/homebrew";' : ''}
+        pkg.githubRepo.value = "me/app";
+        pkg.githubUser.value = "usr";
+        pkg.githubPassword.value = "pwd";
+        pkg.addHomebrewTasks();
+        grind(args);
+      }
+    """;
 
 /// Creates a default Homebrew repository in `me/homebrew.git`.
 Future<void> _createHomebrewRepo() async {
   await d.dir("me/homebrew.git", [
     d.file("my_app.rb", """
-        class MyApp < Formula
-          url "original url"
-          sha256 "original sha"
-        end
-      """),
+      class MyApp < Formula
+        url "original url"
+        sha256 "original sha"
+      end
+    """),
   ]).create();
   await _makeRepo("me/homebrew.git");
 }

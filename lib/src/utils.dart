@@ -30,12 +30,10 @@ import 'package:yaml/yaml.dart';
 import 'info.dart';
 
 /// The raw YAML of the pubspec.
-final rawPubspec =
-    loadYaml(
-          File('pubspec.yaml').readAsStringSync(),
-          sourceUrl: Uri(path: 'pubspec.yaml'),
-        )
-        as Map<dynamic, dynamic>;
+final rawPubspec = loadYaml(
+  File('pubspec.yaml').readAsStringSync(),
+  sourceUrl: Uri(path: 'pubspec.yaml'),
+) as Map<dynamic, dynamic>;
 
 /// The set of entrypoint paths for executables defined by this package.
 Set<String?> get entrypoints => p.PathSet.of(executables.value.values);
@@ -149,9 +147,8 @@ String? _readLicense(String dir) {
 
   // If there are multiple possibilities, choose the shortest one because it's
   // most likely to be canonical.
-  return File(
-    p.join(dir, minBy(possibilities, (path) => path.length)),
-  ).readAsStringSync();
+  return File(p.join(dir, minBy(possibilities, (path) => path.length)))
+      .readAsStringSync();
 }
 
 /// Ensure that the `build/` directory exists.

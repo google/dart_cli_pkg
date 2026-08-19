@@ -35,12 +35,12 @@ void main() {
         .package(
           pubspec,
           """
-      void main(List<String> args) {
-        pkg.addNpmTasks();
-        pkg.addStandaloneTasks();
-        grind(args);
-      }
-    """,
+            void main(List<String> args) {
+              pkg.addNpmTasks();
+              pkg.addStandaloneTasks();
+              grind(args);
+            }
+          """,
           [
             d.file("package.json", json.encode({"name": "my_app"})),
           ],
@@ -70,12 +70,12 @@ void main() {
                 "executables": {"bar": "foo"},
               },
               """
-          void main(List<String> args) {
-            pkg.addNpmTasks();
-            pkg.addStandaloneTasks();
-            grind(args);
-          }
-        """,
+                void main(List<String> args) {
+                  pkg.addNpmTasks();
+                  pkg.addStandaloneTasks();
+                  grind(args);
+                }
+              """,
             )
             .create();
 
@@ -371,9 +371,8 @@ void main() {
         await (await grind(["pkg-npm-dev"])).shouldExit(0);
 
         // This just shouldn't throw an error.
-        await _testCase(
-          "pkg.ensureExecutableUpToDate('foo', node: true);",
-        ).create();
+        await _testCase("pkg.ensureExecutableUpToDate('foo', node: true);")
+            .create();
 
         await (await _test()).shouldExit(0);
       });

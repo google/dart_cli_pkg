@@ -457,9 +457,8 @@ Future<void> _buildPackage() async {
     'build/$_npmName.dart.js',
     p.join(dir.path, '$_npmName.dart.js'),
   );
-  var allRequires = _requiresForTarget(
-    JSRequireTarget.all,
-  ).union(extractedRequires);
+  var allRequires = _requiresForTarget(JSRequireTarget.all)
+      .union(extractedRequires);
 
   var nodeRequires = _requiresForTarget(JSRequireTarget.node);
   var cliRequires = _requiresForTarget(JSRequireTarget.cli).union(nodeRequires);
