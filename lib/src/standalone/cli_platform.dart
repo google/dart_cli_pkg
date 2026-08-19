@@ -42,17 +42,18 @@ final _abiStrings = {
 
 /// A struct representing a platform for which we can build standalone
 /// executables.
-class CliPlatform {
+class CliPlatform(
   /// The operating system.
-  final OperatingSystem os;
+  final OperatingSystem os,
 
   /// The CPU architecture, such as "ia32" or "arm64".
-  final Architecture arch;
-
+  final Architecture arch, {
+  bool musl = false,
+}) {
   /// Whether the executable should be built to use musl LibC instead of glibc.
   ///
   /// This is only ever true if [os] is "linux".
-  final bool isMusl;
+  final bool isMusl = musl;
 
   /// Whether this is the same platform as the running Dart executable.
   bool get isCurrent => this == current;
@@ -119,7 +120,7 @@ class CliPlatform {
     return p.basename(interp).startsWith('ld-musl-');
   }
 
-  new(this.os, this.arch, {bool musl = false}) : isMusl = musl {
+  this {
     if (!_abiStrings.contains('${os}_$arch')) {
       fail("Unknown or unsupported platform $os-$arch!");
     }

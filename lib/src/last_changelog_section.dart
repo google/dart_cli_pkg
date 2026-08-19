@@ -39,9 +39,9 @@ String lastChangelogSection(
 
 /// A class that extracts the first entry from a changelog, reformatted to
 /// remove line breaks that will show up in GitHub release notes.
-class _Extractor {
+class _Extractor(String text, {Object? sourceUrl}) {
   /// The scanner that scans the changelog.
-  final StringScanner _scanner;
+  final StringScanner _scanner = StringScanner(text, sourceUrl: sourceUrl);
 
   /// The buffer to which to write the extracted entry.
   final _buffer = StringBuffer();
@@ -54,9 +54,6 @@ class _Extractor {
   /// This is only added to when parsing a list item. Later elements represent
   /// more deeply-nested blocks.
   final _indentationLevels = <int>[];
-
-  new(String text, {Object? sourceUrl})
-    : _scanner = StringScanner(text, sourceUrl: sourceUrl);
 
   String extract(Version version) {
     if (!_scanner.scan(
