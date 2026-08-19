@@ -201,45 +201,35 @@ void main() {
 
       test("have access to global requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.all)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .all)"),
           completion(isTrue),
         );
       });
 
       test("have access to node requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .node)"),
           completion(isTrue),
         );
       });
 
       test("don't have access to cli requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .cli)"),
           completion(isFalse),
         );
       });
 
       test("don't have access to browser requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .browser)"),
           completion(isFalse),
         );
       });
 
       test("has access to default requires without a node target", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .defaultTarget)"),
           completion(isTrue),
         );
       });
@@ -249,8 +239,8 @@ void main() {
         () async {
           expect(
             hasAccessToRequire("""
-              pkg.JSRequire('http', target: pkg.JSRequireTarget.node),
-              pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget),
+              pkg.JSRequire('http', target: .node),
+              pkg.JSRequire('os', target: .defaultTarget),
             """),
             completion(isFalse),
           );
@@ -353,36 +343,28 @@ void main() {
 
     test("with access to cli requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .cli)"),
         completion(isTrue),
       );
     });
 
     test("with access to node requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .node)"),
         completion(isTrue),
       );
     });
 
     test("without access to browser requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .browser)"),
         completion(isFalse),
       );
     });
 
     test("without access to default requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .defaultTarget)"),
         completion(isFalse),
       );
     });
@@ -766,7 +748,7 @@ void main() {
     const grindDotDart = """
       void main(List<String> args) {
         pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
-        pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.cli)];
+        pkg.jsRequires.value = [pkg.JSRequire('util', target: .cli)];
 
         pkg.addNpmTasks();
         grind(args);
@@ -777,8 +759,8 @@ void main() {
       void main(List<String> args) {
         pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
         pkg.jsRequires.value = [
-          pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
-          pkg.JSRequire('other', target: pkg.JSRequireTarget.node),
+          pkg.JSRequire('util', target: .cli),
+          pkg.JSRequire('other', target: .node),
         ];
 
         pkg.addNpmTasks();
@@ -830,8 +812,8 @@ void main() {
               void main(List<String> args) {
                 pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
                 pkg.jsRequires.value = [
-                  pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
-                  pkg.JSRequire('os', target: pkg.JSRequireTarget.node),
+                  pkg.JSRequire('util', target: .cli),
+                  pkg.JSRequire('os', target: .node),
                 ];
                 pkg.jsEsmExports.value = {'hello'};
 
@@ -1466,8 +1448,8 @@ void main() {
       test("have access to lazy requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node), "
+                "pkg.JSRequire('os', target: .node, "
                 "lazy: true, identifier: 'os_lazy')",
             """
               import 'package:js/js.dart';
@@ -1506,7 +1488,7 @@ void main() {
         expect(
           load(
             "pkg.JSRequire('module_not_found', "
-                "target: pkg.JSRequireTarget.node, lazy: true)",
+                "target: .node, lazy: true)",
             """
               import 'package:js/js.dart';
               import 'package:js/js_util.dart';
@@ -1543,8 +1525,8 @@ void main() {
       test("have access to optional requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node), "
+                "pkg.JSRequire('os', target: .node, "
                 "optional: true, identifier: 'os_optional')",
             """
               import 'package:js/js.dart';
@@ -1585,7 +1567,7 @@ void main() {
           expect(
             load(
               "pkg.JSRequire('module_not_found', "
-                  "target: pkg.JSRequireTarget.node, optional: true)",
+                  "target: .node, optional: true)",
               """
                 import 'package:js/js.dart';
                 import 'package:js/js_util.dart';
@@ -1619,8 +1601,8 @@ void main() {
       test("have access to lazy optional requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node),"
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node),"
+                "pkg.JSRequire('os', target: .node, "
                 "lazy: true, optional: true, "
                 "identifier: 'os_lazy_optional')",
             """
@@ -1661,7 +1643,7 @@ void main() {
         expect(
           load(
             "pkg.JSRequire('module_not_found', "
-                "target: pkg.JSRequireTarget.node, lazy: true, "
+                "target: .node, lazy: true, "
                 "optional: true)",
             """
               import 'package:js/js.dart';

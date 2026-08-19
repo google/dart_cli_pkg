@@ -24,9 +24,9 @@ import 'operating_system.dart';
 
 /// Certain ABIs that Dart recognizes but cli_pkg doesn't support for various
 /// reasons.
-const _unsupportedAbis = {
+const _unsupportedAbis = <Abi>{
   // This is still experimental and Dart isn't shipping SDKs for it yet
-  Abi.linuxRiscv32,
+  .linuxRiscv32,
 };
 
 /// The set of all ABI strings known by this SDK.

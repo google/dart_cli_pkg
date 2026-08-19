@@ -42,12 +42,12 @@ enum Architecture {
   bool get isRiscv64 => this == riscv64;
 
   factory parse(String name) => switch (name) {
-    "arm" => Architecture.arm,
-    "arm64" => Architecture.arm64,
-    "ia32" => Architecture.ia32,
-    "x64" => Architecture.x64,
-    "riscv32" => Architecture.riscv32,
-    "riscv64" => Architecture.riscv64,
+    "arm" => .arm,
+    "arm64" => .arm64,
+    "ia32" => .ia32,
+    "x64" => .x64,
+    "riscv32" => .riscv32,
+    "riscv64" => .riscv64,
     _ => fail('Unknown architecture "$name"'),
   };
 

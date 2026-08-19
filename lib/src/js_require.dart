@@ -57,7 +57,7 @@ class JSRequire(
   /// The target in which to include this require.
   ///
   /// This defaults to [JSRequireTarget.all].
-  final JSRequireTarget target = target ?? JSRequireTarget.all;
+  final JSRequireTarget target = target ?? .all;
 
   @override
   String toString() => "const $identifier = require('$package') on $target";

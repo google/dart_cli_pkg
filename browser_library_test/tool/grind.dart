@@ -25,11 +25,11 @@ void main(List<String> args) {
   };
   pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
   pkg.jsRequires.value = [
-    pkg.JSRequire('immutable', target: pkg.JSRequireTarget.all),
-    pkg.JSRequire('lodash', target: pkg.JSRequireTarget.browser),
-    pkg.JSRequire('os', target: pkg.JSRequireTarget.node),
-    pkg.JSRequire('fs', target: pkg.JSRequireTarget.cli),
-    pkg.JSRequire('http', target: pkg.JSRequireTarget.defaultTarget),
+    pkg.JSRequire('immutable', target: .all),
+    pkg.JSRequire('lodash', target: .browser),
+    pkg.JSRequire('os', target: .node),
+    pkg.JSRequire('fs', target: .cli),
+    pkg.JSRequire('http', target: .defaultTarget),
   ];
   pkg.jsEsmExports.value = {
     'loadedAllDependency',
