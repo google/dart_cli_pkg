@@ -55,7 +55,7 @@ class _Extractor {
   /// more deeply-nested blocks.
   final _indentationLevels = <int>[];
 
-  _Extractor(String text, {Object? sourceUrl})
+  new(String text, {Object? sourceUrl})
     : _scanner = StringScanner(text, sourceUrl: sourceUrl);
 
   String extract(Version version) {

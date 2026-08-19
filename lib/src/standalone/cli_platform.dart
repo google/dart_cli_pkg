@@ -119,7 +119,7 @@ class CliPlatform {
     return p.basename(interp).startsWith('ld-musl-');
   }
 
-  CliPlatform(this.os, this.arch, {bool musl = false}) : isMusl = musl {
+  new(this.os, this.arch, {bool musl = false}) : isMusl = musl {
     if (!_abiStrings.contains('${os}_$arch')) {
       fail("Unknown or unsupported platform $os-$arch!");
     }

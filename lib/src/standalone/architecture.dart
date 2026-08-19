@@ -41,7 +41,7 @@ enum Architecture {
   /// Whether this is a 64-bit RISCV architecture.
   bool get isRiscv64 => this == riscv64;
 
-  factory Architecture.parse(String name) => switch (name) {
+  factory parse(String name) => switch (name) {
     "arm" => Architecture.arm,
     "arm64" => Architecture.arm64,
     "ia32" => Architecture.ia32,

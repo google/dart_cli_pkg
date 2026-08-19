@@ -105,15 +105,13 @@ class ConfigVariable<T> {
     _cached = false;
   }
 
-  ConfigVariable._fn(T Function() callback, {T Function(T)? freeze})
+  new _fn(T Function() callback, {this._freeze})
     : _callback = callback,
-      _defaultCallback = callback,
-      _freeze = freeze;
+      _defaultCallback = callback;
 
-  ConfigVariable._value(this._value, {T Function(T)? freeze})
+  new _value(this._value, {this._freeze})
     : _defaultValue = _value,
-      _cached = true,
-      _freeze = freeze;
+      _cached = true;
 
   @override
   String toString() => value.toString();

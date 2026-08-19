@@ -41,7 +41,7 @@ enum OperatingSystem {
   /// Whether this represents Windows.
   bool get isWindows => this == windows;
 
-  factory OperatingSystem.parse(String name) => switch (name) {
+  factory parse(String name) => switch (name) {
     "android" => OperatingSystem.android,
     "fuchsia" => OperatingSystem.fuchsia,
     "ios" => OperatingSystem.ios,

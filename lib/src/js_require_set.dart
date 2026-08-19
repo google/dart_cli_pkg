@@ -27,14 +27,13 @@ final _equality = EqualityBy<JSRequire, String>(
 @internal
 class JSRequireSet extends EqualitySet<JSRequire> {
   /// Creates an empty set.
-  JSRequireSet() : super(_equality);
+  new() : super(_equality);
 
   /// Creates a set containing [requires].
   ///
   /// If a require with the same identifier appears multiple times in
   /// [requires], the first one takes precedence.
-  JSRequireSet.of(Iterable<JSRequire> requires)
-    : super.from(_equality, requires);
+  new of(Iterable<JSRequire> requires) : super.from(_equality, requires);
 
   @override
   JSRequireSet union(Set<JSRequire> other) =>

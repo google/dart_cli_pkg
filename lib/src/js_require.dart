@@ -53,7 +53,7 @@ class JSRequire {
   /// This defaults to [JSRequireTarget.all].
   final JSRequireTarget target;
 
-  JSRequire(
+  new(
     this.package, {
     String? identifier,
     JSRequireTarget? target,

@@ -75,7 +75,7 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
     )).expand((files) => files);
   }
 
-  ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
+  new(super.name, Iterable<Descriptor> contents)
     : contents = List.unmodifiable(contents);
 
   @override
