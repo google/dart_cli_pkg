@@ -26,9 +26,11 @@ import '../utils.dart';
 /// A [Descriptor] describing files in a Tar or Zip archive.
 ///
 /// The format is determined by the descriptor's file extension.
-class ArchiveDescriptor extends Descriptor implements FileDescriptor {
+class ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
+    extends Descriptor
+    implements FileDescriptor {
   /// Descriptors for entries in this archive.
-  final List<Descriptor> contents;
+  final List<Descriptor> contents = List.unmodifiable(contents);
 
   /// Returns a `package:archive` [Archive] object that contains the contents of
   /// this file.
@@ -74,9 +76,6 @@ class ArchiveDescriptor extends Descriptor implements FileDescriptor {
       }),
     )).expand((files) => files);
   }
-
-  ArchiveDescriptor(super.name, Iterable<Descriptor> contents)
-    : contents = List.unmodifiable(contents);
 
   @override
   Future<void> create([String? parent]) async {

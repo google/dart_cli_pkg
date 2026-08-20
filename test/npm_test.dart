@@ -117,13 +117,13 @@ void main() {
             .package(
               pubspec,
               """
-          void main(List<String> args) {
-            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+                void main(List<String> args) {
+                  pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
 
-            pkg.addNpmTasks();
-            grind(args);
-          }
-        """,
+                  pkg.addNpmTasks();
+                  grind(args);
+                }
+              """,
               [
                 _packageJson,
                 d.dir("lib/src", [_exportsHello('"Hi, there!"')]),
@@ -153,14 +153,14 @@ void main() {
             .package(
               pubspec,
               """
-          void main(List<String> args) {
-            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-            pkg.jsRequires.value = [$requireDeclarations];
+                void main(List<String> args) {
+                  pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+                  pkg.jsRequires.value = [$requireDeclarations];
 
-            pkg.addNpmTasks();
-            grind(args);
-          }
-        """,
+                  pkg.addNpmTasks();
+                  grind(args);
+                }
+              """,
               [
                 _packageJson,
                 d.dir("lib/src", [_exportsHello('osLoaded')]),
@@ -201,45 +201,35 @@ void main() {
 
       test("have access to global requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.all)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .all)"),
           completion(isTrue),
         );
       });
 
       test("have access to node requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .node)"),
           completion(isTrue),
         );
       });
 
       test("don't have access to cli requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .cli)"),
           completion(isFalse),
         );
       });
 
       test("don't have access to browser requires", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .browser)"),
           completion(isFalse),
         );
       });
 
       test("has access to default requires without a node target", () async {
         expect(
-          hasAccessToRequire(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)",
-          ),
+          hasAccessToRequire("pkg.JSRequire('os', target: .defaultTarget)"),
           completion(isTrue),
         );
       });
@@ -249,9 +239,9 @@ void main() {
         () async {
           expect(
             hasAccessToRequire("""
-          pkg.JSRequire('http', target: pkg.JSRequireTarget.node),
-          pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget),
-        """),
+              pkg.JSRequire('http', target: .node),
+              pkg.JSRequire('os', target: .defaultTarget),
+            """),
             completion(isFalse),
           );
         },
@@ -309,14 +299,14 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-          pkg.jsRequires.value.add($requireDeclaration);
+              void main(List<String> args) {
+                pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+                pkg.jsRequires.value.add($requireDeclaration);
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [
               _packageJson,
               d.dir("lib/src", [d.file("exports.dart", "void main() {}")]),
@@ -353,36 +343,28 @@ void main() {
 
     test("with access to cli requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.cli)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .cli)"),
         completion(isTrue),
       );
     });
 
     test("with access to node requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.node)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .node)"),
         completion(isTrue),
       );
     });
 
     test("without access to browser requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.browser)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .browser)"),
         completion(isFalse),
       );
     });
 
     test("without access to default requires", () async {
       expect(
-        hasAccessToRequire(
-          "pkg.JSRequire('os', target: pkg.JSRequireTarget.defaultTarget)",
-        ),
+        hasAccessToRequire("pkg.JSRequire('os', target: .defaultTarget)"),
         completion(isFalse),
       );
     });
@@ -394,13 +376,13 @@ void main() {
 
         await d.dir("my_app/bin", [
           d.file("foo.dart", r"""
-          void main() {
-            print("node: ${const bool.fromEnvironment('node')}");
-            print("version: ${const String.fromEnvironment('version')}");
-            print("dart-version: "
-                "${const String.fromEnvironment('dart-version')}");
-          }
-        """),
+            void main() {
+              print("node: ${const bool.fromEnvironment('node')}");
+              print("version: ${const String.fromEnvironment('version')}");
+              print("dart-version: "
+                  "${const String.fromEnvironment('dart-version')}");
+            }
+          """),
         ]).create();
 
         await (await grind(["pkg-npm-dev"])).shouldExit();
@@ -426,14 +408,14 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.environmentConstants.value["my-const"] =
-              ${riskyArgStringLiteral(invokedByDart: true)};
+              void main(List<String> args) {
+                pkg.environmentConstants.value["my-const"] =
+                    ${riskyArgStringLiteral(invokedByDart: true)};
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [_packageJson],
           )
           .create();
@@ -532,12 +514,12 @@ void main() {
           d.dir("lib/src", [_exportsHello('"Hi, there!"')]),
           d.dir("bin", [
             d.file("exec.dart", r"""
-            import '../lib/src/exports.dart' as lib;
+              import '../lib/src/exports.dart' as lib;
 
-            void main(List<String> args) {
-              print("Hello from exec");
-            }
-          """),
+              void main(List<String> args) {
+                print("Hello from exec");
+              }
+            """),
           ]),
         ],
       ).create();
@@ -585,12 +567,12 @@ void main() {
           .package(
             pubspec,
             r"""
-          void main(List<String> args) {
-            pkg.addNpmTasks();
-            pkg.jsForceStrictMode.value = true;
-            grind(args);
-          }
-        """,
+              void main(List<String> args) {
+                pkg.addNpmTasks();
+                pkg.jsForceStrictMode.value = true;
+                grind(args);
+              }
+            """,
             [
               _packageJson,
               d.dir("bin", [d.file("foo.dart", strictOrSloppy)]),
@@ -645,16 +627,16 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.npmPackageJson.value = {
-            "name": "my_app",
-            "another": "attribute"
-          };
+              void main(List<String> args) {
+                pkg.npmPackageJson.value = {
+                  "name": "my_app",
+                  "another": "attribute"
+                };
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [
               d.file(
                 "package.json",
@@ -738,13 +720,13 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
+              void main(List<String> args) {
+                pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [
               _packageJson,
               d.dir("lib/src", [d.file("module_main.dart", "void main() {}")]),
@@ -766,7 +748,7 @@ void main() {
     const grindDotDart = """
       void main(List<String> args) {
         pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
-        pkg.jsRequires.value = [pkg.JSRequire('util', target: pkg.JSRequireTarget.cli)];
+        pkg.jsRequires.value = [pkg.JSRequire('util', target: .cli)];
 
         pkg.addNpmTasks();
         grind(args);
@@ -777,8 +759,8 @@ void main() {
       void main(List<String> args) {
         pkg.jsModuleMainLibrary.value = "lib/src/module_main.dart";
         pkg.jsRequires.value = [
-          pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
-          pkg.JSRequire('other', target: pkg.JSRequireTarget.node),
+          pkg.JSRequire('util', target: .cli),
+          pkg.JSRequire('other', target: .node),
         ];
 
         pkg.addNpmTasks();
@@ -827,18 +809,18 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-          pkg.jsRequires.value = [
-            pkg.JSRequire('util', target: pkg.JSRequireTarget.cli),
-            pkg.JSRequire('os', target: pkg.JSRequireTarget.node),
-          ];
-          pkg.jsEsmExports.value = {'hello'};
+              void main(List<String> args) {
+                pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+                pkg.jsRequires.value = [
+                  pkg.JSRequire('util', target: .cli),
+                  pkg.JSRequire('os', target: .node),
+                ];
+                pkg.jsEsmExports.value = {'hello'};
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [
               _packageJson,
               d.dir("lib/src", [_exportsHello('osLoaded')]),
@@ -1031,10 +1013,10 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          print(pkg.npmDistTag);
-        }
-      """,
+              void main(List<String> args) {
+                print(pkg.npmDistTag);
+              }
+            """,
             [_packageJson],
           )
           .create();
@@ -1048,10 +1030,10 @@ void main() {
       await d.package(
         {...pubspec, "version": "1.2.3-foo.4.bar"},
         """
-        void main(List<String> args) {
-          print(pkg.npmDistTag);
-        }
-      """,
+          void main(List<String> args) {
+            print(pkg.npmDistTag);
+          }
+        """,
         [_packageJson],
       ).create();
 
@@ -1064,10 +1046,10 @@ void main() {
       await d.package(
         {...pubspec, "version": "1.2.3-4.foo"},
         """
-        void main(List<String> args) {
-          print(pkg.npmDistTag);
-        }
-      """,
+          void main(List<String> args) {
+            print(pkg.npmDistTag);
+          }
+        """,
         [_packageJson],
       ).create();
 
@@ -1081,11 +1063,11 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.npmDistTag.value = "qux";
-          print(pkg.npmDistTag);
-        }
-      """,
+              void main(List<String> args) {
+                pkg.npmDistTag.value = "qux";
+                print(pkg.npmDistTag);
+              }
+            """,
             [_packageJson],
           )
           .create();
@@ -1120,13 +1102,13 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.npmReadme.value = "Other README text";
+              void main(List<String> args) {
+                pkg.npmReadme.value = "Other README text";
 
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [_packageJson, d.file("README.md", "Some README text")],
           )
           .create();
@@ -1217,12 +1199,12 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.npmAdditionalFiles.value = {"foo/bar/baz.txt": "contents"};
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+              void main(List<String> args) {
+                pkg.npmAdditionalFiles.value = {"foo/bar/baz.txt": "contents"};
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [_packageJson],
           )
           .create();
@@ -1236,12 +1218,12 @@ void main() {
           .package(
             pubspec,
             """
-        void main(List<String> args) {
-          pkg.npmAdditionalFiles.value = {"/foo/bar/baz.txt": "contents"};
-          pkg.addNpmTasks();
-          grind(args);
-        }
-      """,
+              void main(List<String> args) {
+                pkg.npmAdditionalFiles.value = {"/foo/bar/baz.txt": "contents"};
+                pkg.addNpmTasks();
+                grind(args);
+              }
+            """,
             [_packageJson],
           )
           .create();
@@ -1267,36 +1249,36 @@ void main() {
             .package(
               pubspec,
               r"""
-            void main(List<String> args) {
-              pkg.addNpmTasks();
-              pkg.jsForceStrictMode.value = true;
-              grind(args);
-            }
-          """,
+                void main(List<String> args) {
+                  pkg.addNpmTasks();
+                  pkg.jsForceStrictMode.value = true;
+                  grind(args);
+                }
+              """,
               [
                 _packageJson,
                 d.dir("bin", [
                   d.file("foo.dart", """
-              import 'package:cli_pkg/js.dart';
-              import 'package:js/js.dart';
+                    import 'package:cli_pkg/js.dart';
+                    import 'package:js/js.dart';
 
-              @JS("Function")
-              class _JSFunction {
-                external _JSFunction(String arguments, String body);
-                external Object? call();
-              }
+                    @JS("Function")
+                    class _JSFunction {
+                      external _JSFunction(String arguments, String body);
+                      external Object? call();
+                    }
 
-              void main() {
-                try {
-                  wrapJSExceptions(() {
-                    _JSFunction("error",
-                        "throw \${${json.encode(expression)}};").call();
-                  });
-                } catch (_, stackTrace) {
-                  print(stackTrace);
-                }
-              }
-            """),
+                    void main() {
+                      try {
+                        wrapJSExceptions(() {
+                          _JSFunction("error",
+                              "throw \${${json.encode(expression)}};").call();
+                        });
+                      } catch (_, stackTrace) {
+                        print(stackTrace);
+                      }
+                    }
+                  """),
                 ]),
               ],
             )
@@ -1421,14 +1403,14 @@ void main() {
             .package(
               pubspec,
               """
-          void main(List<String> args) {
-            pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
-            pkg.jsRequires.value = [$requireDeclarations];
+                void main(List<String> args) {
+                  pkg.jsModuleMainLibrary.value = "lib/src/exports.dart";
+                  pkg.jsRequires.value = [$requireDeclarations];
 
-            pkg.addNpmTasks();
-            grind(args);
-          }
-        """,
+                  pkg.addNpmTasks();
+                  grind(args);
+                }
+              """,
               [
                 _packageJson,
                 d.dir("lib/src", [d.file("exports.dart", dartExports)]),
@@ -1466,37 +1448,37 @@ void main() {
       test("have access to lazy requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node), "
+                "pkg.JSRequire('os', target: .node, "
                 "lazy: true, identifier: 'os_lazy')",
             """
-                  import 'package:js/js.dart';
+              import 'package:js/js.dart';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osLazy(Object? value);
-                  }
+              @JS()
+              class Exports {
+                external set os(Object? value);
+                external set osLazy(Object? value);
+              }
 
-                  @JS()
-                  external Exports get exports;
+              @JS()
+              external Exports get exports;
 
-                  @JS('os')
-                  external Object? os;
+              @JS('os')
+              external Object? os;
 
-                  @JS('os_lazy')
-                  external Object? get osLazy;
+              @JS('os_lazy')
+              external Object? get osLazy;
 
-                  void main() {
-                    exports.os = os;
-                    exports.osLazy = osLazy;
-                  }
-                  """,
+              void main() {
+                exports.os = os;
+                exports.osLazy = osLazy;
+              }
+            """,
             """
-                  var my_app = require("my_app");
+              var my_app = require("my_app");
 
-                  console.log(my_app.os === my_app.osLazy);
-                """,
+              console.log(my_app.os === my_app.osLazy);
+            """,
           ),
           completion(isTrue),
         );
@@ -1506,35 +1488,35 @@ void main() {
         expect(
           load(
             "pkg.JSRequire('module_not_found', "
-                "target: pkg.JSRequireTarget.node, lazy: true)",
+                "target: .node, lazy: true)",
             """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+              import 'package:js/js.dart';
+              import 'package:js/js_util.dart';
 
-                  @JS()
-                  class Exports {
-                    external set run(Object? value);
-                  }
+              @JS()
+              class Exports {
+                external set run(Object? value);
+              }
 
-                  @JS()
-                  external Exports get exports;
+              @JS()
+              external Exports get exports;
 
-                  @JS('module_not_found')
-                  external Object? get moduleNotFound;
+              @JS('module_not_found')
+              external Object? get moduleNotFound;
 
-                  void main() {
-                    exports.run = allowInterop(() => moduleNotFound);
-                  }
-                  """,
+              void main() {
+                exports.run = allowInterop(() => moduleNotFound);
+              }
+            """,
             """
-                  var my_app = require("my_app");
+              var my_app = require("my_app");
 
-                  try {
-                    myapp.run()
-                  } catch (_) {
-                    console.log(true)
-                  }
-                """,
+              try {
+                myapp.run()
+              } catch (_) {
+                console.log(true)
+              }
+            """,
           ),
           completion(isTrue),
         );
@@ -1543,37 +1525,37 @@ void main() {
       test("have access to optional requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node), "
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node), "
+                "pkg.JSRequire('os', target: .node, "
                 "optional: true, identifier: 'os_optional')",
             """
-                  import 'package:js/js.dart';
+              import 'package:js/js.dart';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osOptional(Object? value);
-                  }
+              @JS()
+              class Exports {
+                external set os(Object? value);
+                external set osOptional(Object? value);
+              }
 
-                  @JS()
-                  external Exports get exports;
+              @JS()
+              external Exports get exports;
 
-                  @JS('os')
-                  external Object? os;
+              @JS('os')
+              external Object? os;
 
-                  @JS('os_optional')
-                  external Object? osOptional;
+              @JS('os_optional')
+              external Object? osOptional;
 
-                  void main() {
-                    exports.os = os;
-                    exports.osOptional = osOptional;
-                  }
-                """,
+              void main() {
+                exports.os = os;
+                exports.osOptional = osOptional;
+              }
+            """,
             """
-                  var my_app = require("my_app");
+              var my_app = require("my_app");
 
-                  console.log(my_app.os === my_app.osOptional);
-                """,
+              console.log(my_app.os === my_app.osOptional);
+            """,
           ),
           completion(isTrue),
         );
@@ -1585,31 +1567,31 @@ void main() {
           expect(
             load(
               "pkg.JSRequire('module_not_found', "
-                  "target: pkg.JSRequireTarget.node, optional: true)",
+                  "target: .node, optional: true)",
               """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+                import 'package:js/js.dart';
+                import 'package:js/js_util.dart';
 
-                  @JS()
-                  class Exports {
-                    external set moduleNotFound(Object? value);
-                  }
+                @JS()
+                class Exports {
+                  external set moduleNotFound(Object? value);
+                }
 
-                  @JS()
-                  external Exports get exports;
+                @JS()
+                external Exports get exports;
 
-                  @JS('module_not_found')
-                  external Object? moduleNotFound;
+                @JS('module_not_found')
+                external Object? moduleNotFound;
 
-                  void main() {
-                    exports.moduleNotFound = moduleNotFound;
-                  }
-                  """,
+                void main() {
+                  exports.moduleNotFound = moduleNotFound;
+                }
+              """,
               """
-                  var my_app = require("my_app");
+                var my_app = require("my_app");
 
-                  console.log(my_app.moduleNotFound === null)
-                """,
+                console.log(my_app.moduleNotFound === null)
+              """,
             ),
             completion(isTrue),
           );
@@ -1619,38 +1601,38 @@ void main() {
       test("have access to lazy optional requires", () async {
         expect(
           load(
-            "pkg.JSRequire('os', target: pkg.JSRequireTarget.node),"
-                "pkg.JSRequire('os', target: pkg.JSRequireTarget.node, "
+            "pkg.JSRequire('os', target: .node),"
+                "pkg.JSRequire('os', target: .node, "
                 "lazy: true, optional: true, "
                 "identifier: 'os_lazy_optional')",
             """
-                  import 'package:js/js.dart';
+              import 'package:js/js.dart';
 
-                  @JS()
-                  class Exports {
-                    external set os(Object? value);
-                    external set osLazyOptional(Object? value);
-                  }
+              @JS()
+              class Exports {
+                external set os(Object? value);
+                external set osLazyOptional(Object? value);
+              }
 
-                  @JS()
-                  external Exports get exports;
+              @JS()
+              external Exports get exports;
 
-                  @JS('os')
-                  external Object? os;
+              @JS('os')
+              external Object? os;
 
-                  @JS('os_lazy_optional')
-                  external Object? get osLazyOptional;
+              @JS('os_lazy_optional')
+              external Object? get osLazyOptional;
 
-                  void main() {
-                    exports.os = os;
-                    exports.osLazyOptional = osLazyOptional;
-                  }
-                """,
+              void main() {
+                exports.os = os;
+                exports.osLazyOptional = osLazyOptional;
+              }
+            """,
             """
-                  var my_app = require("my_app");
+              var my_app = require("my_app");
 
-                  console.log(my_app.os === my_app.osLazyOptional);
-                """,
+              console.log(my_app.os === my_app.osLazyOptional);
+            """,
           ),
           completion(isTrue),
         );
@@ -1661,32 +1643,32 @@ void main() {
         expect(
           load(
             "pkg.JSRequire('module_not_found', "
-                "target: pkg.JSRequireTarget.node, lazy: true, "
+                "target: .node, lazy: true, "
                 "optional: true)",
             """
-                  import 'package:js/js.dart';
-                  import 'package:js/js_util.dart';
+              import 'package:js/js.dart';
+              import 'package:js/js_util.dart';
 
-                  @JS()
-                  class Exports {
-                    external set run(Object? value);
-                  }
+              @JS()
+              class Exports {
+                external set run(Object? value);
+              }
 
-                  @JS()
-                  external Exports get exports;
+              @JS()
+              external Exports get exports;
 
-                  @JS('module_not_found')
-                  external Object? get moduleNotFound;
+              @JS('module_not_found')
+              external Object? get moduleNotFound;
 
-                  void main() {
-                    exports.run = allowInterop(() => moduleNotFound);
-                  }
-                """,
+              void main() {
+                exports.run = allowInterop(() => moduleNotFound);
+              }
+            """,
             """
-                  var my_app = require("my_app");
+              var my_app = require("my_app");
 
-                  console.log(my_app.run() === null)
-                """,
+              console.log(my_app.run() === null)
+            """,
           ),
           completion(isTrue),
         );
@@ -1701,22 +1683,22 @@ void main() {
 /// The [expression] has access to an `osLoaded` field that's true if Node.js's
 /// `os` core library has been loaded and `false` otherwise.
 d.FileDescriptor _exportsHello(String expression) => d.file("exports.dart", """
-    import 'package:js/js.dart';
+  import 'package:js/js.dart';
 
-    @JS()
-    class Exports {
-      external set hello(Object value);
-    }
+  @JS()
+  class Exports {
+    external set hello(Object value);
+  }
 
-    @JS()
-    external Exports get exports;
+  @JS()
+  external Exports get exports;
 
-    @JS('os')
-    external Object? os;
+  @JS('os')
+  external Object? os;
 
-    final osLoaded = os != null;
+  final osLoaded = os != null;
 
-    void main() {
-      exports.hello = ($expression);
-    }
-  """);
+  void main() {
+    exports.hello = ($expression);
+  }
+""");

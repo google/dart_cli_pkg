@@ -49,9 +49,8 @@ void main() {
     test("default to pkg.dartName", () async {
       await d.package(pubspec, _enableStandalone).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app"),
@@ -67,9 +66,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my-app-1.2.3-$_archiveSuffix", [
         d.dir("my-app"),
@@ -86,9 +84,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my-sa-app-1.2.3-$_archiveSuffix", [
         d.dir("my-sa-app"),
@@ -105,9 +102,8 @@ void main() {
 
     test("default to the pubspec's executables", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -133,9 +129,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -160,9 +155,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -187,9 +181,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -214,9 +207,8 @@ void main() {
         }
       """).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app", [
@@ -250,16 +242,16 @@ void main() {
               },
             },
             """
-          void main(List<String> args) {
-            // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
-            // #44995 are fixed.
-            pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
+              void main(List<String> args) {
+                // TODO(nweiz): Test spaces and commas when dart-lang/sdk#46050 and
+                // #44995 are fixed.
+                pkg.environmentConstants.value["my-const"] =
+                    ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
-            pkg.addStandaloneTasks();
-            grind(args);
-          }
-        """,
+                pkg.addStandaloneTasks();
+                grind(args);
+              }
+            """,
           )
           .create();
 
@@ -270,9 +262,8 @@ void main() {
         ),
       ]).create();
 
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
       await extract("my_app/build/my_app-1.2.3-$_archiveSuffix", "out");
 
       // Directly
@@ -311,9 +302,8 @@ void main() {
         await executable.shouldExit(0);
 
         // Through an absolute symlink
-        Link(
-          d.path("foo-absolute$dotBat"),
-        ).createSync(d.path("out/my_app/foo$dotBat"));
+        Link(d.path("foo-absolute$dotBat"))
+            .createSync(d.path("out/my_app/foo$dotBat"));
         executable = await TestProcess.start(
           d.path("foo-absolute$dotBat"),
           [],
@@ -323,9 +313,8 @@ void main() {
         await executable.shouldExit(0);
 
         // Through a nested symlink
-        Link(
-          d.path("foo-nested$dotBat"),
-        ).createSync(d.path("foo-relative$dotBat"));
+        Link(d.path("foo-nested$dotBat"))
+            .createSync(d.path("foo-relative$dotBat"));
         executable = await TestProcess.start(
           d.path("foo-nested$dotBat"),
           [],
@@ -393,9 +382,8 @@ void main() {
             [d.file("LICENSE", "Please use my code")],
           )
           .create();
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
@@ -414,9 +402,8 @@ void main() {
 
     test("is still generated if the package doesn't have a license", () async {
       await d.package(pubspec, _enableStandalone).create();
-      await (await grind([
-        "pkg-standalone-${CliPlatform.current}",
-      ])).shouldExit(0);
+      await (await grind(["pkg-standalone-${CliPlatform.current}"]))
+          .shouldExit(0);
 
       await d.archive("my_app/build/my_app-1.2.3-$_archiveSuffix", [
         d.dir("my_app/src", [
@@ -571,14 +558,14 @@ void main() {
               "executables": {"const": "const"},
             },
             """
-          void main(List<String> args) {
-            pkg.environmentConstants.value["my-const"] =
-                ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
+              void main(List<String> args) {
+                pkg.environmentConstants.value["my-const"] =
+                    ${riskyArgStringLiteral(invokedByDart: true, dartCompileExe: true)};
 
-            pkg.addStandaloneTasks();
-            grind(args);
-          }
-        """,
+                pkg.addStandaloneTasks();
+                grind(args);
+              }
+            """,
           )
           .create();
 

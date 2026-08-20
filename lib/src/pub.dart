@@ -79,7 +79,7 @@ void addPubTasks() {
 Future<void> _deploy() async {
   Directory(p.dirname(_credentialsPath)).createSync(recursive: true);
 
-  File(_credentialsPath).openSync(mode: FileMode.writeOnlyAppend)
+  File(_credentialsPath).openSync(mode: .writeOnlyAppend)
     ..writeStringSync(pubCredentials.value)
     ..closeSync();
 

@@ -306,13 +306,11 @@ void main() {
       },
     );
 
-    test(
-      "prefers an explicit username to the GITHUB_PASSWORD environment variable",
-      () async {
-        await d.package(pubspecWithHomepage, _enableGithub()).create();
-        await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
-      },
-    );
+    test("prefers an explicit username to the GITHUB_PASSWORD environment "
+        "variable", () async {
+      await d.package(pubspecWithHomepage, _enableGithub()).create();
+      await assertPassword("pwd", environment: {"GITHUB_PASSWORD": "wrong"});
+    });
   });
 
   group("bearer token", () {
@@ -359,21 +357,19 @@ void main() {
       },
     );
 
-    test(
-      "prefers an explicit username to the GITHUB_PASSWORD environment variable",
-      () async {
-        await d
-            .package(
-              pubspecWithHomepage,
-              _enableGithub(password: false, bearer: true),
-            )
-            .create();
-        await assertToken(
-          "secret",
-          environment: {"GITHUB_BEARER_TOKEN": "wrong"},
-        );
-      },
-    );
+    test("prefers an explicit username to the GITHUB_PASSWORD environment "
+        "variable", () async {
+      await d
+          .package(
+            pubspecWithHomepage,
+            _enableGithub(password: false, bearer: true),
+          )
+          .create();
+      await assertToken(
+        "secret",
+        environment: {"GITHUB_BEARER_TOKEN": "wrong"},
+      );
+    });
   });
 
   group("release notes", () {

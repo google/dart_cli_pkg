@@ -41,19 +41,19 @@ enum OperatingSystem {
   /// Whether this represents Windows.
   bool get isWindows => this == windows;
 
-  factory OperatingSystem.parse(String name) => switch (name) {
-    "android" => OperatingSystem.android,
-    "fuchsia" => OperatingSystem.fuchsia,
-    "ios" => OperatingSystem.ios,
-    "linux" => OperatingSystem.linux,
-    "macos" => OperatingSystem.macos,
-    "windows" => OperatingSystem.windows,
+  factory parse(String name) => switch (name) {
+    "android" => .android,
+    "fuchsia" => .fuchsia,
+    "ios" => .ios,
+    "linux" => .linux,
+    "macos" => .macos,
+    "windows" => .windows,
     _ => fail('Unknown operating system "$name"'),
   };
 
   String toHumanString() => switch (this) {
-    OperatingSystem.ios => "iOS",
-    OperatingSystem.macos => "macOS",
+    .ios => "iOS",
+    .macos => "macOS",
     _ => name[0].toUpperCase() + name.substring(1).toLowerCase(),
   };
 

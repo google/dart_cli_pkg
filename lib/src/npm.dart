@@ -275,9 +275,7 @@ void addNpmTasks() {
   npmDistTag.freeze();
 
   var hasNonCliRequires = jsRequires.value.any(
-    (require) =>
-        require.target != JSRequireTarget.cli &&
-        require.target != JSRequireTarget.all,
+    (require) => require.target != .cli && require.target != .all,
   );
   if (jsModuleMainLibrary.value == null) {
     if (hasNonCliRequires) {
@@ -457,14 +455,12 @@ Future<void> _buildPackage() async {
     'build/$_npmName.dart.js',
     p.join(dir.path, '$_npmName.dart.js'),
   );
-  var allRequires = _requiresForTarget(
-    JSRequireTarget.all,
-  ).union(extractedRequires);
+  var allRequires = _requiresForTarget(.all).union(extractedRequires);
 
-  var nodeRequires = _requiresForTarget(JSRequireTarget.node);
-  var cliRequires = _requiresForTarget(JSRequireTarget.cli).union(nodeRequires);
-  var browserRequires = _requiresForTarget(JSRequireTarget.browser);
-  var defaultRequires = _requiresForTarget(JSRequireTarget.defaultTarget);
+  var nodeRequires = _requiresForTarget(.node);
+  var cliRequires = _requiresForTarget(.cli).union(nodeRequires);
+  var browserRequires = _requiresForTarget(.browser);
+  var defaultRequires = _requiresForTarget(.defaultTarget);
 
   writeString(
     p.join('build', 'npm', 'package.json'),
@@ -575,7 +571,7 @@ JSRequireSet _copyJSAndInjectDependencies(String source, String destination) {
             .firstWhereOrNull((require) => require.package == package)
             ?.identifier;
         if (identifier == null) {
-          var require = JSRequire(package, target: JSRequireTarget.all);
+          var require = JSRequire(package, target: .all);
           extractedRequires.add(require);
           identifier = require.identifier;
         }
@@ -811,7 +807,7 @@ const _cliPkgExports = {};
 /// Publishes the contents of `build/npm` to npm.
 Future<void> _deploy() async {
   if (npmToken.value case var token?) {
-    var file = File(".npmrc").openSync(mode: FileMode.writeOnlyAppend);
+    var file = File(".npmrc").openSync(mode: .writeOnlyAppend);
     file.writeStringSync("\n//registry.npmjs.org/:_authToken=$token");
     file.closeSync();
   } else {

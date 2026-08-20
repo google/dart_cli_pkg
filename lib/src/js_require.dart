@@ -22,14 +22,11 @@ import 'js_require_target.dart';
 ///
 /// Note that if [jsEsmExports] is set, ESM files with `import`s are generated
 /// in addition to CJS files with `require()`.
-class JSRequire {
+class JSRequire(
   /// The argument to the `require()` function.
-  final String package;
-
-  /// The global identifier to assign to the result of `require()`.
-  ///
-  /// This defaults to a valid JS identifier based on [package].
-  final String identifier;
+  final String package, {
+  String? identifier,
+  JSRequireTarget? target,
 
   /// Whether the dependency is loaded lazily.
   ///
@@ -38,7 +35,7 @@ class JSRequire {
   /// when this package is loaded.
   ///
   /// This defaults to false.
-  final bool lazy;
+  final bool lazy = false,
 
   /// Whether the dependency is optional.
   ///
@@ -46,25 +43,21 @@ class JSRequire {
   /// rather than throwing an error.
   ///
   /// This defaults to false.
-  final bool optional;
+  final bool optional = false,
+}) {
+  /// The global identifier to assign to the result of `require()`.
+  ///
+  /// This defaults to a valid JS identifier based on [package].
+  final String identifier =
+      identifier ??
+      package
+          .replaceFirst(RegExp(r'^@'), '')
+          .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
 
   /// The target in which to include this require.
   ///
   /// This defaults to [JSRequireTarget.all].
-  final JSRequireTarget target;
-
-  JSRequire(
-    this.package, {
-    String? identifier,
-    JSRequireTarget? target,
-    this.lazy = false,
-    this.optional = false,
-  }) : identifier =
-           identifier ??
-           package
-               .replaceFirst(RegExp(r'^@'), '')
-               .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_'),
-       target = target ?? JSRequireTarget.all;
+  final JSRequireTarget target = target ?? .all;
 
   @override
   String toString() => "const $identifier = require('$package') on $target";

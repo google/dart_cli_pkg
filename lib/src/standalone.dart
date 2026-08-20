@@ -24,7 +24,6 @@ import 'config_variable.dart';
 import 'info.dart';
 import 'sdk_channel.dart';
 import 'standalone/cli_platform.dart';
-import 'standalone/operating_system.dart';
 import 'template.dart';
 import 'utils.dart';
 
@@ -97,7 +96,7 @@ void _compileNative({bool enableAsserts = false}) {
         'dart',
         arguments: [
           'compile',
-          useExe.value(CliPlatform.current) ? 'exe' : 'aot-snapshot',
+          useExe.value(.current) ? 'exe' : 'aot-snapshot',
           if (enableAsserts) '--enable-asserts',
           for (var entry in environmentConstants.value.entries)
             '-D${entry.key}=${entry.value}',
@@ -306,18 +305,15 @@ Future<List<int>> _dartExecutable(CliPlatform platform) async {
       "https://github.com/dart-musl/dart/releases/"
           "download/$dartVersion/"
           "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
-    CliPlatform(os: OperatingSystem.android) =>
+    CliPlatform(os: .android) =>
       "https://github.com/"
           "dart-android/dart/releases/download/$dartVersion/"
           "dartsdk-${platform.os}-${platform.arch}-release.tar.gz",
-    CliPlatform(
-      os: var os && (OperatingSystem.fuchsia || OperatingSystem.ios),
-    ) =>
-      fail(
-        "${os.toHumanString()} executables can only be generated when running "
-        "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
-        "that platform.",
-      ),
+    CliPlatform(os: var os && (.fuchsia || .ios)) => fail(
+      "${os.toHumanString()} executables can only be generated when running "
+      "on ${os.toHumanString()}, because Dart doesn't distribute SDKs for "
+      "that platform.",
+    ),
     _ =>
       "https://storage.googleapis.com/dart-archive/channels/"
           "${SdkChannel.current}/release/$dartVersion/sdk/dartsdk-${platform.os}-"

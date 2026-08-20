@@ -24,9 +24,9 @@ import 'operating_system.dart';
 
 /// Certain ABIs that Dart recognizes but cli_pkg doesn't support for various
 /// reasons.
-const _unsupportedAbis = {
+const _unsupportedAbis = <Abi>{
   // This is still experimental and Dart isn't shipping SDKs for it yet
-  Abi.linuxRiscv32,
+  .linuxRiscv32,
 };
 
 /// The set of all ABI strings known by this SDK.
@@ -42,17 +42,18 @@ final _abiStrings = {
 
 /// A struct representing a platform for which we can build standalone
 /// executables.
-class CliPlatform {
+class CliPlatform(
   /// The operating system.
-  final OperatingSystem os;
+  final OperatingSystem os,
 
   /// The CPU architecture, such as "ia32" or "arm64".
-  final Architecture arch;
-
+  final Architecture arch, {
+  bool musl = false,
+}) {
   /// Whether the executable should be built to use musl LibC instead of glibc.
   ///
   /// This is only ever true if [os] is "linux".
-  final bool isMusl;
+  final bool isMusl = musl;
 
   /// Whether this is the same platform as the running Dart executable.
   bool get isCurrent => this == current;
@@ -107,9 +108,9 @@ class CliPlatform {
 
   /// Returns whether the current platform is using musl LibC.
   static bool get _isCurrentPlatformMusl {
-    var section = Elf.fromFile(
-      Platform.resolvedExecutable,
-    )?.namedSections('.interp').firstOrNull;
+    var section = Elf.fromFile(Platform.resolvedExecutable)
+        ?.namedSections('.interp')
+        .firstOrNull;
     if (section == null) return false;
 
     var file = File(Platform.resolvedExecutable).openSync()
@@ -119,7 +120,7 @@ class CliPlatform {
     return p.basename(interp).startsWith('ld-musl-');
   }
 
-  CliPlatform(this.os, this.arch, {bool musl = false}) : isMusl = musl {
+  this {
     if (!_abiStrings.contains('${os}_$arch')) {
       fail("Unknown or unsupported platform $os-$arch!");
     }

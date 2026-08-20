@@ -156,9 +156,8 @@ Future<void> _update() async {
     "git",
     arguments: [
       "push",
-      url(
-        "https://$githubUser:$githubPassword@github.com/$homebrewRepo.git",
-      ).toString(),
+      url("https://$githubUser:$githubPassword@github.com/$homebrewRepo.git")
+          .toString(),
       "HEAD:${await _originHead(repo)}",
     ],
     workingDirectory: repo,
