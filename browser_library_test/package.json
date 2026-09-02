@@ -18,7 +18,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "browserify": "^17.0.1",
     "cli-pkg-test": "file:build/npm",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "esmify": "^2.1.1",
     "prettier": "^3.9.6",
     "rollup": "^4.63.0",
