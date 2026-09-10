@@ -86,12 +86,10 @@ class CliPlatform(
   /// All platforms that are supported by Dart SDKs.
   static final Set<CliPlatform> all = {
     for (var [os, arch] in _abiStrings.map((abi) => abi.split('_')))
-      for (var musl in [false, if (os == 'linux') true])
-        CliPlatform(
-          OperatingSystem.parse(os),
-          Architecture.parse(arch),
-          musl: musl,
-        ),
+      if (OperatingSystem.tryParse(os) case var os?)
+        if (Architecture.tryParse(arch) case var arch?)
+          for (var musl in [false, if (os == .linux) true])
+            CliPlatform(os, arch, musl: musl),
   };
 
   /// The platform of the current Dart executable.

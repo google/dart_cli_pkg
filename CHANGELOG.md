@@ -1,3 +1,11 @@
+## 2.16.0
+
+* Make the package more resilient to unknown operating system and architecture
+  identifiers. Instead of crashing, it will now omit tasks for unsupported
+  architectures.
+
+* Add `OperatingSystem.tryParse()` and `Architecture.tryParse()` static methods.
+
 ## 2.15.2
 
 * Expand and upgrade some dependency versions.
