@@ -28,7 +28,7 @@ enum Architecture {
   /// Whether this is a 64-bit ARM architecture.
   bool get isArm64 => this == arm64;
 
-  /// Whether this is a 64-bit ARM architecture.
+  /// Whether this is an extended 64-bit ARM architecture.
   bool get isArm64e => this == arm64e;
 
   /// Whether this is a 32-bit x86 architecture.
