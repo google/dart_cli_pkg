@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:grinder/grinder.dart';
-
 /// An enumeration of all operating systems supported by Dart.
 enum OperatingSystem {
   android,
@@ -41,14 +39,20 @@ enum OperatingSystem {
   /// Whether this represents Windows.
   bool get isWindows => this == windows;
 
-  factory parse(String name) => switch (name) {
+  /// Parses [name] as an architecture and throws an error if parsing fails.
+  factory parse(String name) =>
+      tryParse(name) ?? (throw 'Unknown operating system "$name"');
+
+  /// Parses [name] as an operating system and returns `null` if it's not an
+  /// architecture that's recognized or supported by `cli_pkg`.
+  static OperatingSystem? tryParse(String name) => switch (name) {
     "android" => .android,
     "fuchsia" => .fuchsia,
     "ios" => .ios,
     "linux" => .linux,
     "macos" => .macos,
     "windows" => .windows,
-    _ => fail('Unknown operating system "$name"'),
+    _ => null,
   };
 
   String toHumanString() => switch (this) {
