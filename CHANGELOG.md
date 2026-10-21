@@ -1,3 +1,7 @@
+## 2.16.1
+
+* Expand and upgrade some dependency versions.
+
 ## 2.16.0
 
 * Make the package more resilient to unknown operating system and architecture
