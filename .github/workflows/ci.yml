@@ -25,15 +25,13 @@ jobs:
   analyze_ci:
     name: Static analysis (GitHub Actions)
     runs-on: ubuntu-latest
-
-    permissions:
-      security-events: write # Required by upload-sarif
-      actions: read # Required by upload-sarif
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with: {persist-credentials: false}
     - uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
-      with: {persona: pedantic}
+      with:
+        persona: pedantic
+        advanced-security: false # Fail the GitHub action if Zizmor has findings
 
   test:
     name: "Tests | Dart ${{ matrix.dart-channel }} | ${{ matrix.os }} | shard ${{ matrix.shard }}"
