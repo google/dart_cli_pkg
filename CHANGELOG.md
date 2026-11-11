@@ -2,6 +2,9 @@
 
 * Expand and upgrade some dependency versions.
 
+* Increase the minimum dependency version on `xml` to accurately reflect the use
+  of the package.
+
 ## 2.16.0
 
 * Make the package more resilient to unknown operating system and architecture
