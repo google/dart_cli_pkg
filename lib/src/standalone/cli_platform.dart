@@ -36,7 +36,10 @@ final _abiStrings = {
         // There are no Dart SDKs for iOS
         !abi.toString().startsWith("ios_") &&
         // https://github.com/dart-lang/sdk/issues/59698
-        !abi.toString().endsWith("_ia32"))
+        !abi.toString().endsWith("_ia32") &&
+        // There are not yet any Dart SDKs for arm64e. See
+        // https://github.com/dart-lang/sdk/issues/63420
+        !abi.toString().endsWith("_arm64e"))
       abi.toString(),
 };
 
