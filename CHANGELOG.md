@@ -1,5 +1,8 @@
 ## 2.16.1
 
+* Don't try to build `macos-arm64e` releases since there's no Dart SDK for this
+  combination yet.
+
 * Expand and upgrade some dependency versions.
 
 * Increase the minimum dependency version on `xml` to accurately reflect the use
